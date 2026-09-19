@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "eslint.config.ts",
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "blocks/**/*.ts",
+    "blocks/**/*.tsx",
+    "examples/**/*.ts",
+    "examples/**/*.tsx"
+  ],
+  "exclude": ["**/dist/**", "**/node_modules/**"]
+}

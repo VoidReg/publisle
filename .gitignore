@@ -1,0 +1,12 @@
+node_modules
+dist
+*.tsbuildinfo
+coverage
+.turbo
+.env
+.env.*
+!.env.example
+.DS_Store
+.vscode
+
+SPECS.md
