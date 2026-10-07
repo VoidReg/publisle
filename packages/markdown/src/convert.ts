@@ -24,20 +24,71 @@ const children = (node: unknown): Node[] =>
     ? (object(node)["children"] as Node[])
     : [];
 
+function resolveReferences(
+  node: Node,
+  definitions: ReadonlyMap<string, { url: string; title?: string }>,
+): Node {
+  const data = object(node);
+  if (node.type === "linkReference" || node.type === "imageReference") {
+    const definition = definitions.get(
+      String(data["identifier"] ?? "").toLowerCase(),
+    );
+    if (definition) {
+      if (node.type === "imageReference")
+        return {
+          ...node,
+          type: "image",
+          url: definition.url,
+          alt: String(data["alt"] ?? ""),
+          ...(definition.title === undefined
+            ? {}
+            : { title: definition.title }),
+        };
+      return {
+        ...node,
+        type: "link",
+        url: definition.url,
+        ...(definition.title === undefined ? {} : { title: definition.title }),
+        children: children(node).map((child) =>
+          resolveReferences(child, definitions),
+        ),
+      };
+    }
+  }
+  return children(node).length
+    ? {
+        ...node,
+        children: children(node).map((child) =>
+          resolveReferences(child, definitions),
+        ),
+      }
+    : node;
+}
+
+function textNodes(value: string): InlineNode[] {
+  return value
+    .split("\n")
+    .flatMap((part, index) => [
+      ...(index === 0 ? [] : [{ type: "softBreak" as const }]),
+      ...(part.length === 0 ? [] : [{ type: "text" as const, value: part }]),
+    ]);
+}
+
 function inline(nodes: readonly Node[]): InlineNode[] {
   return nodes.flatMap((node): InlineNode[] => {
     const data = object(node);
     switch (node.type) {
       case "text":
-        return [{ type: "text", value: String(data["value"] ?? "") }];
+        return textNodes(String(data["value"] ?? ""));
       case "emphasis":
       case "strong":
-      case "delete":
         return [{ type: node.type, children: inline(children(node)) }];
+      case "delete":
+        return [{ type: "strikethrough", children: inline(children(node)) }];
       case "inlineCode":
         return [{ type: "inlineCode", value: String(data["value"] ?? "") }];
       case "inlineMath":
-        return [{ type: "math", value: String(data["value"] ?? "") }];
+        return [{ type: "inlineMath", value: String(data["value"] ?? "") }];
       case "link":
         return [
           {
@@ -52,7 +103,7 @@ function inline(nodes: readonly Node[]): InlineNode[] {
       case "image":
         return [
           {
-            type: "image",
+            type: "inlineImage",
             url: String(data["url"] ?? ""),
             alt: String(data["alt"] ?? ""),
             ...(typeof data["title"] === "string"
@@ -61,7 +112,7 @@ function inline(nodes: readonly Node[]): InlineNode[] {
           },
         ];
       case "break":
-        return [{ type: "break" }];
+        return [{ type: "hardBreak" }];
       case "footnoteReference":
         return [
           {
@@ -71,6 +122,60 @@ function inline(nodes: readonly Node[]): InlineNode[] {
         ];
       case "html":
         return [{ type: "rawHtml", value: String(data["value"] ?? "") }];
+      case "textDirective": {
+        const name = String(data["name"] ?? "");
+        const attributes = attrs(node);
+        const body = children(node)
+          .map((child) => String(object(child)["value"] ?? ""))
+          .join("")
+          .trim();
+        if (name === "ref")
+          return [
+            {
+              type: "crossReference",
+              target: attributes["target"] ?? body,
+              ...(attributes["target"] && body
+                ? { children: textNodes(body) }
+                : {}),
+            },
+          ];
+        if (name === "cite") {
+          let items = body
+            .split(";")
+            .map((id) => ({ id: id.trim() }))
+            .filter(({ id }) => id.length > 0);
+          if (attributes["data"]) {
+            try {
+              const parsed = JSON.parse(
+                decodeURIComponent(attributes["data"]),
+              ) as typeof items;
+              if (Array.isArray(parsed)) items = parsed;
+            } catch {
+              /* The block parser will report malformed authored data. */
+            }
+          } else if (items[0]) {
+            items[0] = {
+              ...items[0],
+              ...(attributes["locator"]
+                ? { locator: attributes["locator"] }
+                : {}),
+              ...(attributes["label"] ? { label: attributes["label"] } : {}),
+              ...(attributes["suppressAuthor"] === "true"
+                ? { suppressAuthor: true }
+                : {}),
+            };
+          }
+          return [
+            {
+              type: "citationReference",
+              items,
+              ...(attributes["prefix"] ? { prefix: attributes["prefix"] } : {}),
+              ...(attributes["suffix"] ? { suffix: attributes["suffix"] } : {}),
+            },
+          ];
+        }
+        return textNodes(body);
+      }
       default:
         return [{ type: "text", value: String(data["value"] ?? "") }];
     }
@@ -101,12 +206,15 @@ function flow(nodes: readonly Node[]): FlowNode[] {
             ...(typeof data["start"] === "number"
               ? { start: data["start"] }
               : {}),
-            items: children(node).map((item) => ({
-              ...(typeof object(item)["checked"] === "boolean"
-                ? { checked: object(item)["checked"] as boolean }
-                : {}),
-              children: flow(children(item)),
-            })),
+            items: children(node).map((item) =>
+              typeof object(item)["checked"] === "boolean"
+                ? {
+                    type: "taskListItem",
+                    checked: object(item)["checked"] as boolean,
+                    children: flow(children(item)),
+                  }
+                : { type: "listItem", children: flow(children(item)) },
+            ),
           },
         ];
       case "code":
@@ -289,7 +397,7 @@ function blockFor(
   switch (node.type) {
     case "paragraph": {
       const content = inline(children(node));
-      if (content.length === 1 && content[0]?.type === "image") {
+      if (content.length === 1 && content[0]?.type === "inlineImage") {
         const image = content[0];
         return {
           type: "publisle:figure",
@@ -374,6 +482,133 @@ function blockFor(
     case "containerDirective": {
       const name = String(data["name"] ?? "");
       const attributes = attrs(node);
+      const slot = (slotName: string) =>
+        children(node).find(
+          (child) =>
+            child.type === "containerDirective" &&
+            String(object(child)["name"] ?? "") === slotName,
+        );
+      if (name === "heading") {
+        const heading = children(node).find(
+          (child) => child.type === "heading",
+        );
+        if (heading)
+          return {
+            type: "publisle:heading",
+            schemaVersion: 1,
+            data: {
+              level: Number(object(heading)["depth"]),
+              content: inline(children(heading)),
+              ...(attributes["label"] ? { label: attributes["label"] } : {}),
+            },
+          } as Omit<Block, "id">;
+      }
+      if (name === "equation") {
+        const equation = children(node).find((child) => child.type === "math");
+        if (equation)
+          return {
+            type: "publisle:math",
+            schemaVersion: 1,
+            data: {
+              value: String(object(equation)["value"] ?? ""),
+              display: true,
+              ...(attributes["label"] ? { label: attributes["label"] } : {}),
+            },
+          } as Omit<Block, "id">;
+      }
+      if (name === "figure") {
+        const caption = slot("caption");
+        const credit = slot("credit");
+        const creditNodes = credit
+          ? inlineFromFlow(flow(children(credit)), diagnostics)
+          : undefined;
+        return {
+          type: "publisle:figure",
+          schemaVersion: 1,
+          data: {
+            src: attributes["src"] ?? "",
+            alt: attributes["alt"] ?? "",
+            ...(attributes["title"] ? { title: attributes["title"] } : {}),
+            ...(attributes["label"] ? { label: attributes["label"] } : {}),
+            ...(caption ? { caption: flow(children(caption)) } : {}),
+            ...(creditNodes ? { credit: creditNodes } : {}),
+            ...(attributes["original"]
+              ? {
+                  original: {
+                    src: attributes["original"],
+                    ...(attributes["mediaType"]
+                      ? { mediaType: attributes["mediaType"] }
+                      : {}),
+                    ...(attributes["filename"]
+                      ? { filename: attributes["filename"] }
+                      : {}),
+                  },
+                }
+              : {}),
+          },
+        } as Omit<Block, "id">;
+      }
+      if (name === "table") {
+        const table = children(node).find((child) => child.type === "table");
+        if (table)
+          return {
+            type: "publisle:table",
+            schemaVersion: 1,
+            data: {
+              align: (object(table)["align"] ?? []) as JsonValue,
+              rows: children(table).map((row) =>
+                children(row).map((cell) => inline(children(cell))),
+              ),
+              ...(attributes["label"] ? { label: attributes["label"] } : {}),
+              ...(slot("caption")
+                ? { caption: flow(children(slot("caption")!)) }
+                : {}),
+            },
+          } as unknown as Omit<Block, "id">;
+      }
+      if (name === "embed") {
+        const ratio = (attributes["ratio"] ?? "16/9").split("/").map(Number);
+        return {
+          type: "publisle:embed",
+          schemaVersion: 1,
+          data: {
+            provider: attributes["provider"] ?? "",
+            resourceId: attributes["resource"] ?? "",
+            title: attributes["title"] ?? "",
+            aspectRatio: { width: ratio[0] ?? 16, height: ratio[1] ?? 9 },
+            ...(slot("caption")
+              ? { caption: flow(children(slot("caption")!)) }
+              : {}),
+            ...(slot("fallback")
+              ? { fallback: flow(children(slot("fallback")!)) }
+              : {}),
+          },
+        } as Omit<Block, "id">;
+      }
+      if (name === "diagram") {
+        const code = children(node).find((child) => child.type === "code");
+        return {
+          type: "publisle:diagram",
+          schemaVersion: 1,
+          data: {
+            engine:
+              attributes["engine"] ??
+              String(code ? (object(code)["lang"] ?? "") : ""),
+            source: String(code ? (object(code)["value"] ?? "") : ""),
+            alt: attributes["alt"] ?? "",
+            ...(attributes["label"] ? { label: attributes["label"] } : {}),
+            ...(slot("caption")
+              ? { caption: flow(children(slot("caption")!)) }
+              : {}),
+            ...(slot("fallback")
+              ? { fallback: flow(children(slot("fallback")!)) }
+              : {}),
+            ...(attributes["print"]
+              ? { printFallback: { src: attributes["print"] } }
+              : {}),
+          },
+        } as Omit<Block, "id">;
+      }
       if (name === "callout")
         return {
           type: "publisle:callout",
@@ -471,10 +706,21 @@ export function treeToDocument(
     }
   }
   const occurrence = new Map<string, number>();
+  const definitions = new Map<string, { url: string; title?: string }>();
+  for (const node of tree.children) {
+    if (node.type !== "definition") continue;
+    definitions.set(node.identifier.toLowerCase(), {
+      url: node.url,
+      ...(node.title === null || node.title === undefined
+        ? {}
+        : { title: node.title }),
+    });
+  }
   const blocks: Block[] = [];
   for (const node of tree.children) {
-    if (node.type === "yaml") continue;
-    const block = blockFor(node, source, diagnostics);
+    if (node.type === "yaml" || node.type === "definition") continue;
+    const resolved = resolveReferences(node, definitions);
+    const block = blockFor(resolved, source, diagnostics);
     if (!block) continue;
     const signature = JSON.stringify([
       block.type,
@@ -483,7 +729,7 @@ export function treeToDocument(
     ]);
     const count = occurrence.get(signature) ?? 0;
     occurrence.set(signature, count + 1);
-    const attributes = attrs(node);
+    const attributes = attrs(resolved);
     const id = attributes["id"]
       ? parseBlockId(attributes["id"])
       : deterministicBlockId(block, count);

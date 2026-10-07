@@ -1,11 +1,17 @@
+export interface CitationItem {
+  readonly id: string;
+  readonly locator?: string;
+  readonly label?: string;
+  readonly suppressAuthor?: boolean;
+}
+
 export type InlineNode =
   | { readonly type: "text"; readonly value: string }
   | {
-      readonly type: "emphasis" | "strong" | "delete";
+      readonly type: "emphasis" | "strong" | "strikethrough";
       readonly children: readonly InlineNode[];
     }
-  | { readonly type: "inlineCode"; readonly value: string }
-  | { readonly type: "math"; readonly value: string }
+  | { readonly type: "inlineCode" | "inlineMath"; readonly value: string }
   | {
       readonly type: "link";
       readonly url: string;
@@ -13,13 +19,24 @@ export type InlineNode =
       readonly children: readonly InlineNode[];
     }
   | {
-      readonly type: "image";
+      readonly type: "inlineImage";
       readonly url: string;
       readonly alt: string;
       readonly title?: string;
     }
-  | { readonly type: "break" }
+  | { readonly type: "hardBreak" | "softBreak" }
   | { readonly type: "footnoteReference"; readonly identifier: string }
+  | {
+      readonly type: "citationReference";
+      readonly items: readonly CitationItem[];
+      readonly prefix?: string;
+      readonly suffix?: string;
+    }
+  | {
+      readonly type: "crossReference";
+      readonly target: string;
+      readonly children?: readonly InlineNode[];
+    }
   | { readonly type: "rawHtml"; readonly value: string };
 
 export type FlowNode =
@@ -51,11 +68,15 @@ export interface ParagraphData {
 export interface HeadingData {
   readonly level: 1 | 2 | 3 | 4 | 5 | 6;
   readonly content: readonly InlineNode[];
+  readonly label?: string;
 }
-export interface ListItemData {
-  readonly checked?: boolean;
-  readonly children: readonly FlowNode[];
-}
+export type ListItemData =
+  | { readonly type: "listItem"; readonly children: readonly FlowNode[] }
+  | {
+      readonly type: "taskListItem";
+      readonly checked: boolean;
+      readonly children: readonly FlowNode[];
+    };
 export interface ListData {
   readonly ordered: boolean;
   readonly start?: number;
@@ -72,16 +93,46 @@ export interface CodeData {
 export interface MathData {
   readonly value: string;
   readonly display: boolean;
+  readonly label?: string;
+}
+export interface DownloadableResource {
+  readonly src: string;
+  readonly mediaType?: string;
+  readonly filename?: string;
 }
 export interface FigureData {
   readonly src: string;
   readonly alt: string;
   readonly title?: string;
-  readonly caption?: readonly InlineNode[];
+  readonly label?: string;
+  readonly caption?: readonly FlowNode[];
+  readonly credit?: readonly InlineNode[];
+  readonly original?: DownloadableResource;
 }
 export interface TableData {
   readonly align: readonly ("left" | "right" | "center" | null)[];
   readonly rows: readonly (readonly (readonly InlineNode[])[])[];
+  readonly label?: string;
+  readonly caption?: readonly FlowNode[];
+}
+export interface EmbedData {
+  readonly provider: string;
+  readonly resourceId: string;
+  readonly title: string;
+  readonly aspectRatio: { readonly width: number; readonly height: number };
+  readonly caption?: readonly FlowNode[];
+  readonly fallback?: readonly FlowNode[];
+}
+export type DiagramEngine =
+  "mermaid" | "graphviz" | "wavedrom" | "plantuml" | `${string}:${string}`;
+export interface DiagramData {
+  readonly engine: DiagramEngine;
+  readonly source: string;
+  readonly alt: string;
+  readonly label?: string;
+  readonly caption?: readonly FlowNode[];
+  readonly fallback?: readonly FlowNode[];
+  readonly printFallback?: DownloadableResource;
 }
 export interface CalloutData {
   readonly variant: string;

@@ -2,24 +2,28 @@
   import PublisleArticle from "@publisle/adapter-svelte/article";
   import { compilePublication } from "@publisle/adapter-core";
   import "@publisle/adapter-core/document.css";
+  import "@publisle/adapter-core/katex.css";
   import { prepare } from "@publisle/core";
   import type { Diagnostic } from "@publisle/schema";
   import {
     BLOCK_TYPES,
     BLOCK_LABELS,
     DocumentEditor,
+    FOURIER_ARTICLE,
   } from "@publisle/playground-core";
   import BlockEditor from "$lib/BlockEditor.svelte";
   import Schematic from "$lib/Schematic.svelte";
   import "../../../playground-core/theme.css";
 
   const implementations = {
+    "demo:interactive-scene": () => import("@publisle/example-scene/svelte"),
     "publisle:interactive-schematic": () => Promise.resolve({ default: Schematic }),
   };
 
   const editor = new DocumentEditor();
   let current = $state(editor.document);
   let diagnostics = $state<readonly Diagnostic[]>([]);
+  let payloadFormatting = $state<"pretty" | "compact">("pretty");
   let markdownInput = $state<HTMLInputElement>();
   let jsonInput = $state<HTMLInputElement>();
 
@@ -58,7 +62,7 @@
   }
 
   function handleExportMarkdown() {
-    const result = editor.exportMarkdown();
+    const result = editor.exportMarkdown({ payloadFormatting });
     if (result.markdown) {
       download("document.md", result.markdown);
     }
@@ -87,12 +91,19 @@
       >
         New
       </button>
+      <button
+        type="button"
+        onclick={() => { diagnostics = editor.importMarkdown(FOURIER_ARTICLE).diagnostics; }}
+      >
+        Load Fourier article
+      </button>
       <button type="button" onclick={() => markdownInput?.click()}>
         Import Markdown
       </button>
       <button type="button" onclick={handleExportMarkdown}>
         Export Markdown
       </button>
+      <label>Payload JSON <select bind:value={payloadFormatting}><option value="pretty">Readable</option><option value="compact">Compact</option></select></label>
       <button type="button" onclick={() => jsonInput?.click()}>
         Import JSON
       </button>

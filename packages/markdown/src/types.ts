@@ -10,6 +10,7 @@ export interface MarkdownImportOptions {
 export type MarkdownExportPolicy = "fallback" | "strict" | "warn" | "standard";
 export interface MarkdownExportOptions {
   readonly policy?: MarkdownExportPolicy;
+  readonly payloadFormatting?: "pretty" | "compact";
 }
 export interface MarkdownImportResult {
   readonly document?: Document;

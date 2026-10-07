@@ -7,11 +7,13 @@ import {
   BLOCK_TYPES,
   BLOCK_LABELS,
   DocumentEditor,
+  FOURIER_ARTICLE,
 } from "@publisle/playground-core";
 import { BlockEditor } from "./BlockEditor.tsx";
 
 const editor = new DocumentEditor();
 const implementations = {
+  "demo:interactive-scene": () => import("@publisle/example-scene/react"),
   "publisle:interactive-schematic": () => import("./Schematic.tsx"),
 };
 
@@ -36,6 +38,9 @@ function download(filename: string, content: string, type = "text/markdown") {
 export default function App() {
   const document = useDocument();
   const [diagnostics, setDiagnostics] = useState<readonly Diagnostic[]>([]);
+  const [payloadFormatting, setPayloadFormatting] = useState<
+    "pretty" | "compact"
+  >("pretty");
   const markdownInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,7 +63,7 @@ export default function App() {
   };
 
   const handleExportMarkdown = () => {
-    const result = editor.exportMarkdown();
+    const result = editor.exportMarkdown({ payloadFormatting });
     if (result.markdown) {
       download("document.md", result.markdown);
     }
@@ -85,6 +90,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            onClick={() =>
+              setDiagnostics(editor.importMarkdown(FOURIER_ARTICLE).diagnostics)
+            }
+          >
+            Load Fourier article
+          </button>
+          <button
+            type="button"
             onClick={() => markdownInputRef.current?.click()}
           >
             Import Markdown
@@ -92,6 +105,20 @@ export default function App() {
           <button type="button" onClick={handleExportMarkdown}>
             Export Markdown
           </button>
+          <label>
+            Payload JSON{" "}
+            <select
+              value={payloadFormatting}
+              onChange={(event) =>
+                setPayloadFormatting(
+                  event.target.value === "compact" ? "compact" : "pretty",
+                )
+              }
+            >
+              <option value="pretty">Readable</option>
+              <option value="compact">Compact</option>
+            </select>
+          </label>
           <button type="button" onClick={() => jsonInputRef.current?.click()}>
             Import JSON
           </button>

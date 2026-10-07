@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { coreBlockDefinitions } from "@publisle/blocks-core";
+import {
+  coreBlockDefinitions,
+  diagram,
+  embed,
+  figure,
+  heading,
+  math,
+  paragraph,
+} from "@publisle/blocks-core";
 import {
   interactiveSchematic,
   interactiveSchematicDefinition,
@@ -126,5 +134,120 @@ describe("createRenderPlan", () => {
       expect.objectContaining({ code: "missing-island-renderer" }),
     );
     expect(plan.nodes[0]).toMatchObject({ kind: "element", tag: "section" });
+  });
+
+  it("uses the descriptor display name when an interactive label is omitted", () => {
+    const prepared = prepare(
+      document({
+        blocks: [
+          interactiveSchematic({
+            activation: "visible",
+            fallback: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", value: "Static schematic" }],
+              },
+            ],
+            payload: { source: "./counter.json" },
+          }),
+        ],
+      }),
+      { registry },
+    ).document;
+    if (!prepared) throw new Error("Expected prepared document.");
+    expect(prepared.islands[0]?.displayName).toBe("Interactive schematic");
+    const plan = createRenderPlan(prepared, {
+      renderers: {
+        "publisle:interactive-schematic": { module: "./Schematic.js" },
+      },
+    });
+    expect(plan.nodes[0]).toMatchObject({
+      children: [expect.objectContaining({ label: "Interactive schematic" })],
+    });
+  });
+
+  it("indexes cross-references and renders color-aware KaTeX", () => {
+    const input = document({
+      blocks: [
+        heading({
+          level: 2,
+          label: "sec:start",
+          content: [{ type: "text", value: "Start" }],
+        }),
+        figure({ src: "flow.svg", alt: "Flow", label: "fig:flow" }),
+        paragraph({
+          content: [
+            { type: "crossReference", target: "fig:flow" },
+            { type: "text", value: " " },
+            { type: "inlineMath", value: "\\textcolor{red}{x}" },
+          ],
+        }),
+        math({ value: "\\color{blue} y", display: true, label: "eq:y" }),
+      ],
+    });
+    const prepared = prepare(input, { registry }).document;
+    expect(prepared?.references?.targets).toMatchObject([
+      { label: "sec:start", kind: "heading", title: "Start" },
+      { label: "fig:flow", kind: "figure", ordinal: 1 },
+      { label: "eq:y", kind: "equation", ordinal: 1 },
+    ]);
+    if (!prepared) throw new Error("Expected prepared document.");
+    const plan = createRenderPlan(prepared);
+    expect(JSON.stringify(plan.nodes)).toContain("Figure 1");
+    expect(JSON.stringify(plan.nodes)).toContain("katex");
+    expect(plan.diagnostics).toEqual([]);
+  });
+
+  it("renders restricted embeds and diagram fallbacks", () => {
+    const prepared = prepare(
+      document({
+        blocks: [
+          embed({
+            provider: "youtube",
+            resourceId: "dQw4w9WgXcQ",
+            title: "Video",
+            aspectRatio: { width: 16, height: 9 },
+          }),
+          diagram({
+            engine: "mermaid",
+            source: "graph TD",
+            alt: "Graph",
+            fallback: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", value: "Graph fallback" }],
+              },
+            ],
+          }),
+        ],
+      }),
+      { registry },
+    ).document;
+    if (!prepared) throw new Error("Expected prepared document.");
+    const plan = createRenderPlan(prepared);
+    expect(JSON.stringify(plan.nodes)).toContain(
+      "youtube-nocookie.com/embed/dQw4w9WgXcQ",
+    );
+    expect(JSON.stringify(plan.nodes)).toContain("Graph fallback");
+    expect(plan.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "missing-diagram-renderer" }),
+    );
+  });
+
+  it("rejects unresolved cross-references during preparation", () => {
+    const result = prepare(
+      document({
+        blocks: [
+          paragraph({
+            content: [{ type: "crossReference", target: "fig:missing" }],
+          }),
+        ],
+      }),
+      { registry },
+    );
+    expect(result.document).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "unresolved-cross-reference" }),
+    );
   });
 });

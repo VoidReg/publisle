@@ -3,7 +3,9 @@ import type { BlockFromDefinition } from "@publisle/schema";
 import {
   calloutDefinition,
   codeDefinition,
+  diagramDefinition,
   dividerDefinition,
+  embedDefinition,
   figureDefinition,
   headingDefinition,
   listDefinition,
@@ -15,6 +17,8 @@ import {
 import type {
   CalloutData,
   CodeData,
+  DiagramData,
+  EmbedData,
   FigureData,
   HeadingData,
   ListData,
@@ -47,3 +51,5 @@ export const figure = (data: FigureData) => make(figureDefinition, data);
 export const table = (data: TableData) => make(tableDefinition, data);
 export const callout = (data: CalloutData) => make(calloutDefinition, data);
 export const divider = () => make(dividerDefinition, {});
+export const embed = (data: EmbedData) => make(embedDefinition, data);
+export const diagram = (data: DiagramData) => make(diagramDefinition, data);

@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./document.css": "./src/document.css",
+    "./katex.css": "./src/katex.css",
     "./island-runtime": "./src/island-runtime.ts",
     "./vite": "./src/vite.ts"
   },
@@ -13,10 +14,12 @@
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",
     "@publisle/schema": "workspace:*",
+    "katex": "^0.16.47",
     "vite": "^8.0.0"
   },
   "devDependencies": {
     "@publisle/blocks-core": "workspace:*",
-    "@publisle/blocks-technical": "workspace:*"
+    "@publisle/blocks-technical": "workspace:*",
+    "@types/katex": "^0.16.8"
   }
 }

@@ -1,9 +1,19 @@
 import { definePortableBlock } from "@publisle/block-sdk";
 import { SchemaParseError } from "@publisle/schema";
-import { flowNodes, inlineNodes, listItems, record, string } from "./parse.ts";
+import {
+  flowNodes,
+  inlineNodes,
+  listItems,
+  nonemptyString,
+  record,
+  string,
+} from "./parse.ts";
 import type {
   CalloutData,
   CodeData,
+  DiagramData,
+  DownloadableResource,
+  EmbedData,
   FigureData,
   FootnoteData,
   HeadingData,
@@ -27,6 +37,34 @@ function booleanValue(
       `${label} must be a boolean.`,
     );
   return value;
+}
+
+function optionalString(data: Record<string, unknown>, key: string) {
+  return typeof data[key] === "string" ? { [key]: data[key] } : {};
+}
+
+function optionalLabel(data: Record<string, unknown>) {
+  if (data["label"] === undefined) return {};
+  const label = nonemptyString(data["label"], "label");
+  if (!/^[A-Za-z][\w:.-]*$/u.test(label))
+    throw new SchemaParseError(
+      "invalid-block-data",
+      "label must be a stable identifier.",
+    );
+  return { label };
+}
+
+function resource(value: unknown, label: string): DownloadableResource {
+  const data = record(value, label);
+  return {
+    src: string(data["src"], `${label}.src`),
+    ...(typeof data["mediaType"] === "string"
+      ? { mediaType: data["mediaType"] }
+      : {}),
+    ...(typeof data["filename"] === "string"
+      ? { filename: data["filename"] }
+      : {}),
+  };
 }
 
 export const paragraphDefinition = definePortableBlock({
@@ -54,6 +92,7 @@ export const headingDefinition = definePortableBlock({
       return {
         level: level as HeadingData["level"],
         content: inlineNodes(data["content"]),
+        ...optionalLabel(data),
       };
     },
   },
@@ -71,7 +110,11 @@ export const listDefinition = definePortableBlock({
         );
       return {
         ordered: booleanValue(data["ordered"], "list.ordered", false),
-        ...(typeof data["start"] === "number" ? { start: data["start"] } : {}),
+        ...(typeof data["start"] === "number" &&
+        Number.isInteger(data["start"]) &&
+        data["start"] >= 1
+          ? { start: data["start"] }
+          : {}),
         items: listItems(data["items"], "list.items"),
       };
     },
@@ -111,6 +154,7 @@ export const mathDefinition = definePortableBlock({
       return {
         value: string(data["value"], "math.value"),
         display: booleanValue(data["display"], "math.display", false),
+        ...optionalLabel(data),
       };
     },
   },
@@ -129,14 +173,24 @@ export const figureDefinition = definePortableBlock({
       return {
         src: string(data["src"], "figure.src"),
         alt: string(data["alt"], "figure.alt"),
-        ...(typeof data["title"] === "string" ? { title: data["title"] } : {}),
+        ...optionalString(data, "title"),
+        ...optionalLabel(data),
         ...(data["caption"] === undefined
           ? {}
-          : { caption: inlineNodes(data["caption"], "figure.caption") }),
+          : { caption: flowNodes(data["caption"], "figure.caption") }),
+        ...(data["credit"] === undefined
+          ? {}
+          : { credit: inlineNodes(data["credit"], "figure.credit") }),
+        ...(data["original"] === undefined
+          ? {}
+          : { original: resource(data["original"], "figure.original") }),
       };
     },
   },
-  resources: (data) => [{ uri: data.src }],
+  resources: (data) => [
+    { uri: data.src },
+    ...(data.original ? [{ uri: data.original.src }] : []),
+  ],
 });
 export const tableDefinition = definePortableBlock({
   type: "publisle:table",
@@ -177,9 +231,82 @@ export const tableDefinition = definePortableBlock({
             inlineNodes(cell, `table.rows[${rowIndex}][${cellIndex}]`),
           );
         }),
+        ...optionalLabel(data),
+        ...(data["caption"] === undefined
+          ? {}
+          : { caption: flowNodes(data["caption"], "table.caption") }),
       };
     },
   },
+});
+export const embedDefinition = definePortableBlock({
+  type: "publisle:embed",
+  schemaVersion: 1,
+  schema: {
+    parse(value): EmbedData {
+      const data = record(value, "embed");
+      const ratio = record(data["aspectRatio"], "embed.aspectRatio");
+      const width = Number(ratio["width"]);
+      const height = Number(ratio["height"]);
+      if (!(width > 0) || !(height > 0))
+        throw new SchemaParseError(
+          "invalid-block-data",
+          "embed.aspectRatio dimensions must be positive.",
+        );
+      return {
+        provider: nonemptyString(data["provider"], "embed.provider"),
+        resourceId: nonemptyString(data["resourceId"], "embed.resourceId"),
+        title: nonemptyString(data["title"], "embed.title"),
+        aspectRatio: { width, height },
+        ...(data["caption"] === undefined
+          ? {}
+          : { caption: flowNodes(data["caption"], "embed.caption") }),
+        ...(data["fallback"] === undefined
+          ? {}
+          : { fallback: flowNodes(data["fallback"], "embed.fallback") }),
+      };
+    },
+  },
+});
+export const diagramDefinition = definePortableBlock({
+  type: "publisle:diagram",
+  schemaVersion: 1,
+  schema: {
+    parse(value): DiagramData {
+      const data = record(value, "diagram");
+      const engine = string(data["engine"], "diagram.engine");
+      if (
+        !["mermaid", "graphviz", "wavedrom", "plantuml"].includes(engine) &&
+        !engine.includes(":")
+      )
+        throw new SchemaParseError(
+          "invalid-block-data",
+          "Custom diagram engines must be namespaced.",
+        );
+      return {
+        engine: engine as DiagramData["engine"],
+        source: string(data["source"], "diagram.source"),
+        alt: string(data["alt"], "diagram.alt"),
+        ...optionalLabel(data),
+        ...(data["caption"] === undefined
+          ? {}
+          : { caption: flowNodes(data["caption"], "diagram.caption") }),
+        ...(data["fallback"] === undefined
+          ? {}
+          : { fallback: flowNodes(data["fallback"], "diagram.fallback") }),
+        ...(data["printFallback"] === undefined
+          ? {}
+          : {
+              printFallback: resource(
+                data["printFallback"],
+                "diagram.printFallback",
+              ),
+            }),
+      };
+    },
+  },
+  resources: (data) =>
+    data.printFallback ? [{ uri: data.printFallback.src }] : [],
 });
 export const calloutDefinition = definePortableBlock({
   type: "publisle:callout",
@@ -245,4 +372,6 @@ export const coreBlockDefinitions = [
   dividerDefinition,
   footnoteDefinition,
   rawHtmlDefinition,
+  embedDefinition,
+  diagramDefinition,
 ] as const;

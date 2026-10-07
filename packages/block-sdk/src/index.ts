@@ -95,7 +95,10 @@ export function defineInteractiveBlock<
       },
     },
     island(data) {
-      return { activation: data.activation };
+      return {
+        activation: data.activation,
+        displayName: definition.descriptor.displayName,
+      };
     },
     ...(definition.defaults === undefined
       ? {}

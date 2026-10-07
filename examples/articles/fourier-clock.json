@@ -1,0 +1,13 @@
+{
+  "kind": "manual-counter-demonstration",
+  "initialCount": 0,
+  "steps": [
+    "Check the value at the jump",
+    "Check a continuity point",
+    "Inspect points near the jump",
+    "Vary the quadrature sample count",
+    "Observe an under-resolved estimate",
+    "Explain Parseval's identity"
+  ],
+  "note": "The schematic demo renderer does not parse this source; its Clock and Reset controls update a manual count only."
+}

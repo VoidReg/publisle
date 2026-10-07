@@ -1,0 +1,24 @@
+{
+  "name": "@publisle/example-scene",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/definition.ts",
+    "./runtime": "./src/runtime.ts",
+    "./react": "./src/Scene.tsx",
+    "./svelte": "./src/Scene.svelte"
+  },
+  "dependencies": {
+    "@publisle/block-sdk": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "react": "^19.0.0",
+    "svelte": "^5.0.0",
+    "three": "^0.183.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/three": "^0.183.0"
+  }
+}

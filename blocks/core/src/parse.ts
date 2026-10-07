@@ -20,6 +20,16 @@ export function string(value: unknown, label: string): string {
   return value;
 }
 
+export function nonemptyString(value: unknown, label: string): string {
+  const result = string(value, label);
+  if (result.trim().length === 0)
+    throw new SchemaParseError(
+      "invalid-block-data",
+      `${label} must not be empty.`,
+    );
+  return result;
+}
+
 export function inlineNodes(
   value: unknown,
   label = "content",
@@ -35,12 +45,12 @@ export function inlineNodes(
     if (
       type === "text" ||
       type === "inlineCode" ||
-      type === "math" ||
+      type === "inlineMath" ||
       type === "rawHtml"
     ) {
       return { type, value: string(node["value"], `${label}[${index}].value`) };
     }
-    if (type === "emphasis" || type === "strong" || type === "delete") {
+    if (type === "emphasis" || type === "strong" || type === "strikethrough") {
       return {
         type,
         children: inlineNodes(node["children"], `${label}[${index}].children`),
@@ -55,7 +65,7 @@ export function inlineNodes(
       };
       return result;
     }
-    if (type === "image") {
+    if (type === "inlineImage") {
       return {
         type,
         url: string(node["url"], `${label}[${index}].url`),
@@ -63,11 +73,58 @@ export function inlineNodes(
         ...(typeof node["title"] === "string" ? { title: node["title"] } : {}),
       };
     }
-    if (type === "break") return { type };
+    if (type === "hardBreak" || type === "softBreak") return { type };
     if (type === "footnoteReference")
       return {
         type,
         identifier: string(node["identifier"], `${label}[${index}].identifier`),
+      };
+    if (type === "citationReference") {
+      if (!Array.isArray(node["items"]) || node["items"].length === 0)
+        throw new SchemaParseError(
+          "invalid-block-data",
+          `${label}[${index}].items must be a non-empty array.`,
+        );
+      return {
+        type,
+        items: node["items"].map((entry, itemIndex) => {
+          const item = record(entry, `${label}[${index}].items[${itemIndex}]`);
+          return {
+            id: nonemptyString(
+              item["id"],
+              `${label}[${index}].items[${itemIndex}].id`,
+            ),
+            ...(typeof item["locator"] === "string"
+              ? { locator: item["locator"] }
+              : {}),
+            ...(typeof item["label"] === "string"
+              ? { label: item["label"] }
+              : {}),
+            ...(typeof item["suppressAuthor"] === "boolean"
+              ? { suppressAuthor: item["suppressAuthor"] }
+              : {}),
+          };
+        }),
+        ...(typeof node["prefix"] === "string"
+          ? { prefix: node["prefix"] }
+          : {}),
+        ...(typeof node["suffix"] === "string"
+          ? { suffix: node["suffix"] }
+          : {}),
+      };
+    }
+    if (type === "crossReference")
+      return {
+        type,
+        target: nonemptyString(node["target"], `${label}[${index}].target`),
+        ...(node["children"] === undefined
+          ? {}
+          : {
+              children: inlineNodes(
+                node["children"],
+                `${label}[${index}].children`,
+              ),
+            }),
       };
     throw new SchemaParseError(
       "invalid-block-data",
@@ -146,9 +203,11 @@ export function listItems(
       `${label} must be an array.`,
     );
   return value.map((entry, index) => {
-    if (Array.isArray(entry)) {
-      return { children: flowNodes(entry, `${label}[${index}]`) };
-    }
+    if (Array.isArray(entry))
+      return {
+        type: "listItem",
+        children: flowNodes(entry, `${label}[${index}]`),
+      };
     const item = record(entry, `${label}[${index}]`);
     const checked = item["checked"];
     if (checked !== undefined && typeof checked !== "boolean") {
@@ -157,9 +216,22 @@ export function listItems(
         `${label}[${index}].checked must be a boolean.`,
       );
     }
-    return {
-      ...(typeof checked === "boolean" ? { checked } : {}),
-      children: flowNodes(item["children"], `${label}[${index}].children`),
-    };
+    const type = item["type"];
+    if (type !== undefined && type !== "listItem" && type !== "taskListItem")
+      throw new SchemaParseError(
+        "invalid-block-data",
+        `${label}[${index}].type is invalid.`,
+      );
+    const task = type === "taskListItem" || typeof checked === "boolean";
+    return task
+      ? {
+          type: "taskListItem",
+          checked: typeof checked === "boolean" ? checked : false,
+          children: flowNodes(item["children"], `${label}[${index}].children`),
+        }
+      : {
+          type: "listItem",
+          children: flowNodes(item["children"], `${label}[${index}].children`),
+        };
   });
 }
