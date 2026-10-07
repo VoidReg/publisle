@@ -7,7 +7,9 @@ import {
   type JsonObject,
   type JsonValue,
   type PreparedDocument,
+  type ReferenceTarget,
 } from "@publisle/schema";
+import katex from "katex";
 import type {
   AdapterCompilerOptions,
   IslandRendererReference,
@@ -24,15 +26,84 @@ const element = (
   children: readonly RenderNode[],
 ): RenderNode => ({ kind: "element", tag, attributes, children });
 
+function referenceText(target: ReferenceTarget): string {
+  if (target.kind === "heading") return target.title ?? target.label;
+  const name = target.kind.charAt(0).toUpperCase() + target.kind.slice(1);
+  return `${name} ${target.ordinal ?? ""}`.trim();
+}
+
+function renderMath(
+  value: string,
+  display: boolean,
+  diagnostics: Diagnostic[],
+  block: Block<BlockType, unknown>,
+): RenderNode[] {
+  try {
+    return [
+      {
+        kind: "raw",
+        value: katex.renderToString(value, {
+          displayMode: display,
+          throwOnError: true,
+          trust: false,
+          strict: "warn",
+          maxExpand: 1000,
+          maxSize: 100,
+          output: "htmlAndMathml",
+        }),
+      },
+    ];
+  } catch (error) {
+    diagnostics.push({
+      level: "warning",
+      code: "invalid-math",
+      message:
+        error instanceof Error ? error.message : "Math rendering failed.",
+      blockId: block.id,
+    });
+    return [
+      element(display ? "pre" : "code", { class: "publisle-math-error" }, [
+        text(value),
+      ]),
+    ];
+  }
+}
+
 function safeUrl(url: string): string | undefined {
   const normalized = url.trim().toLowerCase();
   return /^(?:javascript|vbscript|data):/u.test(normalized) ? undefined : url;
 }
 
+function safeEmbedUrl(url: string): string | undefined {
+  return /^https:\/\//iu.test(url.trim()) ? url : undefined;
+}
+
+const builtinEmbedProviders = {
+  youtube: (resourceId: string) => {
+    return /^[\w-]{6,20}$/u.test(resourceId)
+      ? {
+          src: `https://www.youtube-nocookie.com/embed/${resourceId}`,
+          allow: "accelerometer; autoplay; encrypted-media; picture-in-picture",
+          allowFullscreen: true,
+        }
+      : undefined;
+  },
+  vimeo: (resourceId: string) => {
+    return /^\d+$/u.test(resourceId)
+      ? {
+          src: `https://player.vimeo.com/video/${resourceId}`,
+          allow: "autoplay; fullscreen; picture-in-picture",
+          allowFullscreen: true,
+        }
+      : undefined;
+  },
+} as const;
+
 function inline(
   nodes: readonly Inline[],
   diagnostics: Diagnostic[],
   block: Block<BlockType, unknown>,
+  references: readonly ReferenceTarget[] = [],
 ): RenderNode[] {
   return nodes.flatMap((node): RenderNode[] => {
     switch (node.type) {
@@ -43,7 +114,12 @@ function inline(
           element(
             "em",
             {},
-            inline(node["children"] as Inline[], diagnostics, block),
+            inline(
+              node["children"] as Inline[],
+              diagnostics,
+              block,
+              references,
+            ),
           ),
         ];
       case "strong":
@@ -51,27 +127,40 @@ function inline(
           element(
             "strong",
             {},
-            inline(node["children"] as Inline[], diagnostics, block),
+            inline(
+              node["children"] as Inline[],
+              diagnostics,
+              block,
+              references,
+            ),
           ),
         ];
-      case "delete":
+      case "strikethrough":
         return [
           element(
             "del",
             {},
-            inline(node["children"] as Inline[], diagnostics, block),
+            inline(
+              node["children"] as Inline[],
+              diagnostics,
+              block,
+              references,
+            ),
           ),
         ];
       case "inlineCode":
         return [element("code", {}, [text(String(node["value"] ?? ""))])];
-      case "math":
-        return [
-          element("span", { class: "publisle-math" }, [
-            text(String(node["value"] ?? "")),
-          ]),
-        ];
-      case "break":
+      case "inlineMath":
+        return renderMath(
+          String(node["value"] ?? ""),
+          false,
+          diagnostics,
+          block,
+        );
+      case "hardBreak":
         return [element("br", {}, [])];
+      case "softBreak":
+        return [text("\n")];
       case "footnoteReference": {
         const localId = `footnote-${String(node["identifier"] ?? "")}`;
         return [
@@ -82,6 +171,47 @@ function inline(
               [text(String(node["identifier"] ?? ""))],
             ),
           ]),
+        ];
+      }
+      case "citationReference": {
+        const items = Array.isArray(node["items"])
+          ? (node["items"] as Record<string, unknown>[])
+          : [];
+        const value = `${String(node["prefix"] ?? "")}${items
+          .map((item) => {
+            const id = String(item["id"] ?? "");
+            const locator =
+              typeof item["locator"] === "string" ? `, ${item["locator"]}` : "";
+            return `${id}${locator}`;
+          })
+          .join("; ")}${String(node["suffix"] ?? "")}`;
+        return [
+          element(
+            "span",
+            {
+              class: "publisle-citation",
+              "data-publisle-citation": JSON.stringify(items),
+            },
+            [text(`[${value}]`)],
+          ),
+        ];
+      }
+      case "crossReference": {
+        const target = String(node["target"] ?? "");
+        const resolved = references.find((entry) => entry.label === target);
+        const children = Array.isArray(node["children"])
+          ? inline(node["children"] as Inline[], diagnostics, block, references)
+          : [text(resolved ? referenceText(resolved) : target)];
+        return [
+          element(
+            "a",
+            {
+              href: `#reference-${target}`,
+              "data-publisle-ref": `reference-${target}`,
+              ...(resolved ? {} : { "data-publisle-unresolved": true }),
+            },
+            children,
+          ),
         ];
       }
       case "rawHtml":
@@ -103,11 +233,16 @@ function inline(
           element(
             "a",
             url ? { href: url } : {},
-            inline(node["children"] as Inline[], diagnostics, block),
+            inline(
+              node["children"] as Inline[],
+              diagnostics,
+              block,
+              references,
+            ),
           ),
         ];
       }
-      case "image": {
+      case "inlineImage": {
         const url = safeUrl(String(node["url"] ?? ""));
         if (!url)
           diagnostics.push({
@@ -134,6 +269,7 @@ function flow(
   nodes: readonly Flow[],
   diagnostics: Diagnostic[],
   block: Block<BlockType, unknown>,
+  references: readonly ReferenceTarget[] = [],
 ): RenderNode[] {
   return nodes.flatMap((node): RenderNode[] => {
     switch (node.type) {
@@ -142,7 +278,7 @@ function flow(
           element(
             "p",
             {},
-            inline(node["content"] as Inline[], diagnostics, block),
+            inline(node["content"] as Inline[], diagnostics, block, references),
           ),
         ];
       case "heading":
@@ -150,7 +286,7 @@ function flow(
           element(
             `h${Number(node["level"])}`,
             {},
-            inline(node["content"] as Inline[], diagnostics, block),
+            inline(node["content"] as Inline[], diagnostics, block, references),
           ),
         ];
       case "quote":
@@ -158,7 +294,7 @@ function flow(
           element(
             "blockquote",
             {},
-            flow(node["children"] as Flow[], diagnostics, block),
+            flow(node["children"] as Flow[], diagnostics, block, references),
           ),
         ];
       case "code":
@@ -194,22 +330,28 @@ function flow(
               ? { start: node["start"] }
               : {},
             items.map((item) =>
-              element("li", {}, [
-                ...(typeof item.checked === "boolean"
-                  ? [
-                      element(
-                        "input",
-                        {
-                          type: "checkbox",
-                          disabled: true,
-                          ...(item.checked ? { checked: true } : {}),
-                        },
-                        [],
-                      ),
-                    ]
-                  : []),
-                ...flow(item.children, diagnostics, block),
-              ]),
+              element(
+                "li",
+                typeof item.checked === "boolean"
+                  ? { class: "publisle-task-list-item" }
+                  : {},
+                [
+                  ...(typeof item.checked === "boolean"
+                    ? [
+                        element(
+                          "input",
+                          {
+                            type: "checkbox",
+                            disabled: true,
+                            ...(item.checked ? { checked: true } : {}),
+                          },
+                          [],
+                        ),
+                      ]
+                    : []),
+                  ...flow(item.children, diagnostics, block, references),
+                ],
+              ),
             ),
           ),
         ];
@@ -252,21 +394,30 @@ function nonempty(value: string | undefined, fallback: string): string {
   return value !== undefined && value.length > 0 ? value : fallback;
 }
 
-function accessibleName(envelope: InteractiveEnvelope<JsonObject>): string {
+function accessibleName(
+  envelope: InteractiveEnvelope<JsonObject>,
+  displayName?: string,
+): string {
   const title = envelope.content?.title
     ? inlinePlain(envelope.content.title).trim()
     : "";
   return nonempty(
     envelope.accessibility?.label,
-    nonempty(title, "Interactive"),
+    nonempty(title, displayName ?? "Interactive"),
   );
 }
 
-function exploreLabel(envelope: InteractiveEnvelope<JsonObject>): string {
+function exploreLabel(
+  envelope: InteractiveEnvelope<JsonObject>,
+  displayName?: string,
+): string {
   const title = envelope.content?.title
     ? inlinePlain(envelope.content.title).trim()
     : "";
-  const name = nonempty(title, envelope.accessibility?.label ?? "");
+  const name = nonempty(
+    title,
+    envelope.accessibility?.label ?? displayName ?? "",
+  );
   return name.length > 0 ? `Explore ${name}` : "Explore";
 }
 
@@ -291,6 +442,8 @@ function interactiveNodes(
   envelope: InteractiveEnvelope<JsonObject>,
   options: AdapterCompilerOptions,
   diagnostics: Diagnostic[],
+  references: readonly ReferenceTarget[],
+  displayName?: string,
 ): RenderNode[] {
   const renderer = options.renderers?.[block.type];
   const interactive = renderer ? interactiveReference(renderer) : undefined;
@@ -313,13 +466,18 @@ function interactiveNodes(
       element(
         "p",
         { class: "publisle-interactive-title" },
-        inline(envelope.content.title as Inline[], diagnostics, block),
+        inline(
+          envelope.content.title as Inline[],
+          diagnostics,
+          block,
+          references,
+        ),
       ),
     );
   }
   if (hasDescription)
     explanation.push(
-      ...flow(description as unknown as Flow[], diagnostics, block),
+      ...flow(description as unknown as Flow[], diagnostics, block, references),
     );
   if (envelope.content?.instructions?.length)
     explanation.push(
@@ -327,6 +485,7 @@ function interactiveNodes(
         envelope.content.instructions as unknown as Flow[],
         diagnostics,
         block,
+        references,
       ),
     );
   const visualization: RenderNode[] = staticRenderer
@@ -339,7 +498,12 @@ function interactiveNodes(
         },
       ]
     : hasFallback
-      ? flow(envelope.fallback as unknown as Flow[], diagnostics, block)
+      ? flow(
+          envelope.fallback as unknown as Flow[],
+          diagnostics,
+          block,
+          references,
+        )
       : [];
   const region = (children: readonly RenderNode[]): RenderNode[] => [
     element("section", { class: "publisle-interactive" }, children),
@@ -357,7 +521,7 @@ function interactiveNodes(
   if (envelope.activation === "interaction") {
     fallback.push(
       element("button", { type: "button", "data-publisle-activate": "true" }, [
-        text(exploreLabel(envelope)),
+        text(exploreLabel(envelope, displayName)),
       ]),
     );
   }
@@ -367,7 +531,7 @@ function interactiveNodes(
       kind: "island",
       blockId: block.id,
       activation: envelope.activation,
-      label: accessibleName(envelope),
+      label: accessibleName(envelope, displayName),
       module: interactive.module,
       exportName: interactive.exportName,
       props: envelopeProps(envelope),
@@ -380,51 +544,90 @@ function blockNodes(
   block: Block<BlockType, unknown>,
   options: AdapterCompilerOptions,
   diagnostics: Diagnostic[],
+  references: readonly ReferenceTarget[],
+  displayName?: string,
 ): RenderNode[] {
   if (isInteractiveEnvelope(block.data))
-    return interactiveNodes(block, block.data, options, diagnostics);
+    return interactiveNodes(
+      block,
+      block.data,
+      options,
+      diagnostics,
+      references,
+      displayName,
+    );
   const data = block.data as Record<string, unknown>;
+  const reference = references.find((entry) => entry.blockId === block.id);
   switch (block.type) {
     case "publisle:paragraph":
       return [
         element(
           "p",
           {},
-          inline(data["content"] as Inline[], diagnostics, block),
+          inline(data["content"] as Inline[], diagnostics, block, references),
         ),
       ];
     case "publisle:heading":
       return [
         element(
           `h${Number(data["level"])}`,
-          { "data-publisle-id": block.id },
-          inline(data["content"] as Inline[], diagnostics, block),
+          {
+            "data-publisle-id": block.id,
+            ...(typeof data["label"] === "string"
+              ? { id: `reference-${data["label"]}` }
+              : {}),
+          },
+          inline(data["content"] as Inline[], diagnostics, block, references),
         ),
       ];
     case "publisle:list":
-      return flow([{ type: "list", ...data }], diagnostics, block);
+      return flow([{ type: "list", ...data }], diagnostics, block, references);
     case "publisle:quote":
       return [
         element(
           "blockquote",
           {},
-          flow(data["children"] as Flow[], diagnostics, block),
+          flow(data["children"] as Flow[], diagnostics, block, references),
         ),
       ];
     case "publisle:code":
-      return flow([{ type: "code", ...data }], diagnostics, block);
+      return flow([{ type: "code", ...data }], diagnostics, block, references);
     case "publisle:math":
       return [
         element(
           data["display"] === true ? "div" : "span",
-          { class: "publisle-math" },
-          [text(String(data["value"] ?? ""))],
+          {
+            class: "publisle-math",
+            ...(typeof data["label"] === "string"
+              ? { id: `reference-${data["label"]}` }
+              : {}),
+          },
+          [
+            ...renderMath(
+              String(data["value"] ?? ""),
+              data["display"] === true,
+              diagnostics,
+              block,
+            ),
+            ...(reference?.ordinal
+              ? [
+                  element("span", { class: "publisle-equation-number" }, [
+                    text(`(${reference.ordinal})`),
+                  ]),
+                ]
+              : []),
+          ],
         ),
       ];
     case "publisle:divider":
       return [element("hr", {}, [])];
     case "publisle:figure": {
       const src = safeUrl(String(data["src"] ?? ""));
+      const original = data["original"] as Record<string, unknown> | undefined;
+      const originalSrc =
+        typeof original?.["src"] === "string"
+          ? safeUrl(original["src"])
+          : undefined;
       if (!src)
         diagnostics.push({
           level: "warning",
@@ -433,46 +636,123 @@ function blockNodes(
           blockId: block.id,
         });
       return [
-        element("figure", {}, [
-          element(
-            "img",
-            { ...(src ? { src } : {}), alt: String(data["alt"] ?? "") },
-            [],
-          ),
-          ...(Array.isArray(data["caption"])
-            ? [
-                element(
-                  "figcaption",
-                  {},
-                  inline(data["caption"] as Inline[], diagnostics, block),
-                ),
-              ]
-            : []),
-        ]),
+        element(
+          "figure",
+          typeof data["label"] === "string"
+            ? { id: `reference-${data["label"]}` }
+            : {},
+          [
+            element(
+              "img",
+              { ...(src ? { src } : {}), alt: String(data["alt"] ?? "") },
+              [],
+            ),
+            ...(reference || Array.isArray(data["caption"])
+              ? [
+                  element("figcaption", {}, [
+                    ...(reference
+                      ? [
+                          element("span", { class: "publisle-figure-number" }, [
+                            text(`${referenceText(reference)}. `),
+                          ]),
+                        ]
+                      : []),
+                    ...(Array.isArray(data["caption"])
+                      ? flow(
+                          data["caption"] as Flow[],
+                          diagnostics,
+                          block,
+                          references,
+                        )
+                      : []),
+                  ]),
+                ]
+              : []),
+            ...(Array.isArray(data["credit"])
+              ? [
+                  element(
+                    "small",
+                    { class: "publisle-figure-credit" },
+                    inline(
+                      data["credit"] as Inline[],
+                      diagnostics,
+                      block,
+                      references,
+                    ),
+                  ),
+                ]
+              : []),
+            ...(originalSrc
+              ? [
+                  element(
+                    "a",
+                    {
+                      class: "publisle-figure-original",
+                      href: originalSrc,
+                      download: String(original?.["filename"] ?? true),
+                    },
+                    [text("Download original")],
+                  ),
+                ]
+              : []),
+          ],
+        ),
       ];
     }
     case "publisle:table": {
       const rows = data["rows"] as Inline[][][];
+      const align = data["align"] as ("left" | "right" | "center" | null)[];
       return [
-        element("table", {}, [
-          element(
-            "tbody",
-            {},
-            rows.map((row, rowIndex) =>
+        element(
+          "figure",
+          typeof data["label"] === "string"
+            ? { id: `reference-${data["label"]}` }
+            : {},
+          [
+            ...(reference || Array.isArray(data["caption"])
+              ? [
+                  element("figcaption", {}, [
+                    ...(reference
+                      ? [
+                          element("span", { class: "publisle-table-number" }, [
+                            text(`${referenceText(reference)}. `),
+                          ]),
+                        ]
+                      : []),
+                    ...(Array.isArray(data["caption"])
+                      ? flow(
+                          data["caption"] as Flow[],
+                          diagnostics,
+                          block,
+                          references,
+                        )
+                      : []),
+                  ]),
+                ]
+              : []),
+            element("table", {}, [
               element(
-                "tr",
+                "tbody",
                 {},
-                row.map((cell) =>
+                rows.map((row, rowIndex) =>
                   element(
-                    rowIndex === 0 ? "th" : "td",
+                    "tr",
                     {},
-                    inline(cell, diagnostics, block),
+                    row.map((cell, cellIndex) =>
+                      element(
+                        rowIndex === 0 ? "th" : "td",
+                        align[cellIndex]
+                          ? { class: `publisle-align-${align[cellIndex]}` }
+                          : {},
+                        inline(cell, diagnostics, block, references),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ]),
+            ]),
+          ],
+        ),
       ];
     }
     case "publisle:callout":
@@ -486,7 +766,7 @@ function blockNodes(
             ...(typeof data["title"] === "string"
               ? [element("strong", {}, [text(data["title"])])]
               : []),
-            ...flow(data["children"] as Flow[], diagnostics, block),
+            ...flow(data["children"] as Flow[], diagnostics, block, references),
           ],
         ),
       ];
@@ -495,9 +775,216 @@ function blockNodes(
         element(
           "aside",
           { id: `footnote-${String(data["identifier"] ?? "")}` },
-          flow(data["children"] as Flow[], diagnostics, block),
+          flow(data["children"] as Flow[], diagnostics, block, references),
         ),
       ];
+    case "publisle:embed": {
+      const providerName = String(data["provider"] ?? "");
+      const configuredProvider = options.embedProviders?.[providerName];
+      const builtinProvider =
+        builtinEmbedProviders[
+          providerName as keyof typeof builtinEmbedProviders
+        ];
+      const provider =
+        configuredProvider ??
+        (builtinProvider
+          ? (resourceId: string) => builtinProvider(resourceId)
+          : undefined);
+      const result = provider?.(String(data["resourceId"] ?? ""));
+      const embedSrc = result ? safeEmbedUrl(result.src) : undefined;
+      if (!result || !embedSrc) {
+        diagnostics.push({
+          level: "warning",
+          code: "missing-embed-provider",
+          message: `Embed provider ${providerName} is unavailable or rejected the resource ID.`,
+          blockId: block.id,
+        });
+        return Array.isArray(data["fallback"])
+          ? flow(data["fallback"] as Flow[], diagnostics, block, references)
+          : [
+              element(
+                "p",
+                { "data-publisle-embed-unavailable": providerName },
+                [text(String(data["title"] ?? "Embedded content"))],
+              ),
+            ];
+      }
+      const ratio = data["aspectRatio"] as Record<string, unknown>;
+      return [
+        element("figure", { class: "publisle-embed" }, [
+          element(
+            "iframe",
+            {
+              src: embedSrc,
+              title: String(data["title"] ?? ""),
+              loading: "lazy",
+              referrerpolicy: "strict-origin-when-cross-origin",
+              allow: result.allow ?? "fullscreen",
+              sandbox:
+                ("sandbox" in result ? result.sandbox : undefined) ??
+                "allow-scripts allow-same-origin allow-presentation",
+              ...(result.allowFullscreen ? { allowfullscreen: true } : {}),
+              style: `aspect-ratio:${Number(ratio["width"] ?? 16)}/${Number(ratio["height"] ?? 9)}`,
+            },
+            [],
+          ),
+          ...(Array.isArray(data["caption"])
+            ? [
+                element(
+                  "figcaption",
+                  {},
+                  flow(
+                    data["caption"] as Flow[],
+                    diagnostics,
+                    block,
+                    references,
+                  ),
+                ),
+              ]
+            : []),
+        ]),
+      ];
+    }
+    case "publisle:diagram": {
+      const engine = String(data["engine"] ?? "");
+      const renderer = options.diagramRenderers?.[engine];
+      if (!renderer) {
+        diagnostics.push({
+          level: "warning",
+          code: "missing-diagram-renderer",
+          message: `No renderer is registered for diagram engine ${engine}.`,
+          blockId: block.id,
+        });
+        const print = data["printFallback"] as
+          Record<string, unknown> | undefined;
+        const printSrc =
+          typeof print?.["src"] === "string"
+            ? safeUrl(print["src"])
+            : undefined;
+        const fallback = printSrc
+          ? [
+              element(
+                "img",
+                { src: printSrc, alt: String(data["alt"] ?? "") },
+                [],
+              ),
+            ]
+          : Array.isArray(data["fallback"])
+            ? flow(data["fallback"] as Flow[], diagnostics, block, references)
+            : [element("pre", {}, [text(String(data["source"] ?? ""))])];
+        return [
+          element(
+            "figure",
+            typeof data["label"] === "string"
+              ? { id: `reference-${data["label"]}` }
+              : {},
+            [
+              ...fallback,
+              ...(reference || Array.isArray(data["caption"])
+                ? [
+                    element("figcaption", {}, [
+                      ...(reference
+                        ? [
+                            element(
+                              "span",
+                              { class: "publisle-diagram-number" },
+                              [text(`${referenceText(reference)}. `)],
+                            ),
+                          ]
+                        : []),
+                      ...(Array.isArray(data["caption"])
+                        ? flow(
+                            data["caption"] as Flow[],
+                            diagnostics,
+                            block,
+                            references,
+                          )
+                        : []),
+                    ]),
+                  ]
+                : []),
+            ],
+          ),
+        ];
+      }
+      let result;
+      try {
+        result = renderer({
+          engine,
+          source: String(data["source"] ?? ""),
+          alt: String(data["alt"] ?? ""),
+        });
+      } catch (error) {
+        diagnostics.push({
+          level: "warning",
+          code: "diagram-render-failed",
+          message:
+            error instanceof Error
+              ? error.message
+              : `Rendering ${engine} failed.`,
+          blockId: block.id,
+        });
+        return Array.isArray(data["fallback"])
+          ? flow(data["fallback"] as Flow[], diagnostics, block, references)
+          : [element("pre", {}, [text(String(data["source"] ?? ""))])];
+      }
+      const rendered: RenderNode[] = [...result.static];
+      if (result.interactive)
+        rendered.push({
+          kind: "island",
+          blockId: block.id,
+          implementation: result.interactive.implementation,
+          activation: result.interactive.activation ?? "visible",
+          label: result.accessibleText ?? String(data["alt"] ?? "Diagram"),
+          module: result.interactive.module,
+          exportName: result.interactive.exportName ?? "default",
+          props: result.interactive.props ?? {},
+          fallback: result.static,
+        });
+      return [
+        element(
+          "figure",
+          typeof data["label"] === "string"
+            ? { id: `reference-${data["label"]}` }
+            : {},
+          [
+            element("div", { class: "publisle-diagram-screen" }, rendered),
+            ...(result.print
+              ? [
+                  element(
+                    "div",
+                    { class: "publisle-diagram-print" },
+                    result.print,
+                  ),
+                ]
+              : []),
+            ...(reference || Array.isArray(data["caption"])
+              ? [
+                  element("figcaption", {}, [
+                    ...(reference
+                      ? [
+                          element(
+                            "span",
+                            { class: "publisle-diagram-number" },
+                            [text(`${referenceText(reference)}. `)],
+                          ),
+                        ]
+                      : []),
+                    ...(Array.isArray(data["caption"])
+                      ? flow(
+                          data["caption"] as Flow[],
+                          diagnostics,
+                          block,
+                          references,
+                        )
+                      : []),
+                  ]),
+                ]
+              : []),
+          ],
+        ),
+      ];
+    }
     case "publisle:raw-html":
       return options.rawHtml === "omit"
         ? []
@@ -537,7 +1024,14 @@ export function createRenderPlan(
 ): RenderPlan {
   const diagnostics: Diagnostic[] = [];
   const nodes = document.blocks.flatMap((block) =>
-    blockNodes(block, options, diagnostics),
+    blockNodes(
+      block,
+      options,
+      diagnostics,
+      document.references.targets,
+      document.islands.find((island) => island.blockId === block.id)
+        ?.displayName,
+    ),
   );
   const base = { document, nodes, diagnostics };
   return document.metadata === undefined

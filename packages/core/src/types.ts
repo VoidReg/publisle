@@ -13,6 +13,7 @@ export interface BlockMigration {
 
 export interface IslandDescriptor {
   readonly activation: Activation;
+  readonly displayName?: string;
 }
 
 export interface PortableBlockDefinition<

@@ -71,4 +71,7 @@ export {
   type PrepareResult,
   type ResourcePlan,
   type ResourceReference,
+  type ReferenceKind,
+  type ReferencePlan,
+  type ReferenceTarget,
 } from "./prepared.ts";

@@ -18,6 +18,7 @@
     "@publisle/blocks-technical": "workspace:*",
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/schema": "workspace:*",
+    "@publisle/example-scene": "workspace:*"
   }
 }

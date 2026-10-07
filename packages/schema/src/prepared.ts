@@ -209,10 +209,24 @@ export interface ResourcePlan {
   readonly resources: readonly PlannedResource[];
 }
 
+export type ReferenceKind =
+  "heading" | "figure" | "table" | "equation" | "diagram";
+export interface ReferenceTarget {
+  readonly label: string;
+  readonly blockId: BlockId;
+  readonly kind: ReferenceKind;
+  readonly ordinal?: number;
+  readonly title?: string;
+}
+export interface ReferencePlan {
+  readonly targets: readonly ReferenceTarget[];
+}
+
 export interface IslandPlan {
   readonly blockId: BlockId;
   readonly blockType: string;
   readonly activation: Activation;
+  readonly displayName?: string;
 }
 
 export interface PreparedBlock extends Block<BlockType, unknown> {
@@ -225,6 +239,7 @@ export interface PreparedDocument {
   readonly metadata?: PublicationMetadata;
   readonly blocks: readonly PreparedBlock[];
   readonly resources: ResourcePlan;
+  readonly references: ReferencePlan;
   readonly islands: readonly IslandPlan[];
   readonly cacheIdentity: string;
 }

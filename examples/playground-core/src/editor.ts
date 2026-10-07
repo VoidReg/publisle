@@ -1,9 +1,13 @@
+import { sceneDefinition } from "@publisle/example-scene";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
 import { createRegistry } from "@publisle/core";
 import type { BlockRegistry } from "@publisle/core";
 import { fromMarkdown, toMarkdown } from "@publisle/markdown";
-import type { MarkdownExportResult } from "@publisle/markdown";
+import type {
+  MarkdownExportOptions,
+  MarkdownExportResult,
+} from "@publisle/markdown";
 import {
   createBlock,
   document,
@@ -22,6 +26,7 @@ export type { BlockType };
 export const CORE_REGISTRY: BlockRegistry = createRegistry([
   ...coreBlockDefinitions,
   interactiveSchematicDefinition,
+  sceneDefinition,
 ]);
 
 export type DocumentEditorListener = () => void;
@@ -125,8 +130,8 @@ export class DocumentEditor {
     return { diagnostics: imported.diagnostics };
   }
 
-  exportMarkdown(): MarkdownExportResult {
-    return toMarkdown(this.current);
+  exportMarkdown(options: MarkdownExportOptions = {}): MarkdownExportResult {
+    return toMarkdown(this.current, options);
   }
 
   toJson(): string {

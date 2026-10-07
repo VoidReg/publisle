@@ -12,7 +12,8 @@
     "@publisle/blocks-technical": "workspace:*",
     "@publisle/core": "workspace:*",
     "@publisle/schema": "workspace:*",
-    "svelte": "^5.0.0"
+    "svelte": "^5.0.0",
+    "@publisle/example-scene": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.0",

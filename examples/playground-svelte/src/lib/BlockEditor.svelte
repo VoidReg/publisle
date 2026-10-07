@@ -94,6 +94,7 @@
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .map((line) => ({
+        type: "listItem" as const,
         children: [
           { type: "paragraph" as const, content: setInlineText(line) },
         ],
@@ -275,11 +276,11 @@
         Caption
         <textarea
           rows={2}
-          value={inlineText(data["caption"] as never)}
+          value={flowText(data["caption"] as never)}
           oninput={(event) =>
             onUpdate(block.id, {
               ...data,
-              caption: setInlineText(event.currentTarget.value),
+              caption: setFlowText(event.currentTarget.value),
             })
           }
         ></textarea>
@@ -343,7 +344,15 @@
       </label>
     {:else if block.type === "publisle:divider"}
       <p class="muted">A horizontal divider.</p>
-    {:else if block.type === "publisle:interactive-schematic"}
+    {:else if block.type === "publisle:embed"}
+      <label>Provider<input value={String(data["provider"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, provider: event.currentTarget.value })} /></label>
+      <label>Resource ID<input value={String(data["resourceId"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, resourceId: event.currentTarget.value })} /></label>
+      <label>Accessible title<input value={String(data["title"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, title: event.currentTarget.value })} /></label>
+    {:else if block.type === "publisle:diagram"}
+      <label>Engine<input value={String(data["engine"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, engine: event.currentTarget.value })} /></label>
+      <label>Alternative text<input value={String(data["alt"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, alt: event.currentTarget.value })} /></label>
+      <label>Source<textarea rows={6} value={String(data["source"] ?? "")} oninput={(event) => onUpdate(block.id, { ...data, source: event.currentTarget.value })}></textarea></label>
+    {:else if block.type === "publisle:interactive-schematic" || block.type === "demo:interactive-scene"}
       {@const content = contentRecord(data)}
       <label>
         Activation

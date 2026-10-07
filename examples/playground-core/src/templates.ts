@@ -1,3 +1,4 @@
+import { defaultScene } from "@publisle/example-scene";
 import type { FlowNode, InlineNode } from "@publisle/blocks-core";
 
 export type BlockType =
@@ -11,7 +12,10 @@ export type BlockType =
   | "publisle:table"
   | "publisle:callout"
   | "publisle:divider"
-  | "publisle:interactive-schematic";
+  | "publisle:embed"
+  | "publisle:diagram"
+  | "publisle:interactive-schematic"
+  | "demo:interactive-scene";
 
 export const BLOCK_TYPES: BlockType[] = [
   "publisle:paragraph",
@@ -24,7 +28,10 @@ export const BLOCK_TYPES: BlockType[] = [
   "publisle:table",
   "publisle:callout",
   "publisle:divider",
+  "publisle:embed",
+  "publisle:diagram",
   "publisle:interactive-schematic",
+  "demo:interactive-scene",
 ];
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -38,7 +45,10 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   "publisle:table": "Table",
   "publisle:callout": "Callout",
   "publisle:divider": "Divider",
+  "publisle:embed": "Embed",
+  "publisle:diagram": "Diagram",
   "publisle:interactive-schematic": "Interactive Schematic",
+  "demo:interactive-scene": "3D Scene",
 };
 
 function text(value: string): InlineNode {
@@ -55,6 +65,8 @@ function cell(value: string): readonly InlineNode[] {
 
 export function defaultData(type: BlockType): unknown {
   switch (type) {
+    case "demo:interactive-scene":
+      return defaultScene();
     case "publisle:paragraph":
       return { content: [text("New paragraph")] };
     case "publisle:heading":
@@ -63,8 +75,8 @@ export function defaultData(type: BlockType): unknown {
       return {
         ordered: false,
         items: [
-          { children: [paragraph("First item")] },
-          { children: [paragraph("Second item")] },
+          { type: "listItem", children: [paragraph("First item")] },
+          { type: "listItem", children: [paragraph("Second item")] },
         ],
       };
     case "publisle:quote":
@@ -77,7 +89,7 @@ export function defaultData(type: BlockType): unknown {
       return {
         src: "",
         alt: "",
-        caption: [text("Figure caption")],
+        caption: [paragraph("Figure caption")],
       };
     case "publisle:table":
       return {
@@ -95,6 +107,21 @@ export function defaultData(type: BlockType): unknown {
       };
     case "publisle:divider":
       return {};
+    case "publisle:embed":
+      return {
+        provider: "youtube",
+        resourceId: "dQw4w9WgXcQ",
+        title: "Embedded video",
+        aspectRatio: { width: 16, height: 9 },
+        fallback: [paragraph("Open the video on its provider.")],
+      };
+    case "publisle:diagram":
+      return {
+        engine: "mermaid",
+        source: "graph TD\n  A --> B",
+        alt: "A points to B",
+        fallback: [paragraph("A points to B.")],
+      };
     case "publisle:interactive-schematic":
       return {
         activation: "interaction",

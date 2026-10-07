@@ -1,7 +1,52 @@
 import { describe, expect, it } from "vitest";
 import { fromMarkdown, formatMarkdown, toMarkdown } from "../src/index.ts";
+import { createBlock, document } from "@publisle/schema";
 
 const fence = "`".repeat(3);
+
+describe("inline payload formatting", () => {
+  it("preserves nested JSON, Markdown formatting and fence-like strings in both modes", () => {
+    const input = document({
+      blocks: [
+        createBlock({
+          type: "demo:scene",
+          data: {
+            activation: "interaction",
+            content: {
+              title: [
+                {
+                  type: "strong",
+                  children: [{ type: "text", value: "Scene" }],
+                },
+              ],
+            },
+            payload: {
+              objects: [{ id: "box", position: [1, 2, 3] }],
+              text: "```\n:::interactive\n**bold**",
+              enabled: true,
+            },
+          },
+        }),
+      ],
+    });
+    const pretty = toMarkdown(input);
+    expect(pretty).toEqual(toMarkdown(input, { payloadFormatting: "pretty" }));
+    const compact = toMarkdown(input, { payloadFormatting: "compact" });
+    expect(pretty.markdown).toContain('"objects": [');
+    expect(compact.markdown).toContain(
+      '"objects":[{"id":"box","position":[1,2,3]}]',
+    );
+    expect(compact.markdown!.length).toBeLessThan(pretty.markdown!.length);
+    for (const result of [pretty, compact]) {
+      expect(result.diagnostics).toEqual([]);
+      expect(result.markdown).toContain("**Scene**");
+      const imported = fromMarkdown(result.markdown!);
+      expect(imported.diagnostics).toEqual([]);
+      expect(imported.document?.blocks).toEqual(input.blocks);
+    }
+  });
+});
+
 const source = `---
 title: Counter guide
 custom: retained
@@ -95,5 +140,173 @@ describe("Markdown conversion", () => {
     expect(exported.markdown).toContain("Clocked counter");
     expect(exported.markdown).toContain("The counter starts at zero.");
     expect(exported.markdown).not.toContain("publisle-payload");
+  });
+});
+
+describe("complete portable Markdown model", () => {
+  it("round-trips semantic inline nodes and extension blocks", () => {
+    const input = document({
+      blocks: [
+        createBlock({
+          type: "publisle:heading",
+          data: {
+            level: 2,
+            label: "sec:intro",
+            content: [{ type: "text", value: "Introduction" }],
+          },
+        }),
+        createBlock({
+          type: "publisle:paragraph",
+          data: {
+            content: [
+              { type: "text", value: "See " },
+              { type: "crossReference", target: "fig:flow" },
+              { type: "text", value: " and " },
+              {
+                type: "citationReference",
+                items: [{ id: "doe2026", locator: "12", label: "page" }],
+                prefix: "see ",
+              },
+              { type: "softBreak" },
+              {
+                type: "strikethrough",
+                children: [{ type: "text", value: "old" }],
+              },
+              { type: "hardBreak" },
+              { type: "inlineMath", value: "\\textcolor{red}{x}" },
+            ],
+          },
+        }),
+        createBlock({
+          type: "publisle:figure",
+          data: {
+            src: "flow.svg",
+            alt: "Flow",
+            label: "fig:flow",
+            caption: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", value: "The flow." }],
+              },
+            ],
+            credit: [{ type: "text", value: "ACME" }],
+            original: { src: "flow.pdf", mediaType: "application/pdf" },
+          },
+        }),
+        createBlock({
+          type: "publisle:embed",
+          data: {
+            provider: "youtube",
+            resourceId: "dQw4w9WgXcQ",
+            title: "Video",
+            aspectRatio: { width: 16, height: 9 },
+            fallback: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", value: "Video fallback." }],
+              },
+            ],
+          },
+        }),
+        createBlock({
+          type: "publisle:diagram",
+          data: {
+            engine: "mermaid",
+            source: "graph TD\nA-->B",
+            alt: "A to B",
+            label: "diagram:flow",
+            fallback: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", value: "A points to B." }],
+              },
+            ],
+          },
+        }),
+      ],
+    });
+    const exported = toMarkdown(input);
+    expect(exported.diagnostics).toEqual([]);
+    const imported = fromMarkdown(exported.markdown ?? "");
+    expect(imported.diagnostics).toEqual([]);
+    expect(imported.document?.blocks.map(({ type }) => type)).toEqual(
+      input.blocks.map(({ type }) => type),
+    );
+    expect(imported.document?.blocks[1]?.data).toEqual(input.blocks[1]?.data);
+    expect(imported.document?.blocks[2]?.data).toEqual(input.blocks[2]?.data);
+    expect(imported.document?.blocks[3]?.data).toEqual(input.blocks[3]?.data);
+    expect(imported.document?.blocks[4]?.data).toEqual(input.blocks[4]?.data);
+  });
+
+  it("represents task and ordinary list items distinctly", () => {
+    const imported = fromMarkdown(
+      "- ordinary\n- [x] complete\n- [ ] pending\n",
+    );
+    expect(imported.document?.blocks[0]?.data).toMatchObject({
+      items: [
+        { type: "listItem" },
+        { type: "taskListItem", checked: true },
+        { type: "taskListItem", checked: false },
+      ],
+    });
+  });
+
+  it("resolves reference-style links and images into native nodes", () => {
+    const imported = fromMarkdown(
+      'A [link][site] and ![logo][asset].\n\n[site]: https://example.com\n[asset]: logo.svg "Logo"\n',
+    );
+    expect(imported.diagnostics).toEqual([]);
+    expect(imported.document?.blocks).toHaveLength(1);
+    expect(imported.document?.blocks[0]?.data).toMatchObject({
+      content: [
+        { type: "text", value: "A " },
+        { type: "link", url: "https://example.com" },
+        { type: "text", value: " and " },
+        { type: "inlineImage", url: "logo.svg", alt: "logo", title: "Logo" },
+        { type: "text", value: "." },
+      ],
+    });
+  });
+
+  it("degrades extensions to readable standard Markdown", () => {
+    const output = toMarkdown(
+      document({
+        blocks: [
+          createBlock({
+            type: "publisle:paragraph",
+            data: {
+              content: [
+                { type: "crossReference", target: "fig:x" },
+                { type: "text", value: " " },
+                { type: "citationReference", items: [{ id: "doe2026" }] },
+              ],
+            },
+          }),
+          createBlock({
+            type: "publisle:diagram",
+            data: {
+              engine: "mermaid",
+              source: "graph TD",
+              alt: "Graph",
+              fallback: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", value: "Graph fallback" }],
+                },
+              ],
+            },
+          }),
+        ],
+      }),
+      { policy: "standard" },
+    );
+    expect(output.markdown).not.toContain(":::");
+    expect(output.markdown).not.toContain(":ref");
+    expect(output.markdown).not.toContain(":cite");
+    expect(output.markdown).toContain("fig\\:x \\[doe2026]");
+    expect(output.markdown).toContain("Graph fallback");
+    expect(output.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "extension-semantics-lost" }),
+    );
   });
 });

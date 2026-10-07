@@ -304,6 +304,7 @@ describe("publication artifact", () => {
     );
     const selectors = css
       .replace(/\/\*[\s\S]*?\*\//gu, "")
+      .replace(/@media[^{]+\{/gu, "")
       .split("}")
       .map((rule) => (rule.split("{")[0] ?? "").trim())
       .filter((selector) => selector.length > 0);

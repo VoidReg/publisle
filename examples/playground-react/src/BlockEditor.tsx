@@ -236,11 +236,11 @@ function renderFields(
             Caption
             <textarea
               rows={2}
-              value={inlineText(data["caption"] as never)}
+              value={flowText(data["caption"] as never)}
               onChange={(event) =>
                 onUpdate(block.id, {
                   ...data,
-                  caption: setInlineText(event.target.value),
+                  caption: setFlowText(event.target.value),
                 })
               }
             />
@@ -312,6 +312,72 @@ function renderFields(
       );
     case "publisle:divider":
       return <p className="muted">A horizontal divider.</p>;
+    case "publisle:embed":
+      return (
+        <>
+          <label>
+            Provider
+            <input
+              value={String(data["provider"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, provider: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Resource ID
+            <input
+              value={String(data["resourceId"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, resourceId: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Accessible title
+            <input
+              value={String(data["title"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, title: event.target.value })
+              }
+            />
+          </label>
+        </>
+      );
+    case "publisle:diagram":
+      return (
+        <>
+          <label>
+            Engine
+            <input
+              value={String(data["engine"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, engine: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Alternative text
+            <input
+              value={String(data["alt"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, alt: event.target.value })
+              }
+            />
+          </label>
+          <label>
+            Source
+            <textarea
+              rows={6}
+              value={String(data["source"] ?? "")}
+              onChange={(event) =>
+                onUpdate(block.id, { ...data, source: event.target.value })
+              }
+            />
+          </label>
+        </>
+      );
+    case "demo:interactive-scene":
     case "publisle:interactive-schematic": {
       const content = contentRecord(data);
       const accessibility = accessibilityRecord(data);
@@ -531,6 +597,7 @@ function setListItemsText(value: string) {
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .map((line) => ({
+      type: "listItem" as const,
       children: [{ type: "paragraph" as const, content: setInlineText(line) }],
     }));
 }

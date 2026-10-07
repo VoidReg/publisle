@@ -20,6 +20,7 @@ export type RenderNode =
   | {
       readonly kind: "island";
       readonly blockId: string;
+      readonly implementation?: string;
       readonly activation: Activation;
       readonly label: string;
       readonly module: string;
@@ -51,10 +52,38 @@ export interface IslandRendererReference {
   readonly interactive?: RendererModuleReference;
   readonly static?: RendererModuleReference;
 }
+export interface EmbedProviderResult {
+  readonly src: string;
+  readonly allow?: string;
+  readonly sandbox?: string;
+  readonly allowFullscreen?: boolean;
+}
+export type EmbedProvider = (
+  resourceId: string,
+) => EmbedProviderResult | undefined;
+export interface DiagramRenderResult {
+  readonly static: readonly RenderNode[];
+  readonly print?: readonly RenderNode[];
+  readonly accessibleText?: string;
+  readonly interactive?: {
+    readonly implementation: string;
+    readonly module: string;
+    readonly exportName?: string;
+    readonly activation?: Activation;
+    readonly props?: JsonValue;
+  };
+}
+export type DiagramRenderer = (input: {
+  readonly engine: string;
+  readonly source: string;
+  readonly alt: string;
+}) => DiagramRenderResult;
 export interface AdapterCompilerOptions {
   readonly renderers?: Readonly<Record<string, IslandRendererReference>>;
   readonly rawHtml?:
     "escape" | "omit" | "trusted" | ((value: string) => string);
+  readonly embedProviders?: Readonly<Record<string, EmbedProvider>>;
+  readonly diagramRenderers?: Readonly<Record<string, DiagramRenderer>>;
 }
 export interface AdapterTarget {
   readonly name: string;

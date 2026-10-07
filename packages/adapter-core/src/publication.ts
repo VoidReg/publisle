@@ -16,6 +16,7 @@ export const PUBLICATION_FORMAT = "publisle:publication" as const;
 export const PUBLICATION_FORMAT_VERSION = 1 as const;
 export const RENDERER_BUILD = "1";
 export const DOCUMENT_STYLESHEET_ID = "publisle/document.css";
+export const KATEX_STYLESHEET_ID = "publisle/katex.css";
 
 export interface AssetReference {
   readonly id: string;
@@ -115,7 +116,8 @@ function compilePlan(
         const block = plan.document.blocks.find(
           (entry) => entry.id === node.blockId,
         );
-        const implementation = block?.type ?? node.module;
+        const implementation =
+          node.implementation ?? block?.type ?? node.module;
         islands.push({
           key: node.blockId,
           implementation,
@@ -134,8 +136,18 @@ function compilePlan(
   };
   visit(plan.nodes);
   const html = `<div class="publisle-document" data-publisle-root>${serializeNodes(plan.nodes)}</div>`;
+  const hasMath = plan.document.blocks.some(
+    (block) =>
+      block.type === "publisle:math" ||
+      JSON.stringify(block.data).includes('"inlineMath"'),
+  );
   const styleEntries =
-    styles === "none" ? [] : [{ id: DOCUMENT_STYLESHEET_ID }];
+    styles === "none"
+      ? []
+      : [
+          { id: DOCUMENT_STYLESHEET_ID },
+          ...(hasMath ? [{ id: KATEX_STYLESHEET_ID }] : []),
+        ];
   const metadata = plan.metadata;
   const unsigned = {
     format: PUBLICATION_FORMAT,
@@ -166,6 +178,12 @@ export function compilePublication(
       ? {}
       : { renderers: options.renderers }),
     ...(options.rawHtml === undefined ? {} : { rawHtml: options.rawHtml }),
+    ...(options.embedProviders === undefined
+      ? {}
+      : { embedProviders: options.embedProviders }),
+    ...(options.diagramRenderers === undefined
+      ? {}
+      : { diagramRenderers: options.diagramRenderers }),
   };
   return compilePlan(
     createRenderPlan(source, withIslandRenderers(source, compilerOptions)),

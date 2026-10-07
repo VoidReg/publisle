@@ -18,7 +18,7 @@ export const publicationTarget: AdapterTarget = {
   name: "publication",
   extension: "js",
   emitModule(plan: RenderPlan): string {
-    const publication = compilePublication(plan.document, {
+    const publication = compilePublication(plan, {
       styles: "minimal",
     });
     return `export const publication = ${js(publication)};\nexport const metadata = ${js(publication.metadata ?? null)};\nexport const diagnostics = ${js(publication.diagnostics)};\n`;
@@ -69,7 +69,13 @@ export function createPublisleVitePlugin(options: PublisleViteOptions): Plugin {
           prepared.diagnostics.map(({ message }) => message).join("\n"),
         );
       }
-      const plan = createRenderPlan(preparedDocument, options);
+      const renderers = { ...(options.renderers ?? {}) };
+      for (const island of preparedDocument.islands)
+        renderers[island.blockType] ??= { module: island.blockType };
+      const plan = createRenderPlan(preparedDocument, {
+        ...options,
+        renderers,
+      });
       return options.target.emitModule(plan, { source, filename });
     },
   };
