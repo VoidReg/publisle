@@ -1,0 +1,24 @@
+export { fromMarkdown } from "./import.ts";
+export { toMarkdown } from "./export.ts";
+export { deterministicBlockId } from "./id.ts";
+export type * from "./types.ts";
+
+import { fromMarkdown } from "./import.ts";
+import { toMarkdown } from "./export.ts";
+import type { MarkdownFormatResult, MarkdownImportOptions } from "./types.ts";
+
+export function formatMarkdown(
+  source: string,
+  options: MarkdownImportOptions = {},
+): MarkdownFormatResult {
+  const imported = fromMarkdown(source, options);
+  if (!imported.document) return { diagnostics: imported.diagnostics };
+  const exported = toMarkdown(imported.document);
+  return {
+    ...exported,
+    diagnostics: [...imported.diagnostics, ...exported.diagnostics],
+    ...(imported.document.metadata === undefined
+      ? {}
+      : { metadata: imported.document.metadata }),
+  };
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@publisle/playground-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "theme.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.css": "./theme.css"
+  },
+  "devDependencies": {
+    "@publisle/adapter-core": "workspace:*"
+  },
+  "dependencies": {
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/blocks-technical": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/markdown": "workspace:*",
+    "@publisle/schema": "workspace:*"
+  }
+}

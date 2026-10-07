@@ -1,0 +1,19 @@
+{
+  "name": "@publisle/core",
+  "version": "0.0.0",
+  "description": "Preparation, validation, migration, and planning for Publisle documents.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./hash": "./src/hash.ts"
+  },
+  "dependencies": {
+    "@publisle/schema": "workspace:*"
+  },
+  "scripts": {
+    "test": "vitest run --config ../../vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

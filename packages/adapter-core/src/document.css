@@ -1,0 +1,36 @@
+.publisle-document {
+  color: var(--publisle-text, inherit);
+  font-family: var(--publisle-font, inherit);
+}
+
+.publisle-document :where(h1) {
+  font-size: 2em;
+}
+
+.publisle-document :where(h2) {
+  font-size: 1.5em;
+}
+
+.publisle-document :where(h3) {
+  font-size: 1.25em;
+}
+
+.publisle-document :where(h4) {
+  font-size: 1.1em;
+}
+
+.publisle-document :where(h5, h6) {
+  font-size: 1em;
+}
+
+.publisle-document :where(pre) {
+  overflow-x: auto;
+}
+
+.publisle-document :where(table) {
+  border-collapse: collapse;
+}
+
+.publisle-document :where(img) {
+  max-width: 100%;
+}

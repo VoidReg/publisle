@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024"],
+    "lib": ["ES2024", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "rewriteRelativeImportExtensions": true,
     "allowJs": false,
-    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "checkJs": false,
     "strict": true,
     "noUncheckedIndexedAccess": true,

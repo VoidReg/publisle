@@ -16,6 +16,7 @@
     "src"
   ],
   "scripts": {
+    "test": "vitest run --config ../../vitest.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   }
 }

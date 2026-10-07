@@ -1,3 +1,5 @@
+import { isPlainObject } from "./object.ts";
+
 export type JsonPrimitive = boolean | number | string | null;
 
 export interface JsonObject {
@@ -15,3 +17,27 @@ export type JsonCompatible<T> = T extends JsonPrimitive
       : T extends readonly (infer Item)[]
         ? { readonly [K in keyof T]: JsonCompatible<Item> }
         : { [K in keyof T]: JsonCompatible<T[K]> };
+
+export function isJsonValue(value: unknown): value is JsonValue {
+  if (
+    value === null ||
+    typeof value === "boolean" ||
+    typeof value === "string"
+  ) {
+    return true;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.every((item) => isJsonValue(item));
+  }
+
+  if (isPlainObject(value)) {
+    return Object.values(value).every((item) => isJsonValue(item));
+  }
+
+  return false;
+}

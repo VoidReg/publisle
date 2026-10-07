@@ -16,15 +16,20 @@
     }
   },
   "scripts": {
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check",
+    "build:examples": "pnpm --filter './examples/*' build",
+    "build:playgrounds": "pnpm --filter './examples/playground-*' build",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build:examples",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "keywords": [],
   "author": "",
   "devDependencies": {
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/blocks-technical": "workspace:*",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.5",
     "eslint": "^10.11.0",
@@ -33,6 +38,7 @@
     "jiti": "^2.7.0",
     "prettier": "^3.9.8",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.1"
   }
 }

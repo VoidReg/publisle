@@ -1,0 +1,25 @@
+{
+  "name": "@publisle/playground-svelte",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/adapter-svelte": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/blocks-technical": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/markdown": "workspace:*",
+    "@publisle/playground-core": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^7.0.0",
+    "@sveltejs/kit": "^2.0.0",
+    "vite": "^8.0.0"
+  }
+}

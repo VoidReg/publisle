@@ -1,4 +1,10 @@
-export type { Block, SerializedBlock, UnknownBlock } from "./block.ts";
+export {
+  createBlock,
+  parseBlock,
+  type Block,
+  type SerializedBlock,
+  type UnknownBlock,
+} from "./block.ts";
 export {
   createBlockId,
   isBlockId,
@@ -14,11 +20,55 @@ export {
   type KnownBlockFrom,
   type Schema,
 } from "./definition.ts";
-export type { Document, SerializedDocument } from "./document.ts";
+export {
+  DOCUMENT_SCHEMA_VERSION,
+  document,
+  parseDocument,
+  type Document,
+  type SerializedDocument,
+} from "./document.ts";
 export { SchemaParseError } from "./error.ts";
+export type {
+  PortableSchema,
+  PortableSchemaField,
+  PortableSchemaType,
+} from "./portable-schema.ts";
+export type {
+  Diagnostic,
+  DiagnosticLevel,
+  SourceLocation,
+} from "./diagnostic.ts";
 export type {
   JsonCompatible,
   JsonObject,
   JsonPrimitive,
   JsonValue,
 } from "./json.ts";
+export {
+  isIsoDateTime,
+  parseIsoDateTime,
+  parsePublicationMetadata,
+  type Author,
+  type ImageReference,
+  type IsoDateTime,
+  type LicenseReference,
+  type PublicationMetadata,
+  type SerializedPublicationMetadata,
+} from "./metadata.ts";
+export {
+  isInteractiveEnvelope,
+  isPreparedDocument,
+  parseInteractiveEnvelope,
+  type Activation,
+  type InteractiveAccessibility,
+  type InteractiveContent,
+  type InteractiveContentParsers,
+  type InteractiveEnvelope,
+  type IslandPlan,
+  type PlannedResource,
+  type PreparedBlock,
+  type PreparedDocument,
+  type PrepareResult,
+  type ResourcePlan,
+  type ResourceReference,
+} from "./prepared.ts";

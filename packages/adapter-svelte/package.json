@@ -1,0 +1,32 @@
+{
+  "name": "@publisle/adapter-svelte",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./content": {
+      "svelte": "./src/PublisleContent.svelte",
+      "default": "./src/PublisleContent.svelte"
+    },
+    "./article": {
+      "svelte": "./src/PublisleArticle.svelte",
+      "default": "./src/PublisleArticle.svelte"
+    },
+    "./runtime": "./src/runtime.ts"
+  },
+  "dependencies": {
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/schema": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0",
+    "vite": "^8.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0",
+    "vite": "^8.0.0"
+  }
+}

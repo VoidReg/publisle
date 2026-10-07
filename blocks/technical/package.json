@@ -1,0 +1,14 @@
+{
+  "name": "@publisle/blocks-technical",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@publisle/block-sdk": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/schema": "workspace:*"
+  }
+}
