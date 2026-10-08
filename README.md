@@ -190,6 +190,76 @@ fail the build on errors without shipping inspectors to readers.
 
 `publislePublication` compiles each Markdown module into a publication artifact. The host renders that artifact with `PublisleArticle` and supplies island implementations at runtime. `publisleSvelte()` and `publisleReact()` remain available when a project wants native Svelte or React components instead of a publication fragment.
 
+### Resource resolution and preparation caches
+
+Blocks declare `ResourceReference`s through their `resources(data)` hook.
+Preparation separates shared source resources from derived artifacts:
+`prepared.resources.resources` contains canonical sources and dependency
+identities; `prepared.resources.artifacts` contains transform/options identities
+linked by `sourceIdentity`. A source shared by two transforms is resolved once.
+Source identity includes its URI, host revision, and dependency identities, so a
+dependency change also invalidates the parent's derived artifacts.
+
+```ts
+const registry = createRegistry(blockDefinitions, {
+  preparationVersion: "my-blocks@2",
+});
+const manifest = new Map([
+  ["wave.svg", { version: "sha256:wave-content", dependencies: [] }],
+]);
+const result = prepare(article, {
+  registry,
+  preparationVersion: "my-publication-config@1",
+  resourceResolver: {
+    version: "asset-manifest@1",
+    resolve: ({ uri }) => manifest.get(uri),
+  },
+});
+```
+
+The resolver is synchronous trusted host code; prepare performs no filesystem or
+network I/O. Build a manifest first if discovery requires asynchronous I/O.
+Return `undefined` for a missing source or `{ version, uri?, dependencies? }`
+for a found source. `version` must be a stable nonempty content hash/revision;
+optional `uri` identifies a canonical alias. Dependency entries are source-only
+`{ uri }` objects, already resolved by the host relative to the document (not
+implicitly relative to their parent resource). Lexically equivalent relative
+paths share one lookup; roots and leading `..` remain distinct. URLs retain
+their spelling. Aliases share one planned source when their canonical URI,
+revision, and dependencies agree, but require separate lookups to discover that
+equivalence. Cycles and conflicting canonical revisions fail safely.
+
+Missing sources (`missing-resource`), malformed declarations/results
+(`invalid-resource`), resolver exceptions (`resource-resolution-failed`),
+plugin resource-extraction failures (`resource-analysis-failed`),
+dependency cycles (`resource-dependency-cycle`), and conflicting resolutions
+(`resource-resolution-conflict`) are errors associated with the owning block
+and original source location when available. Profile severity policy cannot
+downgrade them. Without a resolver, declarations remain unchecked references:
+preparation normalizes/deduplicates paths but does not verify existence. Asset
+generation, URI delivery, authorization, and dependency discovery stay host-owned;
+the plan does not rewrite authored resource URLs or generate assets.
+
+`cacheIdentity` includes document content, registry identity, resolved resource
+and artifact identities, resolver version, host preparation version, unknown-block
+policy, profile names/versions, diagnostic policy, and source maps. Object keys,
+registry registration order, and dependency sets are normalized deterministically.
+All cache identities change with this preparation implementation revision; do
+not reuse older entries. No cache storage is provided. The host owns reuse and
+must revalidate external revisions before accepting a cache hit; an old prepared
+identity cannot detect a changed file by itself. Hosts must also watch resource
+dependencies/invalidate their bundler modules; the Vite adapter forwards the
+resolver but does not automatically watch arbitrary host resource locations.
+
+Bump registry `preparationVersion` (default `"1"`) whenever schemas, defaults,
+migrations, normalization, resource extraction, or island planning behavior
+changes. Bump resolver `version` when its behavior/configuration changes, and
+host `preparationVersion` for other preparation configuration (including envelope
+migrations). Function source is never hashed. Transform strings should include
+their implementation version (for example `thumbnail@2`); transform options must
+be finite, acyclic JSON values and require a transform. These explicit versions
+are the host's contract, not automatic change detection.
+
 ### Native static components
 
 For an interactive block's native static visualization, register a host renderer with

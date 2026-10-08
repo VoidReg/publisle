@@ -52,6 +52,27 @@ export interface BlockRegistry {
   get(type: string): AnyPortableBlockDefinition | undefined;
 }
 
+export interface RegistryOptions {
+  /** Bump when schemas/defaults/migrations/normalization/resource or island behavior changes. */
+  readonly preparationVersion?: string;
+}
+
+export interface ResourceResolution {
+  /** Optional canonical URI; defaults to the normalized requested URI. */
+  readonly uri?: string;
+  /** Stable content hash or revision, never a timestamp generated during preparation. */
+  readonly version: string;
+  /** Host-resolved document-relative or absolute source references, not transform requests. */
+  readonly dependencies?: readonly { readonly uri: string }[];
+}
+
+export interface ResourceResolver {
+  /** Bump when resolver configuration/behavior changes; actual content uses result.version. */
+  readonly version: string;
+  /** Undefined means missing. Core performs no I/O. Called once per normalized URI per prepare. */
+  resolve(source: { readonly uri: string }): ResourceResolution | undefined;
+}
+
 export interface PrepareOptions {
   readonly registry: BlockRegistry;
   readonly unknownBlocks?: "preserve" | "error";
@@ -59,6 +80,9 @@ export interface PrepareOptions {
   readonly diagnosticPolicy?: DiagnosticPolicy;
   readonly documentMigrations?: readonly DocumentMigration[];
   readonly sourceMap?: DocumentSourceMap;
+  readonly resourceResolver?: ResourceResolver;
+  /** Cache namespace/version for host preparation configuration, including envelope migrations. */
+  readonly preparationVersion?: string;
 }
 
 export interface PreparedKnownBlock extends Block {

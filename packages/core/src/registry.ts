@@ -1,6 +1,10 @@
 import { sha256Hex } from "./hash.ts";
 
-import type { BlockRegistry, PortableBlockDefinition } from "./types.ts";
+import type {
+  BlockRegistry,
+  PortableBlockDefinition,
+  RegistryOptions,
+} from "./types.ts";
 
 export function createRegistry(
   definitions: readonly PortableBlockDefinition<
@@ -8,7 +12,11 @@ export function createRegistry(
     unknown,
     number
   >[],
+  options: RegistryOptions = {},
 ): BlockRegistry {
+  const preparationVersion = options.preparationVersion ?? "1";
+  if (typeof preparationVersion !== "string" || !preparationVersion.trim())
+    throw new Error("Registry preparationVersion must be a nonempty string.");
   const entries = new Map<
     string,
     PortableBlockDefinition<`${string}:${string}`, unknown, number>
@@ -22,11 +30,18 @@ export function createRegistry(
   }
 
   const version = sha256Hex(
-    JSON.stringify(
+    JSON.stringify([
+      preparationVersion,
       [...entries.values()]
         .map(({ type, schemaVersion }) => [type, schemaVersion])
-        .sort(([left], [right]) => String(left).localeCompare(String(right))),
-    ),
+        .sort(([left], [right]) =>
+          String(left) < String(right)
+            ? -1
+            : String(left) > String(right)
+              ? 1
+              : 0,
+        ),
+    ]),
   );
 
   return {

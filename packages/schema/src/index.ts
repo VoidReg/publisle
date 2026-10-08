@@ -41,12 +41,14 @@ export {
   type DiagnosticLevel,
   type SourceLocation,
 } from "./diagnostic.ts";
-export type {
-  JsonCompatible,
-  JsonObject,
-  JsonPrimitive,
-  JsonValue,
+export {
+  isJsonValue,
+  type JsonCompatible,
+  type JsonObject,
+  type JsonPrimitive,
+  type JsonValue,
 } from "./json.ts";
+export { isPlainObject } from "./object.ts";
 export {
   isIsoDateTime,
   parseIsoDateTime,
@@ -69,6 +71,7 @@ export {
   type InteractiveEnvelope,
   type IslandPlan,
   type PlannedResource,
+  type PlannedArtifact,
   type PreparedBlock,
   type PreparedDocument,
   type PrepareResult,
