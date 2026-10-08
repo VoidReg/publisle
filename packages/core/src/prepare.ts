@@ -1,4 +1,5 @@
 import { sha256Hex } from "./hash.ts";
+import { inspectProfiles } from "./profiles.ts";
 
 import {
   DOCUMENT_SCHEMA_VERSION,
@@ -268,6 +269,27 @@ export function prepare(
 
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
+  if (options.profiles?.length || options.diagnosticPolicy) {
+    const semanticDocument: Document<Block<BlockType, unknown>> = {
+      schemaVersion: document.schemaVersion,
+      blocks: blocks.map(({ id, type, schemaVersion, data }) => ({
+        id,
+        type,
+        schemaVersion,
+        data,
+      })),
+      ...(document.metadata === undefined
+        ? {}
+        : { metadata: document.metadata }),
+    };
+    diagnostics.push(...inspectProfiles(semanticDocument, options));
+  }
+  if (diagnostics.some(({ level }) => level === "error"))
+    return { diagnostics };
+  const profileIdentity =
+    options.profiles?.length || options.diagnosticPolicy
+      ? `:${stable({ profiles: options.profiles?.map(({ name, version }) => ({ name, version: version ?? "1" })) ?? [], diagnosticPolicy: options.diagnosticPolicy ?? {} })}`
+      : "";
   const base = {
     kind: "publisle:prepared-document" as const,
     schemaVersion: document.schemaVersion,
@@ -275,7 +297,9 @@ export function prepare(
     resources: { resources: [...resourceMap.values()] },
     references: { targets },
     islands,
-    cacheIdentity: sha256Hex(`${stable(document)}:${options.registry.version}`),
+    cacheIdentity: sha256Hex(
+      `${stable(document)}:${options.registry.version}${profileIdentity}`,
+    ),
   };
   const prepared: PreparedDocument =
     document.metadata === undefined

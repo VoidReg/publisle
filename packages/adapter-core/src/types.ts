@@ -5,7 +5,7 @@ import type {
   PreparedDocument,
   PublicationMetadata,
 } from "@publisle/schema";
-import type { BlockRegistry } from "@publisle/core";
+import type { PrepareOptions } from "@publisle/core";
 
 export type RenderAttribute = boolean | number | string;
 export type RenderNode =
@@ -93,7 +93,7 @@ export interface AdapterTarget {
     context: { readonly source: string; readonly filename: string },
   ): string;
 }
-export interface PublisleViteOptions extends AdapterCompilerOptions {
-  readonly registry: BlockRegistry;
+export interface PublisleViteOptions
+  extends AdapterCompilerOptions, PrepareOptions {
   readonly target: AdapterTarget;
 }

@@ -15,4 +15,6 @@ export interface Diagnostic {
   readonly message: string;
   readonly blockId?: BlockId;
   readonly sourceLocation?: SourceLocation;
+  /** Present only for optional profile inspection diagnostics. */
+  readonly profile?: string;
 }
