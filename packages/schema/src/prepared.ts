@@ -234,6 +234,7 @@ export interface PreparedBlock extends Block<BlockType, unknown> {
 }
 
 export interface PreparedDocument {
+  readonly sourceMap?: import("./diagnostic.ts").DocumentSourceMap;
   readonly kind: "publisle:prepared-document";
   readonly schemaVersion: number;
   readonly metadata?: PublicationMetadata;

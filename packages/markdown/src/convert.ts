@@ -4,6 +4,7 @@ import type {
   Diagnostic,
   JsonValue,
   PublicationMetadata,
+  SourceLocation,
 } from "@publisle/schema";
 import {
   createBlock,
@@ -15,6 +16,7 @@ import {
 import type { FlowNode, InlineNode } from "@publisle/blocks-core";
 import YAML from "yaml";
 import { deterministicBlockId } from "./id.ts";
+import { sourceLocator } from "./source.ts";
 
 type Node = RootContent | { type: string; [key: string]: unknown };
 const object = (value: unknown): Record<string, unknown> =>
@@ -392,6 +394,7 @@ function blockFor(
   node: Node,
   source: string,
   diagnostics: Diagnostic[],
+  locate: (node: unknown) => SourceLocation,
 ): Omit<Block, "id"> | undefined {
   const data = object(node);
   switch (node.type) {
@@ -646,11 +649,18 @@ function blockFor(
     }
   }
   const position = object(node)["position"] as
-    { start?: { offset?: number }; end?: { offset?: number } } | undefined;
+    | {
+        start?: { line: number; column: number };
+        end?: { line: number; column: number };
+      }
+    | undefined;
   const raw =
-    position?.start?.offset === undefined || position.end?.offset === undefined
+    position?.start === undefined || position.end === undefined
       ? ""
-      : source.slice(position.start.offset, position.end.offset);
+      : source.slice(
+          locate(node).offset,
+          locate({ position: { start: position.end } }).offset,
+        );
   diagnostics.push({
     level: "warning",
     code: "unknown-markdown-node",
@@ -681,7 +691,10 @@ export function treeToDocument(
   tree: Root,
   source: string,
   diagnostics: Diagnostic[],
+  sourceName?: string,
 ) {
+  const locate = sourceLocator(source, sourceName);
+  const blockLocations: Record<string, SourceLocation> = {};
   let metadata: PublicationMetadata | undefined;
   const yaml = tree.children.find((node) => node.type === "yaml");
   if (yaml && "value" in yaml) {
@@ -700,6 +713,7 @@ export function treeToDocument(
       diagnostics.push({
         level: "error",
         code: "invalid-frontmatter",
+        sourceLocation: locate(yaml),
         message:
           error instanceof Error ? error.message : "Invalid YAML frontmatter.",
       });
@@ -720,7 +734,25 @@ export function treeToDocument(
   for (const node of tree.children) {
     if (node.type === "yaml" || node.type === "definition") continue;
     const resolved = resolveReferences(node, definitions);
-    const block = blockFor(resolved, source, diagnostics);
+    const diagnosticStart = diagnostics.length;
+    let block: ReturnType<typeof blockFor>;
+    try {
+      block = blockFor(resolved, source, diagnostics, locate);
+    } catch (error) {
+      diagnostics.push({
+        level: "error",
+        code: "markdown-import-failed",
+        message: error instanceof Error ? error.message : String(error),
+        sourceLocation: locate(node),
+      });
+    }
+    for (let index = diagnosticStart; index < diagnostics.length; index += 1) {
+      const diagnostic = diagnostics[index]!;
+      diagnostics[index] = {
+        ...diagnostic,
+        sourceLocation: diagnostic.sourceLocation ?? locate(node),
+      };
+    }
     if (!block) continue;
     const signature = JSON.stringify([
       block.type,
@@ -730,10 +762,31 @@ export function treeToDocument(
     const count = occurrence.get(signature) ?? 0;
     occurrence.set(signature, count + 1);
     const attributes = attrs(resolved);
-    const id = attributes["id"]
-      ? parseBlockId(attributes["id"])
-      : deterministicBlockId(block, count);
+    let id: ReturnType<typeof parseBlockId>;
+    try {
+      id = attributes["id"]
+        ? parseBlockId(attributes["id"])
+        : deterministicBlockId(block, count);
+    } catch (error) {
+      diagnostics.push({
+        level: "error",
+        code: "markdown-import-failed",
+        message: error instanceof Error ? error.message : String(error),
+        sourceLocation: locate(node),
+      });
+      continue;
+    }
     blocks.push(createBlock({ ...block, id }));
+    blockLocations[id] = locate(node);
+    for (let index = diagnosticStart; index < diagnostics.length; index += 1) {
+      diagnostics[index] = { ...diagnostics[index]!, blockId: id };
+    }
   }
-  return document({ ...(metadata === undefined ? {} : { metadata }), blocks });
+  return {
+    document: document({
+      ...(metadata === undefined ? {} : { metadata }),
+      blocks,
+    }),
+    sourceMap: { document: locate(tree), blocks: blockLocations },
+  };
 }

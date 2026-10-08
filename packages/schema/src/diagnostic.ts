@@ -9,6 +9,27 @@ export interface SourceLocation {
   readonly offset?: number;
 }
 
+/** Original-source sidecar; never part of the semantic document wire format. */
+export interface DocumentSourceMap {
+  readonly document?: SourceLocation;
+  readonly blocks: Readonly<Record<string, SourceLocation>>;
+}
+
+export function locateDiagnostic(
+  diagnostic: Diagnostic,
+  sourceMap?: DocumentSourceMap,
+): Diagnostic {
+  const location =
+    diagnostic.sourceLocation ??
+    (diagnostic.blockId === undefined
+      ? undefined
+      : sourceMap?.blocks[diagnostic.blockId]) ??
+    sourceMap?.document;
+  return location === undefined
+    ? diagnostic
+    : { ...diagnostic, sourceLocation: location };
+}
+
 export interface Diagnostic {
   readonly level: DiagnosticLevel;
   readonly code: string;

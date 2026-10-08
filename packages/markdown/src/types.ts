@@ -2,6 +2,7 @@ import type {
   Diagnostic,
   Document,
   PublicationMetadata,
+  DocumentSourceMap,
 } from "@publisle/schema";
 
 export interface MarkdownImportOptions {
@@ -13,6 +14,7 @@ export interface MarkdownExportOptions {
   readonly payloadFormatting?: "pretty" | "compact";
 }
 export interface MarkdownImportResult {
+  readonly sourceMap?: DocumentSourceMap;
   readonly document?: Document;
   readonly diagnostics: readonly Diagnostic[];
 }

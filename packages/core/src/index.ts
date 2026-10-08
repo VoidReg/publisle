@@ -5,6 +5,7 @@ export type { DiagnosticPolicy, PublicationProfile } from "@publisle/schema";
 export type {
   AnyPortableBlockDefinition,
   BlockMigration,
+  DocumentMigration,
   BlockRegistry,
   IslandDescriptor,
   PortableBlockDefinition,

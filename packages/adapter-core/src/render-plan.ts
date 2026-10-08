@@ -1,5 +1,6 @@
 import {
   isInteractiveEnvelope,
+  locateDiagnostic,
   type Block,
   type BlockType,
   type Diagnostic,
@@ -1033,7 +1034,13 @@ export function createRenderPlan(
         ?.displayName,
     ),
   );
-  const base = { document, nodes, diagnostics };
+  const base = {
+    document,
+    nodes,
+    diagnostics: diagnostics.map((diagnostic) =>
+      locateDiagnostic(diagnostic, document.sourceMap),
+    ),
+  };
   return document.metadata === undefined
     ? base
     : { ...base, metadata: document.metadata };

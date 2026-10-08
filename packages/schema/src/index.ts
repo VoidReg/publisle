@@ -34,10 +34,12 @@ export type {
   PortableSchemaField,
   PortableSchemaType,
 } from "./portable-schema.ts";
-export type {
-  Diagnostic,
-  DiagnosticLevel,
-  SourceLocation,
+export {
+  locateDiagnostic,
+  type DocumentSourceMap,
+  type Diagnostic,
+  type DiagnosticLevel,
+  type SourceLocation,
 } from "./diagnostic.ts";
 export type {
   JsonCompatible,
