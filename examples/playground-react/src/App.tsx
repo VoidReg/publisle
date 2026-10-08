@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { PublisleArticle } from "@publisle/adapter-react";
 import { compilePublication } from "@publisle/adapter-core";
 import { prepare } from "@publisle/core";
@@ -10,6 +16,10 @@ import {
   FOURIER_ARTICLE,
 } from "@publisle/playground-core";
 import { BlockEditor } from "./BlockEditor.tsx";
+import {
+  createMermaidPreview,
+  mermaidSources,
+} from "@publisle/playground-core/mermaid";
 
 const editor = new DocumentEditor();
 const implementations = {
@@ -37,6 +47,21 @@ function download(filename: string, content: string, type = "text/markdown") {
 
 export default function App() {
   const document = useDocument();
+  const [diagrams] = useState(createMermaidPreview);
+  const diagramStatus = useSyncExternalStore(
+    diagrams.subscribe,
+    diagrams.getSnapshot,
+    diagrams.getSnapshot,
+  );
+  useEffect(() => {
+    diagrams.start();
+    return () => {
+      diagrams.dispose();
+    };
+  }, [diagrams]);
+  useEffect(() => {
+    diagrams.update(mermaidSources(document));
+  }, [diagrams, document]);
   const [diagnostics, setDiagnostics] = useState<readonly Diagnostic[]>([]);
   const [payloadFormatting, setPayloadFormatting] = useState<
     "pretty" | "compact"
@@ -47,8 +72,10 @@ export default function App() {
   const publication = useMemo(() => {
     const prepared = prepare(document, { registry: editor.registry });
     if (!prepared.document) return undefined;
-    return compilePublication(prepared.document);
-  }, [document, editor.registry]);
+    return compilePublication(prepared.document, {
+      diagramRenderers: { mermaid: diagrams.rendererFor(prepared.document) },
+    });
+  }, [document, editor.registry, diagrams, diagramStatus]);
 
   const handleImportMarkdown = async (file: File) => {
     const text = await file.text();
@@ -183,6 +210,19 @@ export default function App() {
 
         <aside className="preview">
           <h2>Preview</h2>
+          {diagramStatus.pending > 0 && (
+            <p role="status">Rendering {diagramStatus.pending} diagram(s)…</p>
+          )}
+          {diagramStatus.errors.length > 0 && (
+            <div role="status">
+              {diagramStatus.errors.map((error) => (
+                <p key={error.source}>{error.message}</p>
+              ))}
+              <button type="button" onClick={() => diagrams.retry()}>
+                Retry diagrams
+              </button>
+            </div>
+          )}
           {publication ? (
             <>
               <PublisleArticle

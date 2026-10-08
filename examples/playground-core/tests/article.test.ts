@@ -5,6 +5,7 @@ import { prepare } from "@publisle/core";
 import { compilePublication } from "@publisle/adapter-core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { CORE_REGISTRY } from "../src/editor.ts";
+import { mermaidSources } from "../src/diagram-preview.ts";
 
 describe("Fourier feature article", () => {
   it("uses every native block and inline type and renders valid math and references", () => {
@@ -16,6 +17,7 @@ describe("Fourier feature article", () => {
     expect(imported.diagnostics).toEqual([]);
     expect(imported.document).toBeDefined();
     const doc = imported.document!;
+    expect(mermaidSources(doc)).toHaveLength(3);
     const types = new Set(doc.blocks.map((block) => block.type));
     for (const definition of coreBlockDefinitions)
       expect(types.has(definition.type), definition.type).toBe(true);
@@ -60,6 +62,8 @@ describe("Fourier feature article", () => {
     ).toEqual([]);
     expect(publication.html).not.toContain("publisle-math-error");
     expect(publication.html).toContain("katex");
+    for (const label of ["symmetry", "convergence", "workflow"])
+      expect(publication.html).toContain(`reference-diagram:${label}`);
     expect(publication.islands.map((island) => island.implementation)).toEqual([
       "demo:interactive-scene",
       "publisle:interactive-schematic",
