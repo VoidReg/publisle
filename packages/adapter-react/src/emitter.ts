@@ -18,8 +18,8 @@ function emitNode(
   if (node.kind === "raw")
     return `jsx("span", { dangerouslySetInnerHTML: { __html: ${js(node.value)} } })`;
   if (node.kind === "island") {
-    islands.push(node);
-    return `jsx(PublisleIsland, { activation: ${js(node.activation)}, label: ${js(node.label)}, props: ${js(node.props)}, load: () => import(${js(node.module)}), exportName: ${js(node.exportName)}, fallback: ${emitChildren(node.fallback, islands, components)} })`;
+    const index = islands.push(node) - 1;
+    return `jsx(PublisleIsland, { activation: ${js(node.activation)}, label: ${js(node.label)}, props: publisleIslandProps${index}, load: publisleIslandLoad${index}, exportName: ${js(node.exportName)}, fallback: ${node.fallback.length > 1 ? "jsxs" : "jsx"}(Fragment, { children: ${emitChildren(node.fallback, islands, components)} }) })`;
   }
   if (node.kind === "component") {
     let index = components.findIndex(
@@ -39,7 +39,7 @@ function emitNode(
   const children = node.children.length
     ? `, children: ${emitChildren(node.children, islands, components)}`
     : "";
-  return `jsx(${js(node.tag)}, { ...${js(attributes)}${children} })`;
+  return `${node.children.length > 1 ? "jsxs" : "jsx"}(${js(node.tag)}, { ...${js(attributes)}${children} })`;
 }
 
 function emitChildren(
@@ -65,6 +65,12 @@ export const reactTarget: AdapterTarget = {
           `import { ${js(node.exportName)} as PublisleStatic${index} } from ${js(node.module)};`,
       )
       .join("\n");
-    return `import { Fragment } from "react";\nimport { jsx } from "react/jsx-runtime";\n${imports}\n${islands.length ? 'import { PublisleIsland } from "@publisle/adapter-react/runtime";' : ""}\nexport const document = ${js(plan.document)};\nexport const metadata = ${js(plan.metadata ?? null)};\nexport const diagnostics = ${js(plan.diagnostics)};\nexport default function PublisleMarkdown(){ return jsx(Fragment, { children: ${body} }); }\n`;
+    const islandConstants = islands
+      .map(
+        (node, index) =>
+          `const publisleIslandProps${index} = ${js(node.props)};\nconst publisleIslandLoad${index} = () => import(${js(node.module)});`,
+      )
+      .join("\n");
+    return `import { Fragment } from "react";\nimport { jsx, jsxs } from "react/jsx-runtime";\n${imports}\n${islands.length ? 'import { PublisleIsland } from "@publisle/adapter-react/runtime";' : ""}\n${islandConstants}\nexport const document = ${js(plan.document)};\nexport const metadata = ${js(plan.metadata ?? null)};\nexport const diagnostics = ${js(plan.diagnostics)};\nexport default function PublisleMarkdown(){ return ${plan.nodes.length > 1 ? "jsxs" : "jsx"}(Fragment, { children: ${body} }); }\n`;
   },
 };

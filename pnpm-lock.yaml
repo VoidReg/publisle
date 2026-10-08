@@ -231,6 +231,9 @@ importers:
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
       prettier:
         specifier: ^3.9.8
         version: 3.9.8

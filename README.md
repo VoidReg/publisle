@@ -415,3 +415,45 @@ pnpm --filter @publisle/playground-svelte dev
 ```
 
 They let you assemble an article from blocks, preview it live, and import/export Markdown or JSON.
+
+## Verification
+
+`pnpm check` runs type checking, lint, formatting, unit/build-fixture tests, and
+all example/playground production builds. Real-browser adapter acceptance runs
+separately, and both commands are required by CI:
+
+```bash
+pnpm exec playwright-core install --with-deps chromium
+pnpm test:acceptance
+```
+
+The browser suite uses isolated, minified Vite production fixtures for React and
+Svelte with SSR followed by hydration. It checks static-only bundle boundaries,
+referenced-only island implementations, all activation intents, readable no-JS
+fallbacks, shared loading with independent state, native cleanup, load/export
+failures, pending-load cancellation, resource/artifact identities, structural
+versus profile validity, and coexistence with host components. Hosts retain
+control of head, metadata, routing, and global state. Visibility and idle
+scheduling are controlled deterministically; these are correctness/bundle tests,
+not simulated-device performance benchmarks.
+
+Acceptance output reports total bundled/gzip bytes alongside separate framework,
+Publisle, host, and bundler **rendered module bytes**. Module attribution is a
+bundler diagnostic, not an additive breakdown of minified or compressed bytes.
+No framework shell bytes count as Publisle overhead. Static-only fixtures assert
+zero Publisle runtime/tooling modules and zero attributed Publisle module bytes;
+island fixtures allow only the native adapter runtime and island controller,
+not schemas, migrations, Markdown codecs, or editor code. Vite's automatic module
+preload links are disabled in these fixtures so host-head assertions measure
+adapter behavior rather than bundler asset-hint policy.
+
+CI uses the Chromium revision matched to the pinned development-only Playwright
+dependency. Locally, set `PUBLISLE_BROWSER_PATH` to a compatible Chromium executable
+if desired; installed Google Chrome on Linux is used automatically outside CI.
+Browser tests never silently skip when a browser is missing. Fixture servers,
+browsers, and temporary build directories are cleaned up after each run.
+
+Generated React islands retain stable props/loaders across host rerenders while
+each instance has its own payload/state. Island controllers coalesce overlapping
+activation, retain readable fallback on failure, avoid mounting after destruction,
+and perform idempotent cleanup even when a host mount returns no instance handle.
