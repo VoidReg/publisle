@@ -346,3 +346,17 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+/* Derived host-owned diagrams work identically on screen and in print. */
+.preview .demo-mermaid-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  background: transparent;
+  color-scheme: inherit;
+}
+
+/* Printed SVG images should use the light palette even on a dark-mode device. */
+.preview .publisle-diagram-print .demo-mermaid-svg {
+  color-scheme: light;
+}

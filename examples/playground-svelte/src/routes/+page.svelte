@@ -5,6 +5,7 @@
   import "@publisle/adapter-core/katex.css";
   import { prepare } from "@publisle/core";
   import type { Diagnostic } from "@publisle/schema";
+  import { createMermaidPreview, mermaidSources } from "@publisle/playground-core/mermaid";
   import {
     BLOCK_TYPES,
     BLOCK_LABELS,
@@ -21,6 +22,8 @@
   };
 
   const editor = new DocumentEditor();
+  const diagrams = createMermaidPreview();
+  let diagramStatus = $state(diagrams.getSnapshot());
   let current = $state(editor.document);
   let diagnostics = $state<readonly Diagnostic[]>([]);
   let payloadFormatting = $state<"pretty" | "compact">("pretty");
@@ -33,10 +36,18 @@
     });
   });
 
+  $effect(() => {
+    const unsubscribe = diagrams.subscribe(() => { diagramStatus = diagrams.getSnapshot(); });
+    return () => { unsubscribe(); diagrams.dispose(); };
+  });
+  $effect(() => { diagrams.update(mermaidSources(current)); });
+
   const publication = $derived.by(() => {
+    // Rendering completion invalidates the synchronous publication compiler.
+    void diagramStatus;
     const prepared = prepare(current, { registry: editor.registry });
     if (!prepared.document) return undefined;
-    return compilePublication(prepared.document);
+    return compilePublication(prepared.document, { diagramRenderers: { mermaid: diagrams.rendererFor(prepared.document) } });
   });
 
   function download(filename: string, content: string, type = "text/markdown") {
@@ -161,6 +172,13 @@
 
     <aside class="preview">
       <h2>Preview</h2>
+      {#if diagramStatus.pending > 0}<p role="status">Rendering {diagramStatus.pending} diagram(s)…</p>{/if}
+      {#if diagramStatus.errors.length > 0}
+        <div role="status">
+          {#each diagramStatus.errors as error}<p>{error.message}</p>{/each}
+          <button type="button" onclick={() => diagrams.retry()}>Retry diagrams</button>
+        </div>
+      {/if}
       {#if publication}
         <PublisleArticle {publication} instanceId="primary" {implementations} />
       {:else}

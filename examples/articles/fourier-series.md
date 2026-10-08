@@ -197,6 +197,30 @@ For finite sums, this derivation uses ordinary algebra and integration. For an i
 2. If $f$ is odd, $f(x)\cos(nx)$ is odd, so every $a_n$, including $a_0$, vanishes.
 3. For the remaining even integrand, replace an integral over $[-\pi,\pi]$ by twice the integral over $[0,\pi]$.
 
+Use :ref[]{target="diagram:symmetry"} before calculating any integrals. Symmetry can eliminate whole families of coefficients, but it does not determine the values of the surviving ones.
+
+::::diagram{engine="mermaid" label="diagram:symmetry" alt="Check the function's parity. Even functions have no sine coefficients; odd functions have no constant or cosine coefficients; functions with neither symmetry require both families."}
+
+```mermaid
+flowchart TD
+  F[Periodic function on a symmetric interval] --> P{Which parity?}
+  P -->|Even| E[All sine coefficients vanish]
+  P -->|Odd| O[Constant and cosine coefficients vanish]
+  P -->|Neither| B[Compute both coefficient families]
+  E --> C[Integrate the remaining even products over half a period and double]
+  O --> C
+  B --> A[Use the full-period coefficient formulas]
+```
+
+:::caption
+Choose the coefficient calculation from the function's symmetry, not from the shape of an individual harmonic.
+:::
+
+:::fallback
+For an even function, set every sine coefficient to zero. For an odd function, set the constant and cosine coefficients to zero. In either case, double the remaining integral over the positive half-period. With neither symmetry, use the full-period formulas for both families.
+:::
+::::
+
 :::callout{variant="warning" title="A coefficient is not a point sample"}
 The false shortcut ~~$b_n=f(n)$~~ confuses frequency coordinates with function values. A coefficient summarizes correlation with an entire mode over the interval.
 :::
@@ -291,6 +315,31 @@ At $x_0=0$ for our square wave, that value is zero. In fact every partial sine s
 Near a jump, the partial sums overshoot and undershoot. Adding modes squeezes the oscillation region closer to the jump, but the limiting relative height of the first overshoot does not vanish. This behavior is the **Gibbs phenomenon**.
 
 The apparently paradoxical combination is valid: persistent local peaks can occupy a shrinking region while the integral of squared error tends to zero. A photograph of a peak and a global error measurement answer different questions.
+
+::::diagram{engine="mermaid" label="diagram:convergence" alt="Increasing the square-wave Fourier cutoff gives convergence at fixed points to the midpoint at jumps and to the function elsewhere, and vanishing total squared error, but not uniform convergence over a period containing jumps."}
+
+```mermaid
+flowchart TD
+  N[Increase the square-wave frequency cutoff] --> P[Observe a fixed point]
+  N --> U[Measure the largest error over a period]
+  N --> M[Integrate the squared error]
+  P --> J{Is the point a jump?}
+  J -->|Yes| A[Partial sums approach the midpoint of the two limits]
+  J -->|No| V[Partial sums approach the function value]
+  U --> G[Uniform convergence fails on a period containing jumps]
+  M --> Z[Total squared error tends to zero]
+```
+
+:::caption
+Three tests of convergence applied to this square wave. A shrinking region of Gibbs oscillations is compatible with vanishing mean-square error.
+:::
+
+:::fallback
+At a fixed continuity point the partial sums approach the square wave; at a jump they approach the midpoint of the one-sided limits. The integrated squared error tends to zero. The largest error over an entire period does not tend to zero, so convergence is not uniform there.
+:::
+::::
+
+The branches in :ref[]{target="diagram:convergence"} describe different measurements of the same partial sum, not competing predictions.
 
 :::callout{variant="note" title="More resolution is not the same as more uniform accuracy"}
 Increasing the number of Fourier modes sharpens the transition. Increasing the number of plotting samples merely helps you see the existing partial sum. Neither operation removes the discontinuity of the target.
@@ -456,7 +505,9 @@ Do not silently replace this continuous Fourier series with the discrete Fourier
 
 ## 9. Editable diagrams of the same argument
 
-The following blocks retain editable sources as well as accessible textual fallbacks. A host can render their respective engines; a host without an engine still shows the fallback and source. They are explanatory diagrams, not additional numerical solvers.
+The symmetry and convergence diagrams above, together with the workflow below, retain native Mermaid source, stable labels, captions, and accessible textual fallbacks. In the React and Svelte playgrounds they render as site-themed SVGs, including light/dark and print styles. Edit a diagram's source to explore a different explanation; the host loads the engine only when an uncached source needs rendering.
+
+The other engine examples demonstrate the portable diagram contract. This playground does not render Graphviz, WaveDrom, PlantUML, or the custom engine, so their authored fallbacks are intentional. None of these diagrams is an additional numerical solver.
 
 ::::diagram{engine="mermaid" label="diagram:workflow" alt="A periodic function is projected onto modes, coefficients produce a partial sum, and the residual is checked by energy."}
 
@@ -464,17 +515,22 @@ The following blocks retain editable sources as well as accessible textual fallb
 flowchart LR
   F[Periodic function] --> I[Inner products with modes]
   I --> C[Fourier coefficients]
-  C --> S[Partial sum]
-  S --> R[Residual]
-  R --> E[Energy check]
+  C --> S[Retain frequencies through the cutoff]
+  S --> P[Assemble the partial sum]
+  F --> R[Subtract the partial sum from the function]
+  P --> R
+  R --> E[Measure residual energy]
+  C --> T[Sum squared omitted coefficients]
+  T --> K[Compare using Parseval]
+  E --> K
 ```
 
 :::caption
-A computational route from the function to its approximation.
+A computational route from the function to its approximation, with independent routes to the same residual energy. The omitted energy includes both sine and cosine coefficients beyond the cutoff.
 :::
 
 :::fallback
-Compute inner products to obtain coefficients, assemble a finite sum, and measure the remaining error. Compare the error with the omitted energy.
+Compute inner products to obtain coefficients and retain frequencies through the cutoff to assemble a finite sum. Subtract that sum from the original function and integrate the squared residual. Independently sum the squared omitted coefficients; Parseval identifies this tail with the residual energy under the article's normalization.
 :::
 ::::
 
