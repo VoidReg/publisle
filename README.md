@@ -7,6 +7,10 @@ interactive explanations. Author content as Markdown or typed JSON, validate it
 against a portable schema, and publish it through React or Svelte adapters.
 Your application keeps control of layout, navigation, routing, and page metadata.
 
+The tool is in beta: existing version numbers remain frozen while contracts evolve.
+See the [beta standards](docs/standards/README.md) and [preparation-only contract tooling](docs/guides/contracts.md)
+for the implemented portable subset and its limitations.
+
 ## What it solves
 
 Rich articles often become tied to a framework, hide their interactive data

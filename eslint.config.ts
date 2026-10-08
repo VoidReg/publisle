@@ -22,6 +22,7 @@ export default defineConfig(
   {
     files: [
       "packages/schema/**/*.ts",
+      "packages/contracts/src/**/*.ts",
       "packages/core/src/**/*.ts",
       "packages/block-sdk/**/*.ts",
     ],

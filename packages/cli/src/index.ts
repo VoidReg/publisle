@@ -8,6 +8,8 @@ import {
 import {
   locateDiagnostic,
   parseDocument,
+  parseJson,
+  JsonBoundaryError,
   SchemaParseError,
   type Diagnostic,
   type Document,
@@ -90,7 +92,7 @@ export function processSource(
       input = imported.document;
       sourceMap = imported.sourceMap;
     } else {
-      const raw: unknown = JSON.parse(source);
+      const raw: unknown = parseJson(source);
       input = parseDocument(raw);
       // Parsing intentionally models only portable fields. An upgrade must not
       // silently discard unmodeled author data at the envelope/block boundary.
@@ -200,7 +202,7 @@ export function processSource(
     return { diagnostics, output: exported.markdown };
   } catch (cause) {
     return error(
-      cause instanceof SchemaParseError
+      cause instanceof SchemaParseError || cause instanceof JsonBoundaryError
         ? cause.code
         : "source-operation-failed",
       cause instanceof Error ? cause.message : "Source processing failed.",

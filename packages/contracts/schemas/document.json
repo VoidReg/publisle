@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:publisle:schema:document",
+  "title": "Publisle beta document",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "metadata": {
+      "$ref": "urn:publisle:schema:metadata"
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:publisle:schema:block"
+      }
+    }
+  },
+  "required": ["schemaVersion", "blocks"],
+  "additionalProperties": false
+}

@@ -49,6 +49,25 @@ describe("Node CLI safety and entrypoint", () => {
     return { code, stdout, stderr };
   }
 
+  it("rejects invalid UTF-8 without replacing source bytes", async () => {
+    const bytes = new Uint8Array([0xc3, 0x28]);
+    await writeFile(file, bytes);
+    const result = await invoke(["upgrade", file, "--in-place"]);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("invalid-json-unicode");
+    expect(result.stdout).toBe("");
+    expect(new Uint8Array(await readFile(file))).toEqual(bytes);
+  });
+
+  it("rejects duplicate JSON names before an in-place upgrade can write", async () => {
+    const duplicate = '{"schemaVersion":1,"schemaVersion":1,"blocks":[]}';
+    await writeFile(file, duplicate);
+    const result = await invoke(["upgrade", file, "--in-place"]);
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("duplicate-json-member");
+    expect(await readFile(file, "utf8")).toBe(duplicate);
+  });
+
   it("loads explicit TS host config and validates without changing source bytes", async () => {
     const result = await invoke(["validate", file, "--config", host]);
     expect(result.code).toBe(0);
