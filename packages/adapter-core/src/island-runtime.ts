@@ -25,20 +25,30 @@ export function createIslandController(
   options: IslandMountOptions,
 ): IslandController {
   let instance: unknown;
+  let mounted = false;
+  let pending: Promise<void> | undefined;
   let destroyed = false;
   let cleanup = (): void => undefined;
   const scope = options.scope ?? options.fallback;
-  const activate = async (): Promise<void> => {
-    if (destroyed || instance !== undefined) return;
-    try {
-      const module = await options.load();
-      if (destroyed) return;
-      instance = options.mount(module, options.root, options.props);
-      options.root.hidden = false;
-      options.fallback.hidden = true;
-    } catch (error) {
-      options.onError?.(error);
-    }
+  const activate = (): Promise<void> => {
+    if (destroyed || mounted) return Promise.resolve();
+    if (pending) return pending;
+    pending = (async () => {
+      try {
+        const module = await options.load();
+        if (destroyed) return;
+        instance = options.mount(module, options.root, options.props);
+        mounted = true;
+        cleanup();
+        options.root.hidden = false;
+        options.fallback.hidden = true;
+      } catch (error) {
+        options.onError?.(error);
+      }
+    })().finally(() => {
+      pending = undefined;
+    });
+    return pending;
   };
   if (options.activation === "load") void activate();
   else if (
@@ -84,9 +94,13 @@ export function createIslandController(
   return {
     activate,
     destroy() {
+      if (destroyed) return;
       destroyed = true;
       cleanup();
-      if (instance !== undefined) options.unmount(instance);
+      if (mounted) {
+        mounted = false;
+        options.unmount(instance);
+      }
     },
   };
 }

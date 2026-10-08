@@ -19,6 +19,80 @@ class ElementStub {
 }
 
 describe("createIslandController", () => {
+  it("coalesces overlapping activation and destroys a mounted instance only once", async () => {
+    const root = new ElementStub();
+    const fallback = new ElementStub();
+    let resolve: (value: unknown) => void = () => undefined;
+    const loaded = new Promise<unknown>((done) => {
+      resolve = done;
+    });
+    const load = vi.fn(() => loaded);
+    const mount = vi.fn(() => ({ instance: true }));
+    const unmount = vi.fn();
+    const controller = createIslandController({
+      root: root as unknown as HTMLElement,
+      fallback: fallback as unknown as HTMLElement,
+      activation: "interaction",
+      props: {},
+      load,
+      mount,
+      unmount,
+    });
+    const first = controller.activate();
+    const second = controller.activate();
+    resolve({ default: "component" });
+    await Promise.all([first, second]);
+    expect(load).toHaveBeenCalledOnce();
+    expect(mount).toHaveBeenCalledOnce();
+    controller.destroy();
+    controller.destroy();
+    expect(unmount).toHaveBeenCalledOnce();
+  });
+
+  it("tracks successful mounts even when a host returns an undefined instance", async () => {
+    const mount = vi.fn(() => undefined);
+    const unmount = vi.fn();
+    const controller = createIslandController({
+      root: new ElementStub() as unknown as HTMLElement,
+      fallback: new ElementStub() as unknown as HTMLElement,
+      activation: "interaction",
+      props: {},
+      load: () => Promise.resolve({}),
+      mount,
+      unmount,
+    });
+    await controller.activate();
+    await controller.activate();
+    controller.destroy();
+    expect(mount).toHaveBeenCalledOnce();
+    expect(unmount).toHaveBeenCalledExactlyOnceWith(undefined);
+  });
+
+  it("retains fallback and reports failed activation", async () => {
+    const root = new ElementStub();
+    root.hidden = true;
+    const fallback = new ElementStub();
+    const error = new Error("Module unavailable");
+    const onError = vi.fn();
+    const mount = vi.fn();
+    const controller = createIslandController({
+      root: root as unknown as HTMLElement,
+      fallback: fallback as unknown as HTMLElement,
+      activation: "interaction",
+      props: {},
+      load: () => Promise.reject(error),
+      mount,
+      unmount: vi.fn(),
+      onError,
+    });
+    await controller.activate();
+    expect(mount).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(error);
+    expect(root.hidden).toBe(true);
+    expect(fallback.hidden).toBe(false);
+    controller.destroy();
+  });
+
   it("activates interaction islands from the explicit control", async () => {
     const root = new ElementStub();
     root.hidden = true;
