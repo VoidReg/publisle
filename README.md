@@ -29,6 +29,13 @@ remain references; export does not fetch or inline external resources. Payloads
 describe instance data, while the user-defined block contract documents how its
 renderer interprets that data. Neither format infers arbitrary renderer behavior.
 
+For blocks without a native Markdown mapping, both `policy: "warn"` and
+`policy: "fallback"` emit a warning and preserve the block in a generic Publisle
+directive, including its ID, type, schema version, and JSON data. `fallback` is
+the default. `policy: "strict"` instead returns error diagnostics without Markdown.
+`warn` does not omit unsupported blocks; preservation does not provide a renderer
+for an unavailable plugin.
+
 The React and Svelte playgrounds include a **3D Scene** example with orbit,
 selection, and camera reset controls. Its schema and Three.js renderer belong
 entirely to the host-side [scene demo](examples/scene-demo/README.md); Publisle
