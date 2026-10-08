@@ -168,9 +168,17 @@ below level 1). It recognizes an abstract heading named **Abstract** or labeled
 `abstract`, immediately followed by a nonempty prose paragraph. For other titles,
 use `researchPaperProfile({ abstractLabel: "sec:summary" })`. Metadata descriptions
 are not abstracts; this profile does not assess scientific quality or infer an
-abstract from arbitrary custom blocks. Explicit empty figure alt remains a
-decorative choice. Missing figure alt is still a structural error until the
-separate figure-alt policy change; a profile cannot override that error.
+abstract from arbitrary custom blocks. Figure alt is structurally optional:
+omission means undescribed, while an explicit empty string marks a decorative
+image. Missing descriptions render a visible "Figure description missing."
+notice and nonempty placeholder alt, without changing the source document.
+Use `accessibilityProfile()` from `@publisle/profiles` to check missing figure
+descriptions without research-paper conventions; it is not a comprehensive
+accessibility audit. Both profiles report `missing-alternative-text` (warning
+by default), configurable through `diagnosticPolicy`. Invalid non-string alt
+remains a structural error. Native Markdown export preserves missing alt in a
+figure directive; standard Markdown uses placeholder alt and reports semantic
+loss as usual.
 
 Custom profiles implement the `PublicationProfile` contract exported by schema,
 core, and profiles. Give them a stable name and bump their optional `version`

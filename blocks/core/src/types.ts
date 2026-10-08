@@ -102,7 +102,8 @@ export interface DownloadableResource {
 }
 export interface FigureData {
   readonly src: string;
-  readonly alt: string;
+  /** Omitted means undescribed; an explicit empty string marks a decorative image. */
+  readonly alt?: string;
   readonly title?: string;
   readonly label?: string;
   readonly caption?: readonly FlowNode[];

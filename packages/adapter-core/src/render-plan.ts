@@ -645,9 +645,19 @@ function blockNodes(
           [
             element(
               "img",
-              { ...(src ? { src } : {}), alt: String(data["alt"] ?? "") },
+              {
+                ...(src ? { src } : {}),
+                alt: String(data["alt"] ?? "Figure description missing."),
+              },
               [],
             ),
+            ...(data["alt"] === undefined
+              ? [
+                  element("p", { class: "publisle-figure-missing-alt" }, [
+                    text("Figure description missing."),
+                  ]),
+                ]
+              : []),
             ...(reference || Array.isArray(data["caption"])
               ? [
                   element("figcaption", {}, [

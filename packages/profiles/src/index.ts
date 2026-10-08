@@ -25,12 +25,35 @@ function plainText(value: unknown): string {
     .join("");
 }
 
+/** Checks figure descriptions only; not a comprehensive accessibility audit. */
+export function accessibilityProfile(): PublicationProfile {
+  return {
+    name: "accessibility",
+    version: "1",
+    inspect(document) {
+      return document.blocks.flatMap((block): Diagnostic[] =>
+        block.type === "publisle:figure" &&
+        record(block.data)["alt"] === undefined
+          ? [
+              {
+                level: "warning",
+                code: "missing-alternative-text",
+                message: "A figure is missing alternative text.",
+                blockId: block.id,
+              },
+            ]
+          : [],
+      );
+    },
+  };
+}
+
 export function researchPaperProfile(
   options: ResearchPaperProfileOptions = {},
 ): PublicationProfile {
   return {
     name: "research-paper",
-    version: JSON.stringify(["1", options.abstractLabel ?? null]),
+    version: JSON.stringify(["2", options.abstractLabel ?? null]),
     inspect(document) {
       const diagnostics: Diagnostic[] = [];
       if (!document.metadata?.title?.trim())
@@ -82,15 +105,8 @@ export function researchPaperProfile(
           )
             hasAbstract = true;
         }
-        if (block.type === "publisle:figure" && data["alt"] === undefined) {
-          diagnostics.push({
-            level: "warning",
-            code: "missing-alternative-text",
-            message: "A research-paper figure should provide alternative text.",
-            blockId: block.id,
-          });
-        }
       }
+      diagnostics.push(...accessibilityProfile().inspect(document));
       if (!hasAbstract)
         diagnostics.push({
           level: "warning",

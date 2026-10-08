@@ -261,7 +261,7 @@ function standardExtension(block: AnyBlock): RootContent[] | undefined {
         {
           type: "image",
           url: String(value["src"] ?? ""),
-          alt: String(value["alt"] ?? ""),
+          alt: String(value["alt"] ?? "Figure description missing."),
           ...(typeof value["title"] === "string"
             ? { title: value["title"] }
             : {}),
@@ -409,14 +409,20 @@ function knownBlock(
     case "publisle:figure": {
       const value = data<{
         src: string;
-        alt: string;
+        alt?: string;
         title?: string;
         label?: string;
         caption?: readonly FlowNode[];
         credit?: readonly InlineNode[];
         original?: { src: string; mediaType?: string; filename?: string };
       }>(block);
-      if (!value.caption && !value.credit && !value.label && !value.original)
+      if (
+        value.alt !== undefined &&
+        !value.caption &&
+        !value.credit &&
+        !value.label &&
+        !value.original
+      )
         return {
           type: "paragraph",
           children: [
@@ -433,7 +439,7 @@ function knownBlock(
         name: "figure",
         attributes: {
           src: value.src,
-          alt: value.alt,
+          ...(value.alt === undefined ? {} : { alt: value.alt }),
           ...(value.title === undefined ? {} : { title: value.title }),
           ...(value.label === undefined ? {} : { label: value.label }),
           ...(value.original === undefined

@@ -165,14 +165,11 @@ export const figureDefinition = definePortableBlock({
   schema: {
     parse(value): FigureData {
       const data = record(value, "figure");
-      if (data["alt"] === undefined)
-        throw new SchemaParseError(
-          "invalid-block-data",
-          "figure.alt is required.",
-        );
       return {
         src: string(data["src"], "figure.src"),
-        alt: string(data["alt"], "figure.alt"),
+        ...(data["alt"] === undefined
+          ? {}
+          : { alt: string(data["alt"], "figure.alt") }),
         ...optionalString(data, "title"),
         ...optionalLabel(data),
         ...(data["caption"] === undefined
