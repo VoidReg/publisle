@@ -660,7 +660,7 @@ export function toMarkdown(
       message: `No native Markdown codec is registered for ${block.type}.`,
       blockId: block.id,
     });
-    if (policy !== "warn") nodes.push(generic(block));
+    nodes.push(generic(block));
   }
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };

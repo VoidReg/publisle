@@ -4,6 +4,80 @@ import { createBlock, document } from "@publisle/schema";
 
 const fence = "`".repeat(3);
 
+describe("unsupported block export policies", () => {
+  const first = createBlock({
+    type: "acme:experiment",
+    schemaVersion: 3,
+    data: {
+      title: "An unavailable experiment",
+      measurements: [{ frequency: 3, values: [1, null, 2.5] }],
+      enabled: true,
+      source: "```\n:::publisle\n**Keep this payload**",
+    },
+  });
+  const second = createBlock({
+    type: "acme:dataset",
+    schemaVersion: 2,
+    data: ["retained", false, null, { units: "Hz" }],
+  });
+  const input = document({
+    blocks: [
+      first,
+      createBlock({
+        type: "publisle:paragraph",
+        data: { content: [{ type: "text", value: "Between the blocks." }] },
+      }),
+      second,
+    ],
+  });
+
+  it.each(["warn", "fallback", "standard"] as const)(
+    "preserves unsupported blocks and their order under %s",
+    (policy) => {
+      const exported = toMarkdown(input, { policy });
+      expect(exported.markdown).toBeDefined();
+      expect(exported.diagnostics).toEqual(
+        [first, second].map((block) => ({
+          level: "warning",
+          code: "unsupported-markdown-block",
+          message: `No native Markdown codec is registered for ${block.type}.`,
+          blockId: block.id,
+        })),
+      );
+      const imported = fromMarkdown(exported.markdown!);
+      expect(imported.diagnostics).toEqual([]);
+      expect(imported.document?.blocks.map((block) => block.type)).toEqual(
+        input.blocks.map((block) => block.type),
+      );
+      expect(imported.document?.blocks[0]).toEqual(first);
+      expect(imported.document?.blocks[1]?.data).toEqual(input.blocks[1]?.data);
+      expect(imported.document?.blocks[2]).toEqual(second);
+      expect(toMarkdown(imported.document!, { policy }).markdown).toBe(
+        exported.markdown,
+      );
+    },
+  );
+
+  it("keeps generic preservation as the default export policy", () => {
+    expect(toMarkdown(input)).toEqual(
+      toMarkdown(input, { policy: "fallback" }),
+    );
+  });
+
+  it("fails strict export instead of returning partial Markdown", () => {
+    const exported = toMarkdown(input, { policy: "strict" });
+    expect(exported.markdown).toBeUndefined();
+    expect(exported.diagnostics).toEqual(
+      [first, second].map((block) => ({
+        level: "error",
+        code: "unsupported-markdown-block",
+        message: `No native Markdown codec is registered for ${block.type}.`,
+        blockId: block.id,
+      })),
+    );
+  });
+});
+
 describe("inline payload formatting", () => {
   it("preserves nested JSON, Markdown formatting and fence-like strings in both modes", () => {
     const input = document({
