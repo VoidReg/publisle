@@ -100,6 +100,52 @@ Observe the output on each clock edge.
 
 ## Publication
 
+### Optional conformance profiles
+
+Preparation enforces structural integrity by default. Publication conventions
+are opt-in and can be configured at a server/build boundary:
+
+```ts
+import { prepare } from "@publisle/core";
+import { researchPaperProfile } from "@publisle/profiles";
+
+const result = prepare(document, {
+  registry,
+  profiles: [researchPaperProfile()],
+  diagnosticPolicy: {
+    "missing-abstract": "warning",
+    "missing-affiliation": "info",
+  },
+});
+```
+
+Profile diagnostics include their profile name. Policy maps diagnostic codes to
+`info`, `warning`, or `error` and applies only to profile findings: structural
+errors cannot be downgraded. Profile warnings/info allow a prepared document;
+profile errors prevent publication. Inspectors run after successful structural
+preparation, receive independent deeply frozen normalized semantic snapshots,
+and cannot rewrite source or prepared content. Inspector failures are reported as
+fatal `profile-inspection-failed` diagnostics and cannot be suppressed by policy.
+Profiles are trusted host code, not a sandbox for arbitrary JavaScript.
+
+The research-paper profile checks nonblank titles, authors, author affiliations,
+missing figure alternative text, and top-level heading jumps (including starting
+below level 1). It recognizes an abstract heading named **Abstract** or labeled
+`abstract`, immediately followed by a nonempty prose paragraph. For other titles,
+use `researchPaperProfile({ abstractLabel: "sec:summary" })`. Metadata descriptions
+are not abstracts; this profile does not assess scientific quality or infer an
+abstract from arbitrary custom blocks. Explicit empty figure alt remains a
+decorative choice. Missing figure alt is still a structural error until the
+separate figure-alt policy change; a profile cannot override that error.
+
+Custom profiles implement the `PublicationProfile` contract exported by schema,
+core, and profiles. Give them a stable name and bump their optional `version`
+(default `"1"`) when inspection behavior or configuration changes; profile
+identities and policy participate in preparation cache identity. No profile is
+serialized into the document. The same `profiles` and `diagnosticPolicy` options
+are accepted by Vite adapters, which expose warnings in compiled diagnostics and
+fail the build on errors without shipping inspectors to readers.
+
 `publislePublication` compiles each Markdown module into a publication artifact. The host renders that artifact with `PublisleArticle` and supplies island implementations at runtime. `publisleSvelte()` and `publisleReact()` remain available when a project wants native Svelte or React components instead of a publication fragment.
 
 ### Native static components

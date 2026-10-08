@@ -60,9 +60,7 @@ export function createPublisleVitePlugin(options: PublisleViteOptions): Plugin {
           imported.diagnostics.map(({ message }) => message).join("\n"),
         );
       }
-      const prepared = prepare(sourceDocument, {
-        registry: options.registry,
-      });
+      const prepared = prepare(sourceDocument, options);
       const preparedDocument = prepared.document;
       if (!preparedDocument) {
         return this.error(
@@ -76,7 +74,17 @@ export function createPublisleVitePlugin(options: PublisleViteOptions): Plugin {
         ...options,
         renderers,
       });
-      return options.target.emitModule(plan, { source, filename });
+      return options.target.emitModule(
+        {
+          ...plan,
+          diagnostics: [
+            ...imported.diagnostics,
+            ...prepared.diagnostics,
+            ...plan.diagnostics,
+          ],
+        },
+        { source, filename },
+      );
     },
   };
 }

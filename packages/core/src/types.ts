@@ -3,6 +3,8 @@ import type {
   Block,
   BlockDefinition,
   JsonValue,
+  DiagnosticPolicy,
+  PublicationProfile,
   ResourceReference,
 } from "@publisle/schema";
 
@@ -43,6 +45,8 @@ export interface BlockRegistry {
 export interface PrepareOptions {
   readonly registry: BlockRegistry;
   readonly unknownBlocks?: "preserve" | "error";
+  readonly profiles?: readonly PublicationProfile[];
+  readonly diagnosticPolicy?: DiagnosticPolicy;
 }
 
 export interface PreparedKnownBlock extends Block {
