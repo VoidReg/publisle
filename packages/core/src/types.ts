@@ -8,6 +8,8 @@ import type {
   DocumentSourceMap,
   PublicationProfile,
   ResourceReference,
+  TraversalDeclaration,
+  SemanticDeclaration,
 } from "@publisle/schema";
 
 export interface BlockMigration {
@@ -33,6 +35,8 @@ export interface PortableBlockDefinition<
   Data = JsonValue,
   SchemaVersion extends number = number,
 > extends BlockDefinition<Type, Data, SchemaVersion> {
+  readonly traversal?: TraversalDeclaration;
+  readonly semantics?: SemanticDeclaration;
   readonly defaults?: Partial<Data>;
   readonly migrations?: readonly BlockMigration[];
   normalize?(data: Data): Data;
@@ -53,7 +57,7 @@ export interface BlockRegistry {
 }
 
 export interface RegistryOptions {
-  /** Bump when schemas/defaults/migrations/normalization/resource or island behavior changes. */
+  /** Host identity for opaque preparation behavior; frozen beta versions are not revision IDs. */
   readonly preparationVersion?: string;
 }
 

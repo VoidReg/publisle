@@ -1,10 +1,50 @@
-import type { Diagnostic, PublicationProfile } from "@publisle/schema";
+import type {
+  Diagnostic,
+  PublicationProfile,
+  ProfileContext,
+  Block,
+  Document,
+} from "@publisle/schema";
 
 export type { PublicationProfile } from "@publisle/schema";
 
 export interface ResearchPaperProfileOptions {
   /** Match this heading label instead of the default "Abstract" title/"abstract" label. */
   readonly abstractLabel?: string;
+}
+
+function contentBlocks(
+  document: Document<Block<`${string}:${string}`, unknown>>,
+  context?: ProfileContext,
+) {
+  return context
+    ? context.traversal
+        .filter(
+          (visit) =>
+            visit.kind === "node" &&
+            [
+              "heading",
+              "paragraph",
+              "figure",
+              "table",
+              "list",
+              "quote",
+              "code",
+              "math",
+              "diagram",
+              "callout",
+              "embed",
+              "divider",
+              "footnote",
+              "raw-html",
+            ].includes(visit.type ?? ""),
+        )
+        .map((visit) => ({
+          id: visit.blockId,
+          type: `publisle:${visit.type ?? ""}`,
+          data: visit.value,
+        }))
+    : document.blocks;
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -30,8 +70,8 @@ export function accessibilityProfile(): PublicationProfile {
   return {
     name: "accessibility",
     version: "1",
-    inspect(document) {
-      return document.blocks.flatMap((block): Diagnostic[] =>
+    inspect(document, context) {
+      return contentBlocks(document, context).flatMap((block): Diagnostic[] =>
         block.type === "publisle:figure" &&
         record(block.data)["alt"] === undefined
           ? [
@@ -54,7 +94,7 @@ export function researchPaperProfile(
   return {
     name: "research-paper",
     version: JSON.stringify(["2", options.abstractLabel ?? null]),
-    inspect(document) {
+    inspect(document, context) {
       const diagnostics: Diagnostic[] = [];
       if (!document.metadata?.title?.trim())
         diagnostics.push({
@@ -78,7 +118,8 @@ export function researchPaperProfile(
       }
       let hasAbstract = false;
       let previousLevel = 0;
-      for (const [index, block] of document.blocks.entries()) {
+      const blocks = contentBlocks(document, context);
+      for (const [index, block] of blocks.entries()) {
         const data = record(block.data);
         if (block.type === "publisle:heading") {
           const level = data["level"];
@@ -97,7 +138,7 @@ export function researchPaperProfile(
               ? data["label"] === "abstract" ||
                 plainText(data["content"]).trim().toLowerCase() === "abstract"
               : data["label"] === options.abstractLabel;
-          const next = document.blocks[index + 1];
+          const next = blocks[index + 1];
           if (
             abstractHeading &&
             next?.type === "publisle:paragraph" &&
@@ -106,7 +147,7 @@ export function researchPaperProfile(
             hasAbstract = true;
         }
       }
-      diagnostics.push(...accessibilityProfile().inspect(document));
+      diagnostics.push(...accessibilityProfile().inspect(document, context));
       if (!hasAbstract)
         diagnostics.push({
           level: "warning",

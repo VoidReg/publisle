@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:publisle:schema:semantics",
+  "type": "object",
+  "properties": {
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_:.-]*$(?![\\s\\S])"
+          },
+          "kind": {
+            "enum": [
+              "concept",
+              "quantity",
+              "input",
+              "output",
+              "action",
+              "state",
+              "view",
+              "assumption",
+              "evidence",
+              "relation"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "enum": ["authored", "declared-rule", "calculated-result"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "binding": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "reset": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "interpretation": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4096
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4096
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4096
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4096
+          },
+          "domain": {
+            "$ref": "urn:publisle:schema:json-value"
+          },
+          "default": {
+            "$ref": "urn:publisle:schema:json-value"
+          },
+          "initial": {
+            "$ref": "urn:publisle:schema:json-value"
+          },
+          "valueType": {
+            "enum": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "object",
+              "array",
+              "null"
+            ]
+          },
+          "transient": {
+            "type": "boolean"
+          },
+          "implementation": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "enum": ["declarative", "implementation-bound"]
+              },
+              "identity": {
+                "type": "string"
+              },
+              "limitation": {
+                "type": "string"
+              }
+            },
+            "required": ["status"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["id", "kind", "name", "origin"],
+        "additionalProperties": false
+      },
+      "maxItems": 4096
+    }
+  },
+  "required": ["entities"],
+  "additionalProperties": false
+}

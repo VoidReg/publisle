@@ -16,6 +16,10 @@ const interactiveSlots = new Set([
   "title",
   "description",
   "instructions",
+  "purpose",
+  "observations",
+  "assumptions",
+  "content-fallback",
   "fallback",
 ]);
 

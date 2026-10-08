@@ -1,4 +1,5 @@
 import { definePortableBlock } from "@publisle/block-sdk";
+import { coreTraversal } from "./traversal.ts";
 import { SchemaParseError } from "@publisle/schema";
 import {
   flowNodes,
@@ -69,6 +70,7 @@ function resource(value: unknown, label: string): DownloadableResource {
 
 export const paragraphDefinition = definePortableBlock({
   type: "publisle:paragraph",
+  traversal: coreTraversal("paragraph"),
   schemaVersion: 1,
   schema: {
     parse(value): ParagraphData {
@@ -79,6 +81,7 @@ export const paragraphDefinition = definePortableBlock({
 });
 export const headingDefinition = definePortableBlock({
   type: "publisle:heading",
+  traversal: coreTraversal("heading"),
   schemaVersion: 1,
   schema: {
     parse(value): HeadingData {
@@ -99,6 +102,7 @@ export const headingDefinition = definePortableBlock({
 });
 export const listDefinition = definePortableBlock({
   type: "publisle:list",
+  traversal: coreTraversal("list"),
   schemaVersion: 1,
   schema: {
     parse(value): ListData {
@@ -122,6 +126,7 @@ export const listDefinition = definePortableBlock({
 });
 export const quoteDefinition = definePortableBlock({
   type: "publisle:quote",
+  traversal: coreTraversal("quote"),
   schemaVersion: 1,
   schema: {
     parse(value): QuoteData {
@@ -131,6 +136,7 @@ export const quoteDefinition = definePortableBlock({
 });
 export const codeDefinition = definePortableBlock({
   type: "publisle:code",
+  traversal: coreTraversal("code"),
   schemaVersion: 1,
   schema: {
     parse(value): CodeData {
@@ -147,6 +153,7 @@ export const codeDefinition = definePortableBlock({
 });
 export const mathDefinition = definePortableBlock({
   type: "publisle:math",
+  traversal: coreTraversal("math"),
   schemaVersion: 1,
   schema: {
     parse(value): MathData {
@@ -161,6 +168,7 @@ export const mathDefinition = definePortableBlock({
 });
 export const figureDefinition = definePortableBlock({
   type: "publisle:figure",
+  traversal: coreTraversal("figure"),
   schemaVersion: 1,
   schema: {
     parse(value): FigureData {
@@ -184,13 +192,10 @@ export const figureDefinition = definePortableBlock({
       };
     },
   },
-  resources: (data) => [
-    { uri: data.src },
-    ...(data.original ? [{ uri: data.original.src }] : []),
-  ],
 });
 export const tableDefinition = definePortableBlock({
   type: "publisle:table",
+  traversal: coreTraversal("table"),
   schemaVersion: 1,
   schema: {
     parse(value): TableData {
@@ -238,6 +243,7 @@ export const tableDefinition = definePortableBlock({
 });
 export const embedDefinition = definePortableBlock({
   type: "publisle:embed",
+  traversal: coreTraversal("embed"),
   schemaVersion: 1,
   schema: {
     parse(value): EmbedData {
@@ -267,6 +273,7 @@ export const embedDefinition = definePortableBlock({
 });
 export const diagramDefinition = definePortableBlock({
   type: "publisle:diagram",
+  traversal: coreTraversal("diagram"),
   schemaVersion: 1,
   schema: {
     parse(value): DiagramData {
@@ -302,11 +309,10 @@ export const diagramDefinition = definePortableBlock({
       };
     },
   },
-  resources: (data) =>
-    data.printFallback ? [{ uri: data.printFallback.src }] : [],
 });
 export const calloutDefinition = definePortableBlock({
   type: "publisle:callout",
+  traversal: coreTraversal("callout"),
   schemaVersion: 1,
   schema: {
     parse(value): CalloutData {
@@ -321,6 +327,7 @@ export const calloutDefinition = definePortableBlock({
 });
 export const dividerDefinition = definePortableBlock({
   type: "publisle:divider",
+  traversal: coreTraversal("divider"),
   schemaVersion: 1,
   schema: {
     parse(value): Record<string, never> {
@@ -331,6 +338,7 @@ export const dividerDefinition = definePortableBlock({
 });
 export const footnoteDefinition = definePortableBlock({
   type: "publisle:footnote",
+  traversal: coreTraversal("footnote"),
   schemaVersion: 1,
   schema: {
     parse(value): FootnoteData {
@@ -344,6 +352,7 @@ export const footnoteDefinition = definePortableBlock({
 });
 export const rawHtmlDefinition = definePortableBlock({
   type: "publisle:raw-html",
+  traversal: coreTraversal("raw-html"),
   schemaVersion: 1,
   schema: {
     parse(value): RawHtmlData {

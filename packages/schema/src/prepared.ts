@@ -20,6 +20,15 @@ export interface InteractiveContent {
   readonly title?: readonly JsonValue[];
   readonly description?: readonly JsonValue[];
   readonly instructions?: readonly JsonValue[];
+  readonly purpose?: readonly JsonValue[];
+  readonly observations?: readonly JsonValue[];
+  readonly assumptions?: readonly JsonValue[];
+  readonly fallback?: readonly JsonValue[];
+  readonly presets?: readonly {
+    readonly id: string;
+    readonly binding?: string;
+    readonly description?: readonly JsonValue[];
+  }[];
 }
 
 export interface InteractiveAccessibility {
@@ -46,7 +55,16 @@ const envelopeKeys = new Set([
   "accessibility",
   "payload",
 ]);
-const contentKeys = new Set(["title", "description", "instructions"]);
+const contentKeys = new Set([
+  "title",
+  "description",
+  "instructions",
+  "purpose",
+  "observations",
+  "assumptions",
+  "fallback",
+  "presets",
+]);
 
 function isActivation(value: unknown): value is Activation {
   return typeof value === "string" && activations.has(value as Activation);
@@ -85,9 +103,9 @@ function structuralNodes(value: unknown, label: string): readonly JsonValue[] {
   });
 }
 
-function parseContent(
+export function parseInteractiveContent(
   value: unknown,
-  parsers: InteractiveContentParsers | undefined,
+  parsers?: InteractiveContentParsers,
 ): InteractiveContent {
   if (!isPlainObject(value)) {
     throw new SchemaParseError(
@@ -97,9 +115,7 @@ function parseContent(
   }
   rejectUnknown(value, contentKeys, "content");
   const content: {
-    title?: readonly JsonValue[];
-    description?: readonly JsonValue[];
-    instructions?: readonly JsonValue[];
+    -readonly [Key in keyof InteractiveContent]?: InteractiveContent[Key];
   } = {};
   if (value["title"] !== undefined) {
     content.title = parsers
@@ -115,6 +131,58 @@ function parseContent(
     content.instructions = parsers
       ? parsers.parseFlow(value["instructions"])
       : structuralNodes(value["instructions"], "content.instructions");
+  }
+  for (const key of [
+    "purpose",
+    "observations",
+    "assumptions",
+    "fallback",
+  ] as const) {
+    if (value[key] !== undefined)
+      content[key] = parsers
+        ? parsers.parseFlow(value[key])
+        : structuralNodes(value[key], `content.${key}`);
+  }
+  if (value["presets"] !== undefined) {
+    if (!Array.isArray(value["presets"]) || value["presets"].length > 4096)
+      throw new SchemaParseError(
+        "invalid-block-data",
+        "content.presets must be a bounded array.",
+      );
+    const ids = new Set<string>();
+    content.presets = (value["presets"] as unknown[]).map((preset) => {
+      if (
+        !isPlainObject(preset) ||
+        typeof preset["id"] !== "string" ||
+        !preset["id"].trim() ||
+        ids.has(preset["id"]) ||
+        (preset["binding"] !== undefined &&
+          typeof preset["binding"] !== "string")
+      )
+        throw new SchemaParseError(
+          "invalid-block-data",
+          "Preset associations require unique ids and optional fixed bindings.",
+        );
+      rejectUnknown(
+        preset,
+        new Set(["id", "binding", "description"]),
+        "preset",
+      );
+      ids.add(preset["id"]);
+      return {
+        id: preset["id"],
+        ...(typeof preset["binding"] === "string"
+          ? { binding: preset["binding"] }
+          : {}),
+        ...(preset["description"] === undefined
+          ? {}
+          : {
+              description: parsers
+                ? parsers.parseFlow(preset["description"])
+                : structuralNodes(preset["description"], "preset.description"),
+            }),
+      };
+    });
   }
   return content;
 }
@@ -175,7 +243,7 @@ export function parseInteractiveEnvelope<Payload>(
   const content =
     value["content"] === undefined
       ? undefined
-      : parseContent(value["content"], parsers);
+      : parseInteractiveContent(value["content"], parsers);
   const fallback =
     value["fallback"] === undefined
       ? undefined
@@ -226,6 +294,7 @@ export interface ResourcePlan {
 export type ReferenceKind =
   "heading" | "figure" | "table" | "equation" | "diagram";
 export interface ReferenceTarget {
+  readonly pointer?: string;
   readonly label: string;
   readonly blockId: BlockId;
   readonly kind: ReferenceKind;
@@ -244,10 +313,16 @@ export interface IslandPlan {
 }
 
 export interface PreparedBlock extends Block<BlockType, unknown> {
+  /** Derived, noneditable view verified against the original source before normalization. */
+  readonly readableContent?: InteractiveContent;
   readonly prepared: true;
 }
 
 export interface PreparedDocument {
+  /** Declared locations in document order; opaque branches are excluded. */
+  readonly traversal?: readonly (import("./traversal.ts").TraversalVisit & {
+    readonly blockId: BlockId;
+  })[];
   readonly sourceMap?: import("./diagnostic.ts").DocumentSourceMap;
   readonly kind: "publisle:prepared-document";
   readonly schemaVersion: number;

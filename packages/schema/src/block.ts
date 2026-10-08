@@ -3,8 +3,10 @@ import { parseBlockType, type BlockType } from "./block-type.ts";
 import { SchemaParseError } from "./error.ts";
 import { isJsonValue, type JsonValue } from "./json.ts";
 import { isPlainObject, readField } from "./object.ts";
+import { parseReadable, type ReadableRepresentation } from "./readable.ts";
 
 export interface SerializedBlock {
+  readable?: ReadableRepresentation;
   id: string;
   type: string;
   schemaVersion: number;
@@ -12,6 +14,7 @@ export interface SerializedBlock {
 }
 
 export interface Block<Type extends BlockType = BlockType, Data = JsonValue> {
+  readable?: ReadableRepresentation;
   id: BlockId;
   type: Type;
   schemaVersion: number;
@@ -19,6 +22,7 @@ export interface Block<Type extends BlockType = BlockType, Data = JsonValue> {
 }
 
 export interface UnknownBlock {
+  readable?: ReadableRepresentation;
   id: BlockId;
   type: BlockType;
   schemaVersion: number;
@@ -30,6 +34,7 @@ export function createBlock<Type extends BlockType, Data>(input: {
   data: Data;
   schemaVersion?: number;
   id?: BlockId;
+  readable?: ReadableRepresentation;
 }): Block<Type, Data> {
   parseBlockType(input.type);
   const schemaVersion = input.schemaVersion ?? 1;
@@ -48,6 +53,9 @@ export function createBlock<Type extends BlockType, Data>(input: {
 
   return {
     id: input.id ?? createBlockId(),
+    ...(input.readable === undefined
+      ? {}
+      : { readable: parseReadable(input.readable) }),
     type: input.type,
     schemaVersion,
     data: input.data,
@@ -92,6 +100,9 @@ export function parseBlock(value: unknown): Block {
 
   return {
     id: parseBlockId(id),
+    ...(value["readable"] === undefined
+      ? {}
+      : { readable: parseReadable(value["readable"]) }),
     type: parseBlockType(type),
     schemaVersion,
     data,

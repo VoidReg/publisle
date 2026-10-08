@@ -35,6 +35,8 @@ export interface Diagnostic {
   readonly code: string;
   readonly message: string;
   readonly blockId?: BlockId;
+  /** Fixed JSON Pointer relative to block data or the named declaration. */
+  readonly pointer?: string;
   readonly sourceLocation?: SourceLocation;
   /** Present only for optional profile inspection diagnostics. */
   readonly profile?: string;

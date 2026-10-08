@@ -1,13 +1,13 @@
 # Preparation order and normalization boundaries
 
-The foundation group does not change existing preparation callbacks or silently enable new structural defaults.
+These groups do not replace existing trusted preparation callbacks or silently enable schema-based defaults.
 
 1. Preserve original input; decode strict JSON/UTF-8 or import authored Markdown with diagnostics and source locations.
 2. Inspect the supported envelope and identify required contracts. Pinned discovery/lock checks are a later group; current registries remain trusted host inputs.
 3. If explicitly requested, apply approved document conversions/migrations to a new candidate. Rendering alone never rewrites source.
-4. Resolve known definitions; unknown content follows explicit error/warn/preserve policy.
+4. Check any readable association against the original block's canonical source digest, then resolve known definitions; unknown content follows explicit error/warn/preserve policy. Stale or unsupported prose remains preserved with a diagnostic but is not displayed as current meaning.
 5. Apply declared block migrations, then definition defaults, schema parsing and normalization in the existing trusted preparation boundary. Executable behavior must be declared as such; JSON Schema validation itself performs none of these operations.
-6. Validate normalized candidates against the supported structural contract, then semantic references/resources and optional publication profiles. The foundation validator is opt-in tooling; schema-first integration and traversal unification follow in later groups.
+6. Validate normalized candidates against the supported structural contract, then declared semantic bindings and shared bounded content traversal for references/resources/outlines and optional publication profiles. The structural validator remains opt-in tooling; schema-first SDK integration follows in G3. No arbitrary recursive scan of undeclared payload content is performed.
 7. Generate reference/resource/render plans and diagnostics; compile target-specific output through approved host implementations.
 8. Serialize publication output separately from canonical source. Keep parsers, validators, contract catalogs and conversion tooling outside readers.
 

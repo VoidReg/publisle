@@ -8,7 +8,16 @@ export interface PublicationProfile {
   readonly name: string;
   /** Bump when inspection behavior changes; used in preparation cache identity. */
   readonly version?: string;
-  inspect(document: Document<Block<BlockType, unknown>>): readonly Diagnostic[];
+  inspect(
+    document: Document<Block<BlockType, unknown>>,
+    context?: ProfileContext,
+  ): readonly Diagnostic[];
+}
+
+export interface ProfileContext {
+  readonly traversal: readonly (import("./traversal.ts").TraversalVisit & {
+    readonly blockId: import("./block-id.ts").BlockId;
+  })[];
 }
 
 /** Applies only to profile diagnostic codes, never structural diagnostics. */

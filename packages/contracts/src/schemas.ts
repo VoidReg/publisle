@@ -21,10 +21,18 @@ import block_envelope from "../schemas/block-envelope.json" with { type: "json" 
 import block from "../schemas/block.json" with { type: "json" };
 import document from "../schemas/document.json" with { type: "json" };
 import type { PortableJsonSchema } from "./validate.ts";
+import semantics from "../schemas/semantics.json" with { type: "json" };
+import traversal from "../schemas/traversal.json" with { type: "json" };
+import explanation from "../schemas/explanation.json" with { type: "json" };
+import readable from "../schemas/readable.json" with { type: "json" };
 import foundation_diagnostic from "../schemas/foundation-diagnostic.json" with { type: "json" };
 
 /** Reviewed beta schemas. IDs identify schema resources, not network endpoints. */
 export const BETA_SCHEMAS = {
+  semantics,
+  traversal,
+  explanation,
+  readable,
   "foundation-diagnostic": foundation_diagnostic,
   "json-value": json_value,
   "rich-content": rich_content,

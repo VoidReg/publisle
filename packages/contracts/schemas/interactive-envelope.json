@@ -11,29 +11,7 @@
       "$ref": "urn:publisle:schema:json-value"
     },
     "content": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "array",
-          "items": {
-            "$ref": "urn:publisle:schema:rich-content#/$defs/inline"
-          }
-        },
-        "description": {
-          "type": "array",
-          "items": {
-            "$ref": "urn:publisle:schema:rich-content#/$defs/flow"
-          }
-        },
-        "instructions": {
-          "type": "array",
-          "items": {
-            "$ref": "urn:publisle:schema:rich-content#/$defs/flow"
-          }
-        }
-      },
-      "required": [],
-      "additionalProperties": false
+      "$ref": "urn:publisle:schema:explanation"
     },
     "fallback": {
       "type": "array",

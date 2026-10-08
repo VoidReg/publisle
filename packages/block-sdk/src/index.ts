@@ -8,6 +8,9 @@ import {
   type PortableSchema,
   type ResourceReference,
   type Schema,
+  INTERACTIVE_TRAVERSAL,
+  type TraversalDeclaration,
+  type SemanticDeclaration,
 } from "@publisle/schema";
 
 export interface InteractiveBlockDescriptor {
@@ -67,6 +70,8 @@ export function defineInteractiveBlock<
   readonly schemaVersion: Version;
   readonly schema: Schema<Payload>;
   readonly descriptor: InteractiveBlockDescriptor;
+  readonly traversal?: TraversalDeclaration;
+  readonly semantics?: SemanticDeclaration;
   readonly content?: InteractiveContentParsers;
   readonly defaults?: Partial<InteractiveEnvelope<Payload>>;
   readonly migrations?: readonly BlockMigration[];
@@ -85,6 +90,10 @@ export function defineInteractiveBlock<
   >({
     type: definition.type,
     schemaVersion: definition.schemaVersion,
+    traversal: definition.traversal ?? INTERACTIVE_TRAVERSAL,
+    ...(definition.semantics === undefined
+      ? {}
+      : { semantics: definition.semantics }),
     schema: {
       parse(value): InteractiveEnvelope<Payload> {
         return parseInteractiveEnvelope(

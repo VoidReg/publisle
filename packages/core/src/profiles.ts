@@ -11,6 +11,7 @@ function freeze(value: unknown): void {
 export function inspectProfiles(
   document: Document<Block<BlockType, unknown>>,
   options: PrepareOptions,
+  traversal: import("@publisle/schema").ProfileContext["traversal"] = [],
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const [code, level] of Object.entries(options.diagnosticPolicy ?? {})) {
@@ -28,7 +29,9 @@ export function inspectProfiles(
       // Each inspector gets an independent copy; it cannot alter source/output or another inspector's input.
       const snapshot = structuredClone(document);
       freeze(snapshot);
-      for (const diagnostic of profile.inspect(snapshot)) {
+      const context = structuredClone({ traversal });
+      freeze(context);
+      for (const diagnostic of profile.inspect(snapshot, context)) {
         const override =
           options.diagnosticPolicy &&
           Object.hasOwn(options.diagnosticPolicy, diagnostic.code)

@@ -1,5 +1,6 @@
 /** Finite, reviewed regex set for the initial portable profile; other patterns are unsupported. */
 export const PORTABLE_PATTERNS = {
+  sha256Digest: "^sha256:[0-9a-f]{64}$(?![\\s\\S])",
   blockId:
     "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26})$(?![\\s\\S])",
   blockType:

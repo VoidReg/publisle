@@ -108,7 +108,7 @@ describe("pure document helpers", () => {
     expect(metadata?.extensions).not.toBe(prepared.metadata?.extensions);
   });
 
-  it("projects top-level headings in order without inventing anchors or a hierarchy", () => {
+  it("projects declared nested headings in order without inventing anchors or a hierarchy", () => {
     const prepared = fixture();
     expect(getDocumentOutline(prepared)).toEqual([
       {
@@ -121,6 +121,12 @@ describe("pure document helpers", () => {
         blockId: prepared.blocks[2]?.id,
         level: 3,
         title: "Use FFT x^2 icon intro",
+      },
+      {
+        blockId: prepared.blocks[3]?.id,
+        level: 2,
+        title: "Nested",
+        pointer: "/children/0",
       },
       { blockId: prepared.blocks[4]?.id, level: 6, title: "" },
     ]);
