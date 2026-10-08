@@ -1,4 +1,5 @@
 import { coreBlockDefinitions } from "@publisle/blocks-core";
+import { lockDocument, type ContractBundle } from "@publisle/contracts";
 import { createRegistry, prepare, type PrepareOptions } from "@publisle/core";
 import {
   fromMarkdown,
@@ -6,6 +7,7 @@ import {
   type MarkdownBlockCodec,
 } from "@publisle/markdown";
 import {
+  canonicalizeJson,
   locateDiagnostic,
   parseDocument,
   parseJson,
@@ -17,6 +19,7 @@ import {
 } from "@publisle/schema";
 
 export interface CliConfig {
+  readonly contractBundle?: ContractBundle;
   /** Trusted host configuration, not reader-side code. Core blocks are the default registry. */
   readonly prepare?: PrepareOptions;
   readonly markdown?: { readonly codecs?: readonly MarkdownBlockCodec[] };
@@ -129,12 +132,19 @@ export function processSource(
 
     // Explicitly remove preparation flags/plans and serialize only the public wire envelope.
     const upgraded = parseDocument({
+      ...(input.dependencies === undefined
+        ? {}
+        : { dependencies: input.dependencies }),
+      ...(input.extensions === undefined
+        ? {}
+        : { extensions: input.extensions }),
       schemaVersion: prepared.document.schemaVersion,
       ...(prepared.document.metadata === undefined
         ? {}
         : { metadata: prepared.document.metadata }),
       blocks: prepared.document.blocks.map(
-        ({ id, type, schemaVersion, data }) => ({
+        ({ id, type, schemaVersion, data, readable }) => ({
+          ...(readable === undefined ? {} : { readable }),
           id,
           type,
           schemaVersion,
@@ -207,5 +217,58 @@ export function processSource(
         : "source-operation-failed",
       cause instanceof Error ? cause.message : "Source processing failed.",
     );
+  }
+}
+
+/** Explicit pinning preview/output; never mutates the original input or repins locked content. */
+export async function lockSource(
+  source: string,
+  options: Omit<SourceOperation, "command">,
+): Promise<SourceResult> {
+  try {
+    const imported =
+      options.format === "markdown"
+        ? fromMarkdown(source, {
+            ...options.config?.markdown,
+            sourceName: options.sourceName,
+          })
+        : undefined;
+    if (imported && !imported.document)
+      return { diagnostics: imported.diagnostics };
+    const raw = imported?.document ?? parseJson(source);
+    const document = parseDocument(raw);
+    if (canonicalizeJson(raw) !== canonicalizeJson(document))
+      throw new Error(
+        "Preserve original source: unsupported envelope fields must not be dropped while locking.",
+      );
+    const registry =
+      options.config?.prepare?.registry ?? createRegistry(coreBlockDefinitions);
+    const locked = await lockDocument(document, registry);
+    if (options.format === "json")
+      return {
+        output: JSON.stringify(locked.document, null, 2) + "\n",
+        diagnostics: imported?.diagnostics ?? [],
+      };
+    const exported = toMarkdown(locked.document, { policy: "archival" });
+    return {
+      ...(exported.markdown === undefined ? {} : { output: exported.markdown }),
+      diagnostics: [...(imported?.diagnostics ?? []), ...exported.diagnostics],
+    };
+  } catch (error) {
+    return {
+      diagnostics: [
+        {
+          level: "error",
+          code:
+            error instanceof Error &&
+            "code" in error &&
+            typeof error.code === "string"
+              ? error.code
+              : "document-lock-failed",
+          message: error instanceof Error ? error.message : "Locking failed.",
+          sourceLocation: { source: options.sourceName, line: 1, column: 1 },
+        },
+      ],
+    };
   }
 }

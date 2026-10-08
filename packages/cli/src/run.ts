@@ -11,16 +11,19 @@ import {
 import { dirname, extname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isPlainObject, type Diagnostic } from "@publisle/schema";
-import { processSource, type CliConfig } from "./index.ts";
+import { processSource, lockSource, type CliConfig } from "./index.ts";
+import { validateContractBundle } from "@publisle/contracts";
+import { createRegistry } from "@publisle/core";
+import { coreBlockDefinitions } from "@publisle/blocks-core";
 
 export interface CliIo {
   readonly stdout: (text: string) => void;
   readonly stderr: (text: string) => void;
 }
 
-const help = `Usage: publisle validate|upgrade <file.json|file.md> [--config <host.mjs|host.ts>] [--format json|markdown]
-Upgrade only: [--output <new-file> | --in-place]
-Validation never writes. Upgrade defaults to stdout preview. --output refuses existing files.
+const help = `Usage: publisle validate|upgrade|lock <file.json|file.md> [--config <host.mjs|host.ts>] [--format json|markdown]
+Upgrade: [--output <new-file> | --in-place]. Lock: [--output <new-file>] (never in-place).
+Validation never writes. Upgrade/lock default to stdout preview. --output refuses existing files.
 Config is trusted executable host code exporting a default CliConfig. Node >=24 required.
 Exit codes: 0 success (warnings allowed), 1 document errors, 2 usage/config/I/O errors.
 `;
@@ -120,8 +123,8 @@ export async function runCli(
   }
   try {
     const command = args[0];
-    if (command !== "validate" && command !== "upgrade")
-      throw new Error("Expected validate or upgrade.");
+    if (command !== "validate" && command !== "upgrade" && command !== "lock")
+      throw new Error("Expected validate, upgrade or lock.");
     let file: string | undefined;
     let configFile: string | undefined;
     let outputFile: string | undefined;
@@ -158,6 +161,10 @@ export async function runCli(
     if (!file) throw new Error("An input file is required.");
     if (command === "validate" && (outputFile || inPlace))
       throw new Error("validate does not accept write options.");
+    if (command === "lock" && inPlace)
+      throw new Error(
+        "lock preserves the original source: use stdout preview or --output <new-file>.",
+      );
     if (outputFile && inPlace)
       throw new Error("Choose --output or --in-place, not both.");
     file = resolve(file);
@@ -186,13 +193,33 @@ export async function runCli(
       );
       return 1;
     }
-    const config = await loadConfig(configFile);
-    const result = processSource(original, {
-      command,
+    let config = await loadConfig(configFile);
+    if (config.contractBundle !== undefined) {
+      const bundle = await validateContractBundle(config.contractBundle);
+      config = {
+        ...config,
+        prepare: {
+          ...(config.prepare ?? {
+            registry: createRegistry(coreBlockDefinitions),
+          }),
+          contractPins: bundle.contracts.map((entry) => ({
+            type: entry.contract.identity.type,
+            schemaVersion: entry.contract.identity.schemaVersion,
+            id: entry.id,
+            digest: entry.digest,
+          })),
+        },
+      };
+    }
+    const operation = {
       format,
       sourceName: file,
       config,
-    });
+    };
+    const result =
+      command === "lock"
+        ? await lockSource(original, operation)
+        : processSource(original, { ...operation, command });
     for (const item of result.diagnostics)
       io.stderr(diagnosticText(item, file));
     if (result.diagnostics.some(({ level }) => level === "error")) return 1;

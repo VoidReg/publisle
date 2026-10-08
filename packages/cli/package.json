@@ -15,6 +15,7 @@
     "publisle": "./src/bin.ts"
   },
   "dependencies": {
+    "@publisle/contracts": "workspace:*",
     "@publisle/blocks-core": "workspace:*",
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",

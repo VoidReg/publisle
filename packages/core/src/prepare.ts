@@ -27,6 +27,8 @@ import {
   RICH_TRAVERSAL_RULES,
   richText,
   isPlainObject,
+  parseContractDependencies,
+  canonicalizeJson,
 } from "@publisle/schema";
 
 import type { AnyPortableBlockDefinition, PrepareOptions } from "./types.ts";
@@ -98,11 +100,25 @@ export function prepare(
   options: PrepareOptions,
 ): PrepareResult {
   const result = prepareDocument(document, options);
+  const diagnostics = result.diagnostics.map((diagnostic) =>
+    locateDiagnostic(diagnostic, options.sourceMap),
+  );
   return {
     ...result,
-    diagnostics: result.diagnostics.map((diagnostic) =>
-      locateDiagnostic(diagnostic, options.sourceMap),
-    ),
+    ...(result.document === undefined
+      ? {}
+      : {
+          document: {
+            ...result.document,
+            diagnosticIdentity: sha256Hex(
+              canonicalizeJson({
+                sourceMap: options.sourceMap ?? null,
+                diagnostics,
+              }),
+            ),
+          },
+        }),
+    diagnostics,
   };
 }
 
@@ -131,7 +147,17 @@ function prepareDocument(
       ],
     };
   }
+  let sourceIdentity: string;
   try {
+    sourceIdentity = sha256Hex(canonicalizeJson(document));
+    if (
+      document.dependencies !== undefined &&
+      document.schemaVersion !== DOCUMENT_SCHEMA_VERSION
+    )
+      throw new SchemaParseError(
+        "locked-source-conversion-required",
+        "Locked document envelope requires explicit conversion, never render-time migration.",
+      );
     document = migrateDocument(
       document,
       options.documentMigrations ?? [],
@@ -150,6 +176,64 @@ function prepareDocument(
     return { diagnostics };
   }
   const ids = new Set<string>();
+  if (document.dependencies !== undefined) {
+    try {
+      const pins = parseContractDependencies(document.dependencies);
+      const approved = parseContractDependencies(options.contractPins ?? []);
+      const used = new Set(
+        document.blocks.map(
+          (block) => `${block.type}@${String(block.schemaVersion)}`,
+        ),
+      );
+      if (
+        pins.length !== used.size ||
+        pins.some(
+          (pin) => !used.has(`${pin.type}@${String(pin.schemaVersion)}`),
+        )
+      )
+        throw new SchemaParseError(
+          "contract-manifest-mismatch",
+          "Manifest must contain exactly one pin for every used type/payload version.",
+        );
+      for (const pin of pins) {
+        if (
+          !approved.some(
+            (entry) =>
+              entry.type === pin.type &&
+              entry.schemaVersion === pin.schemaVersion &&
+              entry.id === pin.id &&
+              entry.digest === pin.digest,
+          )
+        )
+          throw new SchemaParseError(
+            "missing-contract-pin",
+            `No approved matching immutable contract for ${pin.type}. Resolve/verify its bundle at preparation time.`,
+          );
+        const definition = options.registry.get(pin.type);
+        if (definition && definition.schemaVersion !== pin.schemaVersion)
+          throw new SchemaParseError(
+            "locked-version-conversion-required",
+            "A locked source version cannot be implicitly migrated. Preserve source and explicitly convert before pinning the new contract.",
+          );
+      }
+    } catch (error) {
+      return {
+        diagnostics: [
+          {
+            level: "error",
+            code:
+              error instanceof SchemaParseError
+                ? error.code
+                : "invalid-contract-manifest",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Invalid contract manifest.",
+          },
+        ],
+      };
+    }
+  }
   const blocks: PreparedBlock[] = [];
   const resourcePlanner = createResourcePlanner(options.resourceResolver);
   const islands: PreparedDocument["islands"][number][] = [];
@@ -323,9 +407,17 @@ function prepareDocument(
     try {
       const migrated = migrate(block, definition);
       const parsed = definition.schema.parse(
-        mergeDefaults(definition.defaults, migrated.data),
+        mergeDefaults(definition.defaults, structuredClone(migrated.data)),
       );
       const data = definition.normalize ? definition.normalize(parsed) : parsed;
+      if (
+        document.dependencies !== undefined &&
+        canonicalizeJson(data) !== canonicalizeJson(block.data)
+      )
+        throw new SchemaParseError(
+          "locked-source-conversion-required",
+          "Locked source cannot be implicitly normalized. Preserve it and explicitly approve conversion before pinning.",
+        );
       const prepared = {
         ...block,
         schemaVersion: definition.schemaVersion,
@@ -453,11 +545,18 @@ function prepareDocument(
         version: version ?? "1",
       })) ?? [],
     diagnosticPolicy: options.diagnosticPolicy ?? {},
-    sourceMap: options.sourceMap ?? null,
     resolverVersion: options.resourceResolver?.version ?? null,
+    resolverBase: options.resourceResolver?.base ?? null,
     resources,
   };
   const base = {
+    ...(document.dependencies === undefined
+      ? {}
+      : { dependencies: document.dependencies }),
+    ...(document.extensions === undefined
+      ? {}
+      : { extensions: document.extensions }),
+    sourceIdentity,
     ...(options.sourceMap === undefined
       ? {}
       : { sourceMap: options.sourceMap }),
@@ -470,7 +569,13 @@ function prepareDocument(
     islands,
     cacheIdentity: sha256Hex(
       stable({
-        document,
+        document: {
+          schemaVersion: document.schemaVersion,
+          metadata: document.metadata ?? null,
+          blocks,
+          dependencies: document.dependencies ?? null,
+          extensions: document.extensions ?? null,
+        },
         registry: options.registry.version,
         preparation: preparationIdentity,
       }),
@@ -480,7 +585,10 @@ function prepareDocument(
     document.metadata === undefined
       ? base
       : { ...base, metadata: document.metadata };
-  return { document: prepared, diagnostics };
+  return {
+    document: { ...prepared, semanticIdentity: prepared.cacheIdentity },
+    diagnostics,
+  };
 }
 
 export function assertPrepared(result: PrepareResult): PreparedDocument {

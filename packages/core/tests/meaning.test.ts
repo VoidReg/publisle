@@ -134,7 +134,7 @@ describe("bounded declared traversal", () => {
       { label: "plot", kind: "figure", ordinal: 1, pointer: "/sections/2" },
     ]);
     expect(
-      prepared.resources.resources.map((resource) => resource.uri),
+      prepared.resources.resources.map((resource) => resource.uri).sort(),
     ).toEqual(["inline.svg", "plot.svg"]);
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       "unresolved-traversal-branch",

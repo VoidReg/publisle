@@ -82,6 +82,10 @@ validates without writing and previews upgrades by default; replacing source
 requires explicit authorization. Pure metadata, outline, and reference helpers
 return data without changing the host page.
 
+For immutable contract pins, archival Markdown and offline asset packages, see the
+[exchange guide](docs/guides/exchange.md). Native and precompiled artifacts share
+the same typed island inputs; full schemas and preparation tooling stay out of readers.
+
 ## Development
 
 ```sh

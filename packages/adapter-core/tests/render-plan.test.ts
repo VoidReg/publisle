@@ -13,7 +13,11 @@ import {
   interactiveSchematicDefinition,
 } from "@publisle/blocks-technical";
 import { createRegistry, prepare } from "@publisle/core";
-import { document } from "@publisle/schema";
+import {
+  document,
+  createIslandInput,
+  isInteractiveEnvelope,
+} from "@publisle/schema";
 import { createRenderPlan } from "../src/index.ts";
 
 describe("createRenderPlan", () => {
@@ -44,12 +48,17 @@ describe("createRenderPlan", () => {
           },
         },
       });
+      const first = input.blocks[0];
+      if (!first || !isInteractiveEnvelope(first.data))
+        throw new Error("Expected valid envelope.");
       expect(JSON.stringify(plan.nodes)).toContain(
         JSON.stringify({
           kind: "component",
           module: staticRenderer.module,
           exportName: staticRenderer.exportName,
-          props: input.blocks[0]?.data,
+          blockId: input.blocks[0]?.id,
+          props: createIslandInput(first, first.data),
+          artifact: [],
         }),
       );
       expect(

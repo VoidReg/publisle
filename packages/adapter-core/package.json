@@ -8,6 +8,7 @@
     "./document.css": "./src/document.css",
     "./katex.css": "./src/katex.css",
     "./island-runtime": "./src/island-runtime.ts",
+    "./publication-runtime": "./src/publication-runtime.ts",
     "./vite": "./src/vite.ts"
   },
   "dependencies": {

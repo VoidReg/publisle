@@ -16,6 +16,7 @@ import {
 import type { FlowNode, InlineNode, ListItemData } from "@publisle/blocks-core";
 import type { MarkdownExportOptions, MarkdownExportResult } from "./types.ts";
 import { codecRegistry } from "./codecs.ts";
+import { toArchivalMarkdown } from "./archive.ts";
 
 function serializeTree(tree: Root): string {
   return serialize(tree, {
@@ -684,6 +685,34 @@ export function toMarkdown(
 ): MarkdownExportResult {
   const diagnostics: Diagnostic[] = [];
   const policy = options.policy ?? "fallback";
+  if (policy === "archival") {
+    try {
+      return {
+        markdown: toArchivalMarkdown(document as Document),
+        diagnostics,
+      };
+    } catch (error) {
+      return {
+        diagnostics: [
+          {
+            level: "error",
+            code: "archival-export-failed",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Archival export failed.",
+          },
+        ],
+      };
+    }
+  }
+  if (document.dependencies !== undefined || document.extensions !== undefined)
+    diagnostics.push({
+      level: "warning",
+      code: "document-envelope-not-exported",
+      message:
+        "This Markdown projection does not preserve dependency pins/extensions. Use archival policy for lossless exchange.",
+    });
   let codecs: ReturnType<typeof codecRegistry>;
   try {
     codecs = codecRegistry(options.codecs);

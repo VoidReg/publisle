@@ -1,14 +1,20 @@
 import { sha256Hex } from "@publisle/core";
+import { canonicalizeJson } from "@publisle/schema";
 import type {
   Activation,
   Diagnostic,
-  JsonObject,
   JsonValue,
   PreparedDocument,
   PublicationMetadata,
+  BlockId,
 } from "@publisle/schema";
-import { instantiateHtml, serializeNodes } from "./html.ts";
-import { createIslandController } from "./island-runtime.ts";
+import { serializeNodes } from "./html.ts";
+export {
+  instantiatePublication,
+  collectPublicationAssets,
+  publicationAssetUrl,
+  attachPublication,
+} from "./publication-runtime.ts";
 import { createRenderPlan } from "./render-plan.ts";
 import type { AdapterCompilerOptions, RenderPlan } from "./types.ts";
 
@@ -31,10 +37,25 @@ export interface PublishedIsland {
   readonly implementation: string;
   readonly activation: Activation;
   readonly mode: "mount" | "hydrate";
-  readonly props: JsonObject;
+  readonly props: JsonValue;
 }
 
 export interface PublicationArtifact {
+  readonly provenance?: {
+    readonly sourceIdentity: string | null;
+    readonly semanticIdentity: string;
+    readonly contracts: readonly import("@publisle/schema").ContractDependency[];
+    readonly resources: import("@publisle/schema").ResourcePlan;
+    readonly configuration: JsonValue;
+    readonly reproducible: boolean;
+    readonly seed?: JsonValue;
+    readonly limitation?: string;
+  };
+  readonly diagnosticIdentity?: string;
+  readonly compatibility?: {
+    readonly islandInputVersion: 1;
+    readonly staticFidelity: "supported" | "fallback" | "unsupported";
+  };
   readonly format: typeof PUBLICATION_FORMAT;
   readonly formatVersion: typeof PUBLICATION_FORMAT_VERSION;
   readonly identity: string;
@@ -48,12 +69,37 @@ export interface PublicationArtifact {
 }
 
 export interface PublicationCompilerOptions extends AdapterCompilerOptions {
+  /** Host pins for otherwise opaque renderer/compiler configuration. Never infer function source. */
+  readonly build?: {
+    readonly configuration: JsonValue;
+    readonly reproducible: boolean;
+    readonly seed?: JsonValue;
+  };
   readonly styles?: "minimal" | "none";
 }
 
 export interface PublicationPlacement {
   readonly instanceId: string;
   readonly html: string;
+}
+
+/** Minimal browser attachment data; excludes HTML, source AST, resources and diagnostics. */
+export type PublicationReaderManifest = Pick<
+  PublicationArtifact,
+  "format" | "formatVersion" | "identity" | "compatibility" | "islands"
+>;
+export function publicationReaderManifest(
+  artifact: PublicationArtifact,
+): PublicationReaderManifest {
+  return {
+    format: artifact.format,
+    formatVersion: artifact.formatVersion,
+    identity: artifact.identity,
+    ...(artifact.compatibility === undefined
+      ? {}
+      : { compatibility: artifact.compatibility }),
+    islands: artifact.islands,
+  };
 }
 
 export interface PublicationEnvironment {
@@ -90,24 +136,78 @@ function withIslandRenderers(
   return { ...options, renderers };
 }
 
-function payloadProps(props: JsonValue): JsonObject {
-  if (typeof props !== "object" || props === null || Array.isArray(props))
-    return {};
-  const payload = (props as Record<string, JsonValue>)["payload"];
-  if (
-    typeof payload === "object" &&
-    payload !== null &&
-    !Array.isArray(payload)
-  )
-    return payload as JsonObject;
-  return {};
-}
-
 function compilePlan(
   plan: RenderPlan,
   styles: "minimal" | "none",
+  build?: PublicationCompilerOptions["build"],
+  rawHtmlPlacement: "reject" | "preserve" = "reject",
 ): PublicationArtifact {
   const islands: PublishedIsland[] = [];
+  const diagnostics = [...plan.diagnostics];
+  let fidelity: "supported" | "fallback" | "unsupported" = "supported";
+  const substantive = (nodes: RenderPlan["nodes"]): boolean =>
+    nodes.some((node) => {
+      if (node.kind === "text") return node.value.trim().length > 0;
+      if (node.kind === "raw")
+        return (
+          node.value.replace(/<[^>]*>/gu, "").trim().length > 0 ||
+          /<(?:img|svg|video|audio)\b/iu.test(node.value)
+        );
+      if (node.kind === "element")
+        return (
+          ["img", "svg", "video", "audio", "iframe", "canvas"].includes(
+            node.tag,
+          ) || substantive(node.children)
+        );
+      return node.kind === "component"
+        ? substantive(node.artifact ?? [])
+        : substantive(node.fallback);
+    });
+  const lower = (nodes: RenderPlan["nodes"]): RenderPlan["nodes"] =>
+    nodes.flatMap((node) => {
+      if (
+        node.kind === "raw" &&
+        /\b(?:id|for|headers|list|form|href|aria-labelledby|aria-describedby|aria-controls|aria-owns|aria-flowto|aria-activedescendant|aria-details|aria-errormessage)\s*=/iu.test(
+          node.value,
+        )
+      ) {
+        diagnostics.push({
+          level: rawHtmlPlacement === "reject" ? "error" : "warning",
+          code: "raw-html-placement-unscoped",
+          message:
+            "Authored trusted HTML IDs/references cannot be generically namespaced. Host must reject it or explicitly preserve it with placement restrictions.",
+        });
+        if (rawHtmlPlacement === "reject") {
+          fidelity = "unsupported";
+          return [];
+        }
+      }
+      if (node.kind === "component") {
+        const replacement = node.artifact ?? [];
+        const supported = substantive(replacement);
+        if (!supported) fidelity = "unsupported";
+        else if (fidelity !== "unsupported") fidelity = "fallback";
+        diagnostics.push({
+          level: supported ? "warning" : "error",
+          code: supported
+            ? "artifact-component-lowered"
+            : "unsupported-artifact-component",
+          message: supported
+            ? "Artifact uses approved static lowering/authored fallback; native component fidelity is not implied."
+            : "Framework component has no static lowering or substantive authored fallback.",
+          ...(node.blockId === undefined
+            ? {}
+            : { blockId: node.blockId as BlockId }),
+        });
+        return lower(replacement);
+      }
+      if (node.kind === "element")
+        return [{ ...node, children: lower(node.children) }];
+      if (node.kind === "island")
+        return [{ ...node, fallback: lower(node.fallback) }];
+      return [node];
+    });
+  const nodes = lower(plan.nodes);
   const modules: ModuleReference[] = [];
   const seen = new Set<string>();
   const visit = (nodes: RenderPlan["nodes"]): void => {
@@ -123,7 +223,7 @@ function compilePlan(
           implementation,
           activation: node.activation,
           mode: "mount",
-          props: payloadProps(node.props),
+          props: node.props,
         });
         if (!seen.has(implementation)) {
           seen.add(implementation);
@@ -134,8 +234,8 @@ function compilePlan(
       if (node.kind === "element") visit(node.children);
     }
   };
-  visit(plan.nodes);
-  const html = `<div class="publisle-document" data-publisle-root>${serializeNodes(plan.nodes)}</div>`;
+  visit(nodes);
+  const html = `<div class="publisle-document" data-publisle-root>${serializeNodes(nodes)}</div>`;
   const hasMath = plan.document.blocks.some(
     (block) =>
       block.type === "publisle:math" ||
@@ -158,11 +258,32 @@ function compilePlan(
     modules,
     islands,
     ...(metadata === undefined ? {} : { metadata }),
-    diagnostics: plan.diagnostics,
+    compatibility: { islandInputVersion: 1 as const, staticFidelity: fidelity },
+    provenance: {
+      sourceIdentity: plan.document.sourceIdentity ?? null,
+      semanticIdentity:
+        plan.document.semanticIdentity ?? plan.document.cacheIdentity,
+      contracts: plan.document.dependencies ?? [],
+      resources: plan.document.resources,
+      configuration: build?.configuration ?? {
+        styles,
+        rendererBuild: RENDERER_BUILD,
+      },
+      reproducible: build?.reproducible ?? false,
+      ...(build?.seed === undefined ? {} : { seed: build.seed }),
+      ...(build === undefined
+        ? {
+            limitation:
+              "Host compiler/renderer configuration and nondeterministic inputs have not been pinned. No byte-reproduction claim.",
+          }
+        : {}),
+    },
   };
   const artifact: PublicationArtifact = {
     ...unsigned,
-    identity: sha256Hex(JSON.stringify(unsigned)),
+    diagnostics,
+    diagnosticIdentity: sha256Hex(canonicalizeJson(diagnostics)),
+    identity: sha256Hex(canonicalizeJson(unsigned)),
   };
   return artifact;
 }
@@ -172,7 +293,8 @@ export function compilePublication(
   options: PublicationCompilerOptions = {},
 ): PublicationArtifact {
   const styles = options.styles ?? "minimal";
-  if (isRenderPlan(source)) return compilePlan(source, styles);
+  if (isRenderPlan(source))
+    return compilePlan(source, styles, options.build, options.rawHtmlPlacement);
   const compilerOptions: AdapterCompilerOptions = {
     ...(options.renderers === undefined
       ? {}
@@ -188,123 +310,7 @@ export function compilePublication(
   return compilePlan(
     createRenderPlan(source, withIslandRenderers(source, compilerOptions)),
     styles,
+    options.build,
+    options.rawHtmlPlacement,
   );
-}
-
-export function instantiatePublication(
-  artifact: PublicationArtifact,
-  instanceId: string,
-): PublicationPlacement {
-  return {
-    instanceId,
-    html: instantiateHtml(artifact.html, instanceId),
-  };
-}
-
-export function collectPublicationAssets(
-  artifacts: readonly PublicationArtifact[],
-): {
-  readonly styles: readonly AssetReference[];
-  readonly modules: readonly ModuleReference[];
-} {
-  const styles = new Map<string, AssetReference>();
-  const modules = new Map<string, ModuleReference>();
-  for (const artifact of artifacts) {
-    for (const style of artifact.styles) styles.set(style.id, style);
-    for (const module of artifact.modules) modules.set(module.id, module);
-  }
-  return {
-    styles: [...styles.values()],
-    modules: [...modules.values()],
-  };
-}
-
-export function publicationAssetUrl(id: string, assetBase = ""): string {
-  if (assetBase === "") return id;
-  return `${assetBase.endsWith("/") ? assetBase : `${assetBase}/`}${id}`;
-}
-
-interface Attachment {
-  readonly key: string;
-  readonly handle: PublicationHandle;
-}
-
-const attachments = new WeakMap<HTMLElement, Attachment>();
-
-export function attachPublication(
-  root: HTMLElement,
-  artifact: PublicationArtifact,
-  environment: PublicationEnvironment = {},
-): PublicationHandle {
-  const current = attachments.get(root);
-  if (current?.key === artifact.identity) return current.handle;
-  current?.handle.dispose();
-  if (artifact.islands.length === 0) {
-    const handle = {
-      dispose() {
-        return undefined;
-      },
-    };
-    return handle;
-  }
-  const loads = new Map<string, Promise<unknown>>();
-  const controllers: { destroy(): void }[] = [];
-  for (const section of root.querySelectorAll<HTMLElement>(
-    "[data-publisle-island]",
-  )) {
-    const key = section.getAttribute("data-publisle-island");
-    const island = artifact.islands.find((entry) => entry.key === key);
-    if (!island) continue;
-    if (island.mode === "hydrate") {
-      section.setAttribute("data-publisle-unsupported-mode", "hydrate");
-      continue;
-    }
-    const fallback = section.querySelector<HTMLElement>(
-      "[data-publisle-fallback]",
-    );
-    const mountTarget = section.querySelector<HTMLElement>(
-      "[data-publisle-mount]",
-    );
-    const loader = environment.implementations?.[island.implementation];
-    if (
-      !fallback ||
-      !mountTarget ||
-      !loader ||
-      !environment.mount ||
-      !environment.unmount
-    ) {
-      section.setAttribute("data-publisle-missing", island.implementation);
-      continue;
-    }
-    let pending = loads.get(island.implementation);
-    if (!pending) {
-      pending = loader();
-      loads.set(island.implementation, pending);
-    }
-    const shared = pending;
-    controllers.push(
-      createIslandController({
-        root: mountTarget,
-        fallback,
-        scope: section,
-        activation: island.activation,
-        props: island.props,
-        load: () => shared,
-        mount: (module, target, props) =>
-          environment.mount?.(module, target, props, environment.services),
-        unmount: (instance) => environment.unmount?.(instance),
-      }),
-    );
-  }
-  let disposed = false;
-  const handle: PublicationHandle = {
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-      for (const controller of controllers) controller.destroy();
-      if (attachments.get(root)?.handle === handle) attachments.delete(root);
-    },
-  };
-  attachments.set(root, { key: artifact.identity, handle });
-  return handle;
 }

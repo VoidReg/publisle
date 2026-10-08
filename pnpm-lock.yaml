@@ -603,6 +603,9 @@ importers:
       '@publisle/blocks-core':
         specifier: workspace:*
         version: link:../../blocks/core
+      '@publisle/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@publisle/core':
         specifier: workspace:*
         version: link:../core

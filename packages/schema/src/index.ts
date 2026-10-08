@@ -127,3 +127,8 @@ export type {
   ContractSource,
   ContractExample,
 } from "./contract.ts";
+export {
+  parseContractDependencies,
+  type ContractDependency,
+} from "./dependencies.ts";
+export { createIslandInput, type IslandInput } from "./island-input.ts";

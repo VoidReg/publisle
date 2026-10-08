@@ -12,6 +12,7 @@ import {
   createBlock,
   document,
   isInteractiveEnvelope,
+  isPlainObject,
   type Activation,
   type JsonObject,
 } from "@publisle/schema";
@@ -45,11 +46,12 @@ const payloadSchema = {
   parse(value: unknown) {
     if (
       !isInteractiveEnvelope(value) ||
+      !isPlainObject(value.payload) ||
       typeof value.payload["name"] !== "string" ||
       typeof value.payload["start"] !== "number"
     )
       throw new Error("Invalid acceptance island payload.");
-    return value;
+    return { ...value, payload: value.payload as JsonObject };
   },
 };
 const definition = {

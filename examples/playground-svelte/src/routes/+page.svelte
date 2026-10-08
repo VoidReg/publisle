@@ -83,6 +83,12 @@
   function handleExportJson() {
     download("document.json", editor.toJson(), "application/json");
   }
+
+  function handleExportArchive() {
+    const result = editor.exportMarkdown({ policy: "archival" });
+    if (result.markdown) download("document.archive.md", result.markdown);
+    diagnostics = result.diagnostics;
+  }
 </script>
 
 <svelte:head>
@@ -113,6 +119,9 @@
       </button>
       <button type="button" onclick={handleExportMarkdown}>
         Export Markdown
+      </button>
+      <button type="button" onclick={handleExportArchive}>
+        Export archival Markdown
       </button>
       <label>Payload JSON <select bind:value={payloadFormatting}><option value="pretty">Readable</option><option value="compact">Compact</option></select></label>
       <button type="button" onclick={() => jsonInput?.click()}>

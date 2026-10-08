@@ -1,6 +1,6 @@
 # Portable block contracts (beta)
 
-This group defines local export and offline consumption. It does not define document manifests, remote discovery, archival Markdown, resource packaging, behavior execution or independent Python conformance.
+This document defines local export and offline consumption. [Locked exchange](exchange.md) adds document manifests, bounded discovery, archival Markdown and resource packaging; [delivery](delivery.md) defines native/artifact input parity. Behavior execution and independent Python conformance remain separate scopes.
 
 ## Definition sources and verification
 
@@ -34,4 +34,4 @@ A bundle (`urn:publisle:contract-bundle:beta`) contains roots, sealed contracts 
 
 There are at most 128 contracts, unique roots, or supplied schema dependencies per operation; declarations and schema traversal retain the foundation budgets (4096 schema nodes, depth 64). Each positive/negative example list is bounded to 64 entries. Strict JSON wire limits apply to snapshots and bundles. Export may execute trusted parser code for verification and is not a sandbox; unknown-origin schema compilation still requires host isolation/time/memory limits. Failures reject export/validation without rewriting authored source or publishing partial bundles.
 
-The JSON-only validator cannot prove that a publisher disclosed all code or that arbitrary code agrees outside fixtures. Hosts approve implementations separately. No document-provided import string grants execution authority. Complete document exchange/discovery follows in G4; semantic export algorithms/inspection follow in G8.
+The JSON-only validator cannot prove that a publisher disclosed all code or that arbitrary code agrees outside fixtures. Hosts approve implementations separately. No document-provided import string grants execution authority. Document exchange/discovery is defined in [locked exchange](exchange.md); semantic export algorithms/inspection remain later work.

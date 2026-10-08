@@ -49,6 +49,25 @@ describe("Node CLI safety and entrypoint", () => {
     return { code, stdout, stderr };
   }
 
+  // Repeated sealed-schema verification runs alongside the full worker suite, not a performance benchmark.
+  it("locks canonical source explicitly without replacing it or overwriting outputs", async () => {
+    const source =
+      '{"schemaVersion":1,"blocks":[{"id":"00000000-0000-4000-a000-000000000001","type":"publisle:paragraph","schemaVersion":1,"data":{"content":[{"type":"text","value":"Hello"}]}}]}';
+    await writeFile(file, source);
+    const preview = await invoke(["lock", file]);
+    expect(preview.code).toBe(0);
+    expect(JSON.parse(preview.stdout)).toHaveProperty(
+      "dependencies.0.type",
+      "publisle:paragraph",
+    );
+    expect(await readFile(file, "utf8")).toBe(source);
+    const output = join(directory, "locked.json");
+    expect((await invoke(["lock", file, "--output", output])).code).toBe(0);
+    expect((await invoke(["lock", file, "--output", output])).code).toBe(2);
+    expect((await invoke(["lock", file, "--in-place"])).code).toBe(2);
+    expect(await readFile(file, "utf8")).toBe(source);
+  }, 15000);
+
   it("rejects invalid UTF-8 without replacing source bytes", async () => {
     const bytes = new Uint8Array([0xc3, 0x28]);
     await writeFile(file, bytes);

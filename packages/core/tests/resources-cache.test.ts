@@ -34,6 +34,45 @@ const resolver = (version = "content-1"): ResourceResolver => ({
 });
 
 describe("resource resolution and cache identity", () => {
+  it("preserves original aliases, host source bases, exact byte pins and external dataset metadata", () => {
+    const input = inputFor({ uri: "./data.csv" }, { uri: "data.csv" });
+    const byteDigest = `sha256:${"a".repeat(64)}` as const;
+    const host: ResourceResolver = {
+      version: "resolver-1",
+      base: "https://example.test/article/",
+      resolve: ({ uri }) => ({
+        version: "revision-1",
+        resolvedLocation: new URL(uri, "https://example.test/article/").href,
+        mediaType: "text/csv",
+        byteDigest,
+        external: true,
+        dataset: { columns: ["x", "y"] },
+      }),
+    };
+    const result = prepare(input, {
+      registry,
+      resourceResolver: host,
+    }).document!;
+    expect(result.resources.resources).toHaveLength(1);
+    expect(result.resources.resources[0]).toMatchObject({
+      uri: "data.csv",
+      originalUris: ["./data.csv", "data.csv"],
+      resolvedLocation: "https://example.test/article/data.csv",
+      byteDigest,
+      external: true,
+      dataset: { columns: ["x", "y"] },
+    });
+    const other = prepare(input, {
+      registry,
+      resourceResolver: { ...host, base: "https://example.test/other/" },
+    }).document!;
+    expect(other.resources.resources[0]?.identity).not.toBe(
+      result.resources.resources[0]?.identity,
+    );
+    expect(input.blocks[0]?.data).toEqual({
+      refs: [{ uri: "./data.csv" }, { uri: "data.csv" }],
+    });
+  });
   it("reports throwing resource extraction and invalid declaration lists safely", () => {
     const throwing = prepare(inputFor(), {
       registry: createRegistry([
@@ -411,7 +450,7 @@ describe("resource resolution and cache identity", () => {
     );
   });
 
-  it("includes preparation, resolver, profile, policy, source-map, and unknown-block options in cache identity", () => {
+  it("includes preparation, resolver, profile, policy and unknown-block options but excludes source-map locations from semantic cache identity", () => {
     const input = inputFor({ uri: "wave.svg" });
     const base = prepare(input, { registry, resourceResolver: resolver() })
       .document!.cacheIdentity;
@@ -426,17 +465,24 @@ describe("resource resolution and cache identity", () => {
       { profiles: [profile] },
       { diagnosticPolicy: { a: "info" as const } },
       { unknownBlocks: "error" as const },
-      {
-        sourceMap: {
-          blocks: {},
-          document: { source: "article.md", line: 1, column: 1 },
-        },
-      },
     ])
       expect(
         prepare(input, { registry, resourceResolver: resolver(), ...options })
           .document!.cacheIdentity,
       ).not.toBe(base);
+    const located = prepare(input, {
+      registry,
+      resourceResolver: resolver(),
+      sourceMap: {
+        blocks: {},
+        document: { source: "article.md", line: 9, column: 3 },
+      },
+    }).document!;
+    expect(located.cacheIdentity).toBe(base);
+    expect(located.diagnosticIdentity).not.toBe(
+      prepare(input, { registry, resourceResolver: resolver() }).document!
+        .diagnosticIdentity,
+    );
     expect(
       prepare(input, { registry, profiles: [profile] }).document!.cacheIdentity,
     ).not.toBe(

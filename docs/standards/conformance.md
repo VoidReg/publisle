@@ -12,7 +12,7 @@ A consumer MUST state the role, supported schema/profile subset and fixture evid
 | Interactive renderer   | Implement its declared behavior and lifecycle, not claim universal simulation                                    |
 | Artifact server        | Store/serve approved precompiled HTML/assets without recompiling each request                                    |
 
-These are role definitions, not declarations that every role is currently implemented. G1 provides JSON/digest tooling and a structural validator; G2 adds descriptive meaning, bounded declared traversal and readable preservation. Independent validation and full archival, semantic-export/behavior and artifact conformance remain separate milestones.
+These are role definitions, not declarations that every role is currently implemented. Current tooling provides JSON/digests, structural validation, descriptive meaning, bounded traversal, readable preservation, locked archival exchange and native/artifact delivery checks. Independent Python validation, semantic-export/behavior execution and the complete P0 conformance matrix remain separate milestones.
 
 ## Capabilities
 

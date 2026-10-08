@@ -11,6 +11,7 @@ import type {
   TraversalDeclaration,
   SemanticDeclaration,
   ContractSource,
+  ContractDependency,
 } from "@publisle/schema";
 
 export interface BlockMigration {
@@ -64,6 +65,11 @@ export interface RegistryOptions {
 }
 
 export interface ResourceResolution {
+  readonly resolvedLocation?: string;
+  readonly mediaType?: string;
+  readonly byteDigest?: `sha256:${string}`;
+  readonly external?: boolean;
+  readonly dataset?: JsonValue;
   /** Optional canonical URI; defaults to the normalized requested URI. */
   readonly uri?: string;
   /** Stable content hash or revision, never a timestamp generated during preparation. */
@@ -73,6 +79,8 @@ export interface ResourceResolution {
 }
 
 export interface ResourceResolver {
+  /** Source-relative resolution base is an input even when URIs appear unchanged. */
+  readonly base?: string;
   /** Bump when resolver configuration/behavior changes; actual content uses result.version. */
   readonly version: string;
   /** Undefined means missing. Core performs no I/O. Called once per normalized URI per prepare. */
@@ -80,6 +88,8 @@ export interface ResourceResolver {
 }
 
 export interface PrepareOptions {
+  /** Approved host pins derived from a verified offline bundle; no discovery happens here. */
+  readonly contractPins?: readonly ContractDependency[];
   readonly registry: BlockRegistry;
   readonly unknownBlocks?: "preserve" | "error";
   readonly profiles?: readonly PublicationProfile[];
