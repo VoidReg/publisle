@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
   canonicalizeJson,
   createBlock,
@@ -28,14 +28,19 @@ const policy: ContractFetchPolicy = {
   maxBytes: 100000,
   timeoutMs: 1000,
 };
-async function fixture() {
+let baseline: Awaited<ReturnType<typeof lockDocument>> | undefined;
+beforeAll(async () => {
   const block = createBlock({ type: "example:counter", data: { count: 3 } });
-  return lockDocument(
+  baseline = await lockDocument(
     document({
       blocks: [block, createBlock({ type: block.type, data: block.data })],
     }),
     createRegistry([definition()]),
   );
+});
+function fixture() {
+  if (!baseline) throw new Error("Fixture setup must complete before use.");
+  return Promise.resolve(structuredClone(baseline));
 }
 describe("locked source and bounded contract resolution", () => {
   it("pins a shared type once, preserves source and freezes existing versions", async () => {

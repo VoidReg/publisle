@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { beforeAll, afterEach, describe, expect, it } from "vitest";
 import {
   mkdtemp,
   readFile,
@@ -30,20 +30,25 @@ afterEach(async () => {
   for (const path of temporary.splice(0))
     await rm(path, { recursive: true, force: true });
 });
-async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "publisle-exchange-test-"));
-  temporary.push(root);
+let baseline: Awaited<ReturnType<typeof lockDocument>> | undefined;
+beforeAll(async () => {
   const definition = defineSchemaBlock({
     type: "example:counter",
     schemaVersion: 1,
     contract: source,
   });
-  const locked = await lockDocument(
+  baseline = await lockDocument(
     document({
       blocks: [createBlock({ type: definition.type, data: { count: 3 } })],
     }),
     createRegistry([definition]),
   );
+});
+async function fixture() {
+  if (!baseline) throw new Error("Fixture setup must complete before use.");
+  const locked = structuredClone(baseline);
+  const root = await mkdtemp(join(tmpdir(), "publisle-exchange-test-"));
+  temporary.push(root);
   return {
     root,
     directory: join(root, "package"),
