@@ -1,0 +1,23 @@
+{
+  "name": "@publisle/cli",
+  "version": "0.0.0",
+  "description": "Optional Node-only validation and explicit source upgrades.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./run": "./src/run.ts"
+  },
+  "bin": {
+    "publisle": "./src/bin.ts"
+  },
+  "dependencies": {
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/markdown": "workspace:*",
+    "@publisle/schema": "workspace:*"
+  }
+}

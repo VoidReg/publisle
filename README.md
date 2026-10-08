@@ -182,6 +182,85 @@ Observe the output on each clock edge.
 
 ## Publication
 
+### Optional Node validation and source upgrades
+
+The source workspace includes `@publisle/cli` and its `publisle` bin entrypoint.
+Use Node >=24 (strip-only TypeScript, as with the workspace packages) and the root
+script; this is not a prebuilt standalone npm distribution:
+
+`pnpm exec publisle ...` invokes the workspace bin directly without script-runner
+output, useful when piping an upgrade preview.
+
+```sh
+pnpm cli validate article.json
+pnpm cli validate article.md --config ./publisle.config.ts
+pnpm cli upgrade article.json --config ./publisle.config.ts
+pnpm cli upgrade article.md --config ./publisle.config.ts --output article.upgraded.md
+pnpm cli upgrade article.json --config ./publisle.config.ts --in-place
+```
+
+Validation never rewrites source. Upgrade defaults to a stdout preview; diagnostics
+go to stderr. `--output` creates a new file and refuses existing targets (including
+symlinks); only `--in-place` authorizes source replacement. In-place upgrades stage
+the result beside the source, preserve ordinary permission bits, check the source
+has not changed, then rename atomically. Symlinks and multiply hard-linked inputs
+are rejected for in-place writes. This is not a filesystem lock or archival backup:
+avoid concurrent editors, review previews, and use version control. Ownership,
+extended attributes and timestamps are not preserved by inode replacement.
+Document errors exit 1; usage/config/I/O errors exit 2; warnings permit exit 0.
+
+Default registration covers `@publisle/blocks-core` only. Validation rejects unknown
+block types; upgrades preserve them with warnings. A config's explicit
+`prepare.unknownBlocks` overrides that default. Provide a trusted explicit `.ts`
+(erasable syntax), `.mjs`, or ESM `.js` config exporting a default `CliConfig`:
+
+```ts
+import { coreBlockDefinitions } from "@publisle/blocks-core";
+import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
+import { createRegistry } from "@publisle/core";
+import { researchPaperProfile } from "@publisle/profiles";
+import type { CliConfig } from "@publisle/cli";
+
+export default {
+  prepare: {
+    registry: createRegistry([
+      ...coreBlockDefinitions,
+      interactiveSchematicDefinition,
+    ]),
+    profiles: [researchPaperProfile()],
+    diagnosticPolicy: { "missing-title": "error" },
+    // documentMigrations, resourceResolver and preparationVersion are also accepted.
+  },
+  markdown: { codecs: [] }, // Your user-owned native directive codecs.
+} satisfies CliConfig;
+```
+
+Configs/plugins execute with the host's authority: never load untrusted code.
+There is no automatic config discovery, asset fetching, browser rendering or
+renderer registry requirement. Resolver-relative paths are the host's responsibility.
+One input is accepted per invocation; `.json`, `.md`, and `.markdown` are inferred.
+`--format json|markdown` explicitly sets the input **and output** format for other
+extensions; this command is an upgrade, not a cross-format converter.
+
+Upgrades use public parse/import/prepare/export APIs to serialize the current wire
+envelope, not prepared plans. Migrations and normalization run in memory; the
+document envelope remains v1. Missing/failed migrations or profile errors prevent
+all output. Unknown plugin payloads/versions/IDs are retained via JSON or generic
+archival Markdown where representable. JSON upgrades reject unmodeled source
+fields rather than silently discard them. Markdown always uses native `fallback`
+export, then reimports and checks metadata/block types/versions/payloads; semantic
+loss refuses output. Source formatting/comments may change. Native Markdown can
+regenerate block IDs (reported as a warning); use JSON when identity must persist.
+No lossy `standard` export or forced-write switch is offered.
+Payload changes from registered parsing/defaults/normalization without a schema
+version change produce `block-data-normalized` warnings for preview review.
+
+For tooling integrations, `processSource(source, options)` from `@publisle/cli`
+returns diagnostics and optional upgraded output without file I/O.
+`runCli(args, { stdout, stderr })` from `@publisle/cli/run` is the Node runner.
+Keep this optional tooling package out of browser imports; existing render/build
+operations still never rewrite article sources.
+
 ### Pure document helpers
 
 At a server/build boundary, `@publisle/core` provides optional data-only helpers:

@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "cli": "node packages/cli/src/bin.ts",
     "build:examples": "pnpm --filter './examples/*' build",
     "build:playgrounds": "pnpm --filter './examples/playground-*' build",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build:examples",
@@ -29,6 +30,7 @@
   "keywords": [],
   "author": "",
   "devDependencies": {
+    "@publisle/cli": "workspace:*",
     "@publisle/blocks-core": "workspace:*",
     "@publisle/blocks-technical": "workspace:*",
     "@eslint/js": "^10.0.1",
