@@ -9,6 +9,11 @@ import { createRegistry } from "@publisle/core";
 import { createServer } from "vite";
 import type { PublicationArtifact } from "../src/index.ts";
 import { publislePublication } from "../src/vite.ts";
+import { createPublisleVitePlugin } from "../src/vite.ts";
+import {
+  noticeCodec,
+  noticeDefinition,
+} from "../../markdown/tests/fixtures/notice-codec.ts";
 import { researchPaperProfile } from "../../profiles/src/index.ts";
 
 const fence = "`".repeat(3);
@@ -34,6 +39,65 @@ ${fence}
 `;
 
 describe("publication Vite target", () => {
+  it.each(["native", "interactive"] as const)(
+    "uses host codecs/current versions for unversioned %s v2-only plugins",
+    async (kind) => {
+      const directory = await mkdtemp(
+        path.join(tmpdir(), "publisle-codec-vite-"),
+      );
+      const filename = path.join(directory, "article.md");
+      await writeFile(
+        filename,
+        kind === "native"
+          ? ':::notice{message="Hello"}\n:::\n'
+          : `:::interactive{type="demo:scene"}\n${fence}publisle-payload\n{"value":42}\n${fence}\n:::\n`,
+      );
+      const registry = createRegistry(
+        kind === "native"
+          ? [{ ...noticeDefinition, migrations: [] }]
+          : [
+              {
+                type: "demo:scene",
+                schemaVersion: 2,
+                schema: { parse: (value) => value },
+              },
+            ],
+      );
+      const server = await createServer({
+        configFile: false,
+        root: directory,
+        logLevel: "silent",
+        server: { middlewareMode: true },
+        plugins: [
+          createPublisleVitePlugin({
+            registry,
+            // Registry version takes priority even if an independently registered codec is older.
+            markdownCodecs: [{ ...noticeCodec, schemaVersion: 1 }],
+            target: {
+              name: "codec-test",
+              extension: "js",
+              emitModule: (plan) =>
+                `export const blocks = ${JSON.stringify(plan.document.blocks)};`,
+            },
+          }),
+        ],
+      });
+      try {
+        const resolved = await server.pluginContainer.resolveId(filename);
+        if (!resolved) throw new Error("Expected resolved article.");
+        const loaded = await server.pluginContainer.load(resolved.id);
+        const code = typeof loaded === "string" ? loaded : loaded?.code;
+        expect(code).toContain('"schemaVersion":2');
+        expect(code).toContain(
+          kind === "native" ? '"message":"Hello"' : '"payload":{"value":42}',
+        );
+      } finally {
+        await server.close();
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+  );
+
   it("forwards host resource resolution and locates missing-resource build errors", async () => {
     const directory = await mkdtemp(
       path.join(tmpdir(), "publisle-resource-vite-"),

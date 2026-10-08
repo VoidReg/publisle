@@ -5,15 +5,15 @@ export type * from "./types.ts";
 
 import { fromMarkdown } from "./import.ts";
 import { toMarkdown } from "./export.ts";
-import type { MarkdownFormatResult, MarkdownImportOptions } from "./types.ts";
+import type { MarkdownFormatResult, MarkdownFormatOptions } from "./types.ts";
 
 export function formatMarkdown(
   source: string,
-  options: MarkdownImportOptions = {},
+  options: MarkdownFormatOptions = {},
 ): MarkdownFormatResult {
   const imported = fromMarkdown(source, options);
   if (!imported.document) return { diagnostics: imported.diagnostics };
-  const exported = toMarkdown(imported.document);
+  const exported = toMarkdown(imported.document, options);
   return {
     ...exported,
     diagnostics: [...imported.diagnostics, ...exported.diagnostics],
