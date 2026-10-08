@@ -6,6 +6,7 @@ import type {
   PublicationMetadata,
 } from "@publisle/schema";
 import type { PrepareOptions } from "@publisle/core";
+import type { MarkdownBlockCodec } from "@publisle/markdown";
 
 export type RenderAttribute = boolean | number | string;
 export type RenderNode =
@@ -96,4 +97,5 @@ export interface AdapterTarget {
 export interface PublisleViteOptions
   extends AdapterCompilerOptions, PrepareOptions {
   readonly target: AdapterTarget;
+  readonly markdownCodecs?: readonly MarkdownBlockCodec[];
 }

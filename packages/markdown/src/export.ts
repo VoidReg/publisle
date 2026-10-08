@@ -7,6 +7,7 @@ import { toMarkdown as serialize } from "mdast-util-to-markdown";
 import YAML from "yaml";
 import {
   isInteractiveEnvelope,
+  isPlainObject,
   type Block,
   type BlockType,
   type Diagnostic,
@@ -14,6 +15,28 @@ import {
 } from "@publisle/schema";
 import type { FlowNode, InlineNode, ListItemData } from "@publisle/blocks-core";
 import type { MarkdownExportOptions, MarkdownExportResult } from "./types.ts";
+import { codecRegistry } from "./codecs.ts";
+
+function serializeTree(tree: Root): string {
+  return serialize(tree, {
+    extensions: [
+      gfmToMarkdown(),
+      directiveToMarkdown(),
+      frontmatterToMarkdown(["yaml"]),
+      mathToMarkdown(),
+    ],
+  });
+}
+
+function hasDirective(value: unknown): boolean {
+  if (!isPlainObject(value)) return false;
+  return (
+    ["containerDirective", "leafDirective", "textDirective"].includes(
+      String(value["type"]),
+    ) ||
+    (Array.isArray(value["children"]) && value["children"].some(hasDirective))
+  );
+}
 
 type GenericNode = { type: string; [key: string]: unknown };
 type AnyBlock = Block<BlockType, unknown>;
@@ -624,10 +647,88 @@ export function toMarkdown(
 ): MarkdownExportResult {
   const diagnostics: Diagnostic[] = [];
   const policy = options.policy ?? "fallback";
+  let codecs: ReturnType<typeof codecRegistry>;
+  try {
+    codecs = codecRegistry(options.codecs);
+  } catch (error) {
+    return {
+      diagnostics: [
+        {
+          level: "error",
+          code: "invalid-markdown-codecs",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    };
+  }
   const nodes: (RootContent | GenericNode)[] = [];
   const metadata = frontmatter(document);
   if (metadata) nodes.push(metadata);
   for (const block of document.blocks) {
+    const codec = codecs.byType.get(block.type);
+    if (codec) {
+      let converted: RootContent | undefined;
+      let failed = false;
+      try {
+        // The codec cannot mutate the caller's source article.
+        converted = codec.encode(structuredClone(block), {
+          ...options,
+          policy,
+        });
+        if (converted !== undefined) {
+          if (policy !== "standard") {
+            if (
+              converted.type !== "containerDirective" ||
+              converted.name !== codec.directive
+            )
+              throw new Error(
+                "Native codecs must return their registered container directive.",
+              );
+            converted = {
+              ...converted,
+              attributes: {
+                ...converted.attributes,
+                schemaVersion: String(block.schemaVersion),
+              },
+            };
+          } else if (hasDirective(converted)) {
+            throw new Error(
+              "Standard codec output must not contain extension directives.",
+            );
+          }
+          // Surface serialization failures as per-block codec diagnostics before assembling output.
+          serializeTree({ type: "root", children: [converted] });
+        }
+      } catch (error) {
+        failed = true;
+        diagnostics.push({
+          level: policy === "strict" ? "error" : "warning",
+          code: "markdown-codec-failed",
+          message: `Encoding ${block.type} failed: ${error instanceof Error ? error.message : String(error)}`,
+          blockId: block.id,
+        });
+      }
+      if (converted !== undefined && !failed) {
+        if (policy === "standard")
+          diagnostics.push({
+            level: "warning",
+            code: "extension-semantics-lost",
+            message: `Publisle semantics for ${block.type} are omitted from standard Markdown.`,
+            blockId: block.id,
+          });
+        nodes.push(converted);
+      } else {
+        if (!failed)
+          diagnostics.push({
+            level: policy === "strict" ? "error" : "warning",
+            code: "unsupported-markdown-block",
+            message: `Codec ${codec.directive} cannot encode ${block.type} at schema version ${block.schemaVersion} under ${policy}.`,
+            blockId: block.id,
+          });
+        nodes.push(generic(block));
+      }
+      continue;
+    }
     if (policy === "standard" && isInteractiveEnvelope(block.data)) {
       diagnostics.push({
         level: "warning",
@@ -670,13 +771,6 @@ export function toMarkdown(
   }
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
-  const markdown = serialize({ type: "root", children: nodes } as Root, {
-    extensions: [
-      gfmToMarkdown(),
-      directiveToMarkdown(),
-      frontmatterToMarkdown(["yaml"]),
-      mathToMarkdown(),
-    ],
-  });
+  const markdown = serializeTree({ type: "root", children: nodes } as Root);
   return { markdown, diagnostics };
 }

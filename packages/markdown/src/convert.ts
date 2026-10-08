@@ -17,6 +17,9 @@ import type { FlowNode, InlineNode } from "@publisle/blocks-core";
 import YAML from "yaml";
 import { deterministicBlockId } from "./id.ts";
 import { sourceLocator } from "./source.ts";
+import { codecRegistry, importedVersion } from "./codecs.ts";
+import type { MarkdownImportOptions } from "./types.ts";
+import type { ContainerDirective } from "mdast-util-directive";
 
 type Node = RootContent | { type: string; [key: string]: unknown };
 const object = (value: unknown): Record<string, unknown> =>
@@ -693,9 +696,21 @@ export function treeToDocument(
   tree: Root,
   source: string,
   diagnostics: Diagnostic[],
-  sourceName?: string,
+  options: MarkdownImportOptions = {},
 ) {
-  const locate = sourceLocator(source, sourceName);
+  const locate = sourceLocator(source, options.sourceName);
+  let codecs: ReturnType<typeof codecRegistry>;
+  try {
+    codecs = codecRegistry(options.codecs);
+  } catch (error) {
+    diagnostics.push({
+      level: "error",
+      code: "invalid-markdown-codecs",
+      message: error instanceof Error ? error.message : String(error),
+      sourceLocation: locate(tree),
+    });
+    return { sourceMap: { document: locate(tree), blocks: {} } };
+  }
   const blockLocations: Record<string, SourceLocation> = {};
   let metadata: PublicationMetadata | undefined;
   const yaml = tree.children.find((node) => node.type === "yaml");
@@ -739,7 +754,56 @@ export function treeToDocument(
     const diagnosticStart = diagnostics.length;
     let block: ReturnType<typeof blockFor>;
     try {
-      block = blockFor(resolved, source, diagnostics, locate);
+      const attributes = attrs(resolved);
+      const codec =
+        resolved.type === "containerDirective"
+          ? codecs.byDirective.get(String(object(resolved)["name"]))
+          : undefined;
+      if (codec) {
+        const schemaVersion = importedVersion(
+          codec.type,
+          attributes["schemaVersion"],
+          options,
+          diagnostics,
+          codec,
+        );
+        let data: unknown;
+        try {
+          data = codec.decode(structuredClone(resolved) as ContainerDirective, {
+            schemaVersion,
+            sourceLocation: locate(node),
+          });
+          // Establish the JSON boundary without interpreting or migrating plugin payloads.
+          createBlock({ type: codec.type, schemaVersion, data });
+        } catch (error) {
+          diagnostics.push({
+            level: "error",
+            code: "markdown-codec-failed",
+            message: `Decoding ${codec.type} failed: ${error instanceof Error ? error.message : String(error)}`,
+            sourceLocation: locate(node),
+          });
+          continue;
+        }
+        block = { type: codec.type, schemaVersion, data } as Omit<Block, "id">;
+      } else {
+        block = blockFor(resolved, source, diagnostics, locate);
+        if (
+          block &&
+          resolved.type === "containerDirective" &&
+          block.type !== "publisle:raw-html" &&
+          object(resolved)["name"] !== "publisle"
+        ) {
+          block = {
+            ...block,
+            schemaVersion: importedVersion(
+              block.type,
+              attributes["schemaVersion"],
+              options,
+              diagnostics,
+            ),
+          };
+        }
+      }
     } catch (error) {
       diagnostics.push({
         level: "error",
@@ -778,7 +842,18 @@ export function treeToDocument(
       });
       continue;
     }
-    blocks.push(createBlock({ ...block, id }));
+    try {
+      blocks.push(createBlock({ ...block, id }));
+    } catch (error) {
+      diagnostics.push({
+        level: "error",
+        code: "markdown-import-failed",
+        message: error instanceof Error ? error.message : String(error),
+        blockId: id,
+        sourceLocation: locate(node),
+      });
+      continue;
+    }
     blockLocations[id] = locate(node);
     for (let index = diagnosticStart; index < diagnostics.length; index += 1) {
       diagnostics[index] = { ...diagnostics[index]!, blockId: id };

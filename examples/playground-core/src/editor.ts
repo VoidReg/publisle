@@ -123,7 +123,9 @@ export class DocumentEditor {
   }
 
   importMarkdown(source: string): ImportResult {
-    const imported = fromMarkdown(source);
+    const imported = fromMarkdown(source, {
+      resolveSchemaVersion: (type) => this.registry.get(type)?.schemaVersion,
+    });
     if (imported.document) {
       this.setDocument(imported.document);
     }

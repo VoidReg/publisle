@@ -88,12 +88,7 @@ export function fromMarkdown(
         mathFromMarkdown(),
       ],
     });
-    const result = treeToDocument(
-      tree,
-      source,
-      diagnostics,
-      options.sourceName,
-    );
+    const result = treeToDocument(tree, source, diagnostics, options);
     return diagnostics.some(({ level }) => level === "error")
       ? { diagnostics, sourceMap: result.sourceMap }
       : { ...result, diagnostics };

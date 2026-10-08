@@ -74,7 +74,14 @@ export function createPublisleVitePlugin(options: PublisleViteOptions): Plugin {
               }),
         });
       };
-      const imported = fromMarkdown(source, { sourceName: filename });
+      const imported = fromMarkdown(source, {
+        sourceName: filename,
+        ...(options.markdownCodecs === undefined
+          ? {}
+          : { codecs: options.markdownCodecs }),
+        resolveSchemaVersion: (type) =>
+          options.registry.get(type)?.schemaVersion,
+      });
       const sourceDocument = imported.document;
       if (!sourceDocument) {
         return fail(imported.diagnostics);

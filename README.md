@@ -36,6 +36,88 @@ the default. `policy: "strict"` instead returns error diagnostics without Markdo
 `warn` does not omit unsupported blocks; preservation does not provide a renderer
 for an unavailable plugin.
 
+### Custom block codecs and authored versions
+
+Register tooling-only `MarkdownBlockCodec`s through the `codecs` option on
+`fromMarkdown`, `toMarkdown`, and `formatMarkdown`. Each codec declares a namespaced
+block `type`, a positive current `schemaVersion`, a unique native container
+`directive` name, and synchronous `decode`/`encode` callbacks. Built-in directive
+names/types cannot be replaced. This API covers top-level block directives, not
+arbitrary parser extensions or inline codecs; reader renderers remain separate.
+
+For example, a user-owned notice plugin can expose this codec alongside its
+portable definition (the definition owns schema validation and migrations):
+
+```ts
+import { isPlainObject } from "@publisle/schema";
+import type { MarkdownBlockCodec } from "@publisle/markdown";
+
+export const noticeCodec: MarkdownBlockCodec = {
+  type: "demo:notice",
+  directive: "notice",
+  schemaVersion: 2,
+  decode(node, { schemaVersion }) {
+    const message = node.attributes?.["message"];
+    if (typeof message !== "string") throw new Error("Missing message");
+    return schemaVersion === 1 ? { text: message } : { message };
+  },
+  encode(block, { policy }) {
+    if (!isPlainObject(block.data)) return undefined;
+    const message = block.data[block.schemaVersion === 1 ? "text" : "message"];
+    if (typeof message !== "string") return undefined;
+    return policy === "standard"
+      ? { type: "paragraph", children: [{ type: "text", value: message }] }
+      : {
+          type: "containerDirective",
+          name: "notice",
+          attributes: { message },
+          children: [],
+        };
+  },
+};
+```
+
+```ts
+const imported = fromMarkdown(':::notice{message="Hello"}\n:::\n', {
+  codecs: [noticeCodec],
+  resolveSchemaVersion: (type) => registry.get(type)?.schemaVersion,
+});
+const exported = toMarkdown(imported.document!, { codecs: [noticeCodec] });
+```
+
+Decoders receive a cloned directive AST, resolved schema version, and original
+source location. Their result must be JSON-compatible data; import does not run
+plugin validators or migrations. Encoders receive a cloned semantic block and
+export options with the effective policy. Native output must be the codec's
+registered container directive; export automatically records the source block's
+schema version. A standard encoder can return plain Markdown without extension
+directives and receives an `extension-semantics-lost` warning. Return `undefined`
+to opt out of an unsupported version/policy. Under strict policy, codec failures
+or opt-outs produce errors and no Markdown; warn/fallback preserve the complete
+block via its generic directive with a warning. Failed decoding is fatal rather
+than guessing at malformed data. Invalid or duplicate registrations also fail
+with structured diagnostics. Codec callbacks are trusted host code, not a sandbox.
+
+For authored native extensions without `schemaVersion`, import checks
+`resolveSchemaVersion(type)` first, then the codec's current version or a built-in
+definition's version. Unknown interactive types retain their JSON payload at
+version 1 with `unresolved-markdown-version`; supply an explicit version or lookup
+to remove the ambiguity. Explicit versions bypass current-version lookup and are
+preserved even if newer than the registry; only preparation migrates or rejects
+unsupported versions. Generic `:::publisle` forms are archival: their explicit
+versions/data bypass native codecs, and an omitted archival version retains the
+legacy version-1 default. Without a codec, unknown native directives remain raw
+source, while generic forms preserve typed JSON; use generic forms for portable
+exchange with hosts that lack the codec.
+
+Vite adapters accept `markdownCodecs` and use their host registry automatically
+for current-version resolution. Both playground editors also use their registry
+on import. `formatMarkdown` accepts the same codec/version options plus export
+policy/formatting options, allowing deterministic native reformatting. None of
+these registrations become article fields or reader dependencies. See the
+[tested notice codec](packages/markdown/tests/fixtures/notice-codec.ts) for an
+example with a separate v1-to-v2 migration.
+
 The React and Svelte playgrounds include a **3D Scene** example with orbit,
 selection, and camera reset controls. Its schema and Three.js renderer belong
 entirely to the host-side [scene demo](examples/scene-demo/README.md); Publisle
