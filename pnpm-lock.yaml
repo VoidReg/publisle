@@ -216,6 +216,9 @@ importers:
       '@publisle/blocks-technical':
         specifier: workspace:*
         version: link:blocks/technical
+      '@publisle/cli':
+        specifier: workspace:*
+        version: link:packages/cli
       '@types/node':
         specifier: ^24.13.5
         version: 24.13.5
@@ -582,6 +585,21 @@ importers:
       '@publisle/core':
         specifier: workspace:*
         version: link:../core
+      '@publisle/schema':
+        specifier: workspace:*
+        version: link:../schema
+
+  packages/cli:
+    dependencies:
+      '@publisle/blocks-core':
+        specifier: workspace:*
+        version: link:../../blocks/core
+      '@publisle/core':
+        specifier: workspace:*
+        version: link:../core
+      '@publisle/markdown':
+        specifier: workspace:*
+        version: link:../markdown
       '@publisle/schema':
         specifier: workspace:*
         version: link:../schema
