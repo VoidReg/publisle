@@ -37,24 +37,7 @@ code does.
 
 ## How the system fits together
 
-```mermaid
-flowchart TD
-  subgraph Tooling["Authoring / server / build"]
-    Markdown["Markdown + directives"] -->|import| Document["Portable document"]
-    JSON["Typed JSON"] -->|parse| Document
-    Document --> Prepare["Prepare: validate, migrate, plan"]
-    Registry["Host block registry + optional profiles / resolver"] --> Prepare
-    Prepare --> Adapter["React / Svelte adapter compilation"]
-    Renderers["Host renderer registration"] --> Adapter
-    Adapter --> Fragment["Static article fragment + optional island hooks"]
-  end
-
-  subgraph Reader["Reader application"]
-    Fragment --> Page["Host page: layout, routing, metadata"]
-    Page -->|activation intent| Islands["Interactive islands"]
-    Modules["Host interactive modules"] -->|lazy load| Islands
-  end
-```
+![Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands.](docs/assets/publisle-system.svg)
 
 The portable schema knows the content, not the UI framework. Preparation produces
 diagnostics, reference/resource plans, and a cache identity. Adapters compile the
