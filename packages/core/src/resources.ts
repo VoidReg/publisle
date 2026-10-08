@@ -58,9 +58,21 @@ export function createResourcePlanner(resolver?: ResourceResolver) {
   const visiting = new Set<string>();
 
   function sourceFor(value: unknown): PlannedResource {
+    const originalUri = nonempty(value, "Original resource URI");
     const requestedUri = canonicalUri(value);
     const cached = requests.get(requestedUri);
-    if (cached) return cached;
+    if (cached) {
+      const canonical = sources.get(cached.identity) ?? cached;
+      const updated = {
+        ...canonical,
+        originalUris: [
+          ...new Set([...(canonical.originalUris ?? []), originalUri]),
+        ].sort(),
+      };
+      sources.set(updated.identity, updated);
+      requests.set(requestedUri, updated);
+      return updated;
+    }
     const failure = failures.get(requestedUri);
     if (failure) throw failure;
     if (visiting.has(requestedUri))
@@ -73,6 +85,10 @@ export function createResourcePlanner(resolver?: ResourceResolver) {
       let uri = requestedUri;
       let version: string | undefined;
       let dependencies: string[] = [];
+      let provenance: Pick<
+        PlannedResource,
+        "resolvedLocation" | "mediaType" | "byteDigest" | "external" | "dataset"
+      > = {};
       if (resolver) {
         nonempty(resolver.version, "Resource resolver version");
         let result: unknown;
@@ -100,6 +116,45 @@ export function createResourcePlanner(resolver?: ResourceResolver) {
           `Resource ${requestedUri} version`,
         );
         if (result["uri"] !== undefined) uri = canonicalUri(result["uri"]);
+        const fields: Record<string, JsonValue> = {};
+        for (const key of ["resolvedLocation", "mediaType"] as const)
+          if (result[key] !== undefined)
+            fields[key] = nonempty(result[key], key);
+        if (result["byteDigest"] !== undefined) {
+          if (
+            typeof result["byteDigest"] !== "string" ||
+            !/^sha256:[0-9a-f]{64}$/u.test(result["byteDigest"])
+          )
+            throw new ResourcePlanningError(
+              "invalid-resource",
+              "Byte digest must be a SHA-256 digest of exact resource bytes.",
+            );
+          fields["byteDigest"] = result["byteDigest"];
+        }
+        if (result["external"] !== undefined) {
+          if (typeof result["external"] !== "boolean")
+            throw new ResourcePlanningError(
+              "invalid-resource",
+              "External status must be boolean.",
+            );
+          fields["external"] = result["external"];
+        }
+        if (result["dataset"] !== undefined) {
+          if (!isJsonValue(result["dataset"]))
+            throw new ResourcePlanningError(
+              "invalid-resource",
+              "Dataset descriptor must be JSON; keep bulk bytes external.",
+            );
+          fields["dataset"] = structuredClone(result["dataset"]);
+        }
+        provenance = fields as Pick<
+          PlannedResource,
+          | "resolvedLocation"
+          | "mediaType"
+          | "byteDigest"
+          | "external"
+          | "dataset"
+        >;
         const references = result["dependencies"];
         if (references !== undefined) {
           if (!Array.isArray(references))
@@ -122,7 +177,13 @@ export function createResourcePlanner(resolver?: ResourceResolver) {
       }
       dependencies = [...new Set(dependencies)].sort();
       const identity = sha256Hex(
-        stable({ uri, version: version ?? null, dependencies }),
+        stable({
+          uri,
+          version: version ?? null,
+          dependencies,
+          provenance,
+          resolverBase: resolver?.base ?? null,
+        }),
       );
       const existing = canonicalSources.get(uri);
       if (existing !== undefined && existing !== identity)
@@ -131,6 +192,13 @@ export function createResourcePlanner(resolver?: ResourceResolver) {
           `Conflicting revisions or dependencies for canonical resource ${uri}.`,
         );
       const resource: PlannedResource = {
+        ...provenance,
+        originalUris: [
+          ...new Set([
+            ...(sources.get(identity)?.originalUris ?? []),
+            originalUri,
+          ]),
+        ].sort(),
         uri,
         identity,
         dependencies,

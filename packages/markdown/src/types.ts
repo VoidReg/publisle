@@ -35,7 +35,8 @@ export interface MarkdownImportOptions {
   /** Current schema version lookup; no migration or validation occurs during import. */
   readonly resolveSchemaVersion?: (type: BlockType) => number | undefined;
 }
-export type MarkdownExportPolicy = "fallback" | "strict" | "warn" | "standard";
+export type MarkdownExportPolicy =
+  "fallback" | "strict" | "warn" | "standard" | "archival";
 export interface MarkdownExportOptions {
   readonly policy?: MarkdownExportPolicy;
   readonly payloadFormatting?: "pretty" | "compact";

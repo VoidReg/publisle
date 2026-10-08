@@ -22,3 +22,4 @@ export function formatMarkdown(
       : { metadata: imported.document.metadata }),
   };
 }
+export { toArchivalMarkdown, fromArchivalMarkdown } from "./archive.ts";

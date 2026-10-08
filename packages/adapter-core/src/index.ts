@@ -21,3 +21,9 @@ export type {
   PublishedIsland,
 } from "./publication.ts";
 export type * from "./types.ts";
+export { placementProgram } from "./placement.ts";
+export { javascriptValue } from "./javascript.ts";
+export {
+  publicationReaderManifest,
+  type PublicationReaderManifest,
+} from "./publication.ts";

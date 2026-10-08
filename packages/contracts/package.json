@@ -13,6 +13,7 @@
     },
     "./schemas/*": "./schemas/*.json",
     "./builtin-sources": "./src/builtin-sources.ts",
+    "./exchange": "./src/exchange.ts",
     "./fixtures/*": "./fixtures/*.json"
   },
   "files": [

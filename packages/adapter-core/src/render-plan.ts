@@ -5,12 +5,13 @@ import {
   type BlockType,
   type Diagnostic,
   type InteractiveEnvelope,
-  type JsonObject,
   type JsonValue,
   type PreparedDocument,
   type ReferenceTarget,
   type InteractiveContent,
+  type ContractDependency,
   richText,
+  createIslandInput,
 } from "@publisle/schema";
 import katex from "katex";
 import type {
@@ -380,7 +381,7 @@ function inlinePlain(nodes: readonly JsonValue[]): string {
     .join("");
 }
 
-function envelopeProps(envelope: InteractiveEnvelope<JsonObject>): JsonValue {
+function envelopeProps(envelope: InteractiveEnvelope<JsonValue>): JsonValue {
   const props: Record<string, JsonValue> = {
     activation: envelope.activation,
     payload: envelope.payload,
@@ -388,6 +389,8 @@ function envelopeProps(envelope: InteractiveEnvelope<JsonObject>): JsonValue {
   if (envelope.content !== undefined)
     props["content"] = envelope.content as JsonValue;
   if (envelope.fallback !== undefined) props["fallback"] = envelope.fallback;
+  if (envelope.initialState !== undefined)
+    props["initialState"] = envelope.initialState;
   if (envelope.accessibility !== undefined)
     props["accessibility"] = envelope.accessibility as JsonValue;
   return props;
@@ -398,7 +401,7 @@ function nonempty(value: string | undefined, fallback: string): string {
 }
 
 function accessibleName(
-  envelope: InteractiveEnvelope<JsonObject>,
+  envelope: InteractiveEnvelope<JsonValue>,
   displayName?: string,
 ): string {
   const title = envelope.content?.title
@@ -411,7 +414,7 @@ function accessibleName(
 }
 
 function exploreLabel(
-  envelope: InteractiveEnvelope<JsonObject>,
+  envelope: InteractiveEnvelope<JsonValue>,
   displayName?: string,
 ): string {
   const title = envelope.content?.title
@@ -442,11 +445,12 @@ function interactiveReference(
 
 function interactiveNodes(
   block: Block<BlockType, unknown>,
-  envelope: InteractiveEnvelope<JsonObject>,
+  envelope: InteractiveEnvelope<JsonValue>,
   options: AdapterCompilerOptions,
   diagnostics: Diagnostic[],
   references: readonly ReferenceTarget[],
   displayName?: string,
+  pins: readonly ContractDependency[] = [],
 ): RenderNode[] {
   const renderer = options.renderers?.[block.type];
   const interactive = renderer ? interactiveReference(renderer) : undefined;
@@ -511,7 +515,18 @@ function interactiveNodes(
           kind: "component",
           module: staticRenderer.module,
           exportName: staticRenderer.exportName ?? "default",
+          blockId: block.id,
           props: envelopeProps(envelope),
+          artifact: staticRenderer.lower
+            ? staticRenderer.lower(createIslandInput(block, envelope, pins))
+            : hasFallback
+              ? flow(
+                  fallbackContent as unknown as Flow[],
+                  diagnostics,
+                  block,
+                  references,
+                )
+              : [],
         },
       ]
     : hasFallback
@@ -563,6 +578,7 @@ function blockNodes(
   diagnostics: Diagnostic[],
   references: readonly ReferenceTarget[],
   displayName?: string,
+  pins: readonly ContractDependency[] = [],
 ): RenderNode[] {
   if (isInteractiveEnvelope(block.data))
     return interactiveNodes(
@@ -572,6 +588,7 @@ function blockNodes(
       diagnostics,
       references,
       displayName,
+      pins,
     );
   const data = block.data as Record<string, unknown>;
   const reference = references.find((entry) => entry.blockId === block.id);
@@ -1088,11 +1105,12 @@ export function createRenderPlan(
       document.references.targets,
       document.islands.find((island) => island.blockId === block.id)
         ?.displayName,
+      document.dependencies ?? [],
     ),
   );
   const base = {
     document,
-    nodes,
+    nodes: wrapInputs(nodes, document),
     diagnostics: diagnostics.map((diagnostic) =>
       locateDiagnostic(diagnostic, document.sourceMap),
     ),
@@ -1100,4 +1118,34 @@ export function createRenderPlan(
   return document.metadata === undefined
     ? base
     : { ...base, metadata: document.metadata };
+}
+
+function wrapInputs(
+  nodes: readonly RenderNode[],
+  document: PreparedDocument,
+): RenderNode[] {
+  return nodes.map((node) => {
+    if (node.kind === "element")
+      return { ...node, children: wrapInputs(node.children, document) };
+    if (node.kind !== "island" && !(node.kind === "component" && node.blockId))
+      return node;
+    const block = document.blocks.find((entry) => entry.id === node.blockId);
+    if (!block)
+      throw new Error("Island input requires a corresponding prepared block.");
+    const activation = node.kind === "island" ? node.activation : "visible";
+    const envelope = isInteractiveEnvelope(node.props)
+      ? node.props
+      : { activation, payload: node.props };
+    return {
+      ...node,
+      ...(node.kind === "island"
+        ? { fallback: wrapInputs(node.fallback, document) }
+        : {}),
+      props: createIslandInput(
+        block,
+        envelope,
+        document.dependencies,
+      ) as unknown as JsonValue,
+    };
+  });
 }

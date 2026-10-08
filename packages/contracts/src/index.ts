@@ -27,3 +27,11 @@ export {
   type ContractBundle,
 } from "./export.ts";
 export { createSchemaParser, type SchemaValue } from "./schema-first.ts";
+export {
+  resolveContracts,
+  lockDocument,
+  validateLockedDocument,
+  ContractResolutionError,
+  type ContractFetchPolicy,
+  type ContractResolutionOptions,
+} from "./resolution.ts";

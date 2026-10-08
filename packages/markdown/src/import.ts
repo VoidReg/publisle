@@ -11,6 +11,7 @@ import type { Diagnostic } from "@publisle/schema";
 import { treeToDocument } from "./convert.ts";
 import type { MarkdownImportOptions, MarkdownImportResult } from "./types.ts";
 import { sourceLocator } from "./source.ts";
+import { fromArchivalMarkdown } from "./archive.ts";
 
 const interactiveSlots = new Set([
   "title",
@@ -83,6 +84,11 @@ export function fromMarkdown(
 ): MarkdownImportResult {
   const diagnostics: Diagnostic[] = [];
   try {
+    if (source.trimStart().startsWith("::::publisle-document"))
+      return {
+        ...fromArchivalMarkdown(source, options.sourceName),
+        diagnostics,
+      };
     const tree = parse(nestInteractiveSlots(source), {
       extensions: [gfm(), directive(), frontmatter(["yaml"]), math()],
       mdastExtensions: [

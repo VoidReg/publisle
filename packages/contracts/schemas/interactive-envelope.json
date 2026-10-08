@@ -4,6 +4,7 @@
   "title": "Publisle beta interactive-envelope",
   "type": "object",
   "properties": {
+    "initialState": { "$ref": "urn:publisle:schema:json-value" },
     "activation": {
       "enum": ["load", "visible", "idle", "interaction"]
     },

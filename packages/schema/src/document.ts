@@ -8,10 +8,17 @@ import {
   type SerializedPublicationMetadata,
 } from "./metadata.ts";
 import { isPlainObject, readField } from "./object.ts";
+import {
+  parseContractDependencies,
+  type ContractDependency,
+} from "./dependencies.ts";
+import { isJsonValue, type JsonObject } from "./json.ts";
 
 export const DOCUMENT_SCHEMA_VERSION = 1;
 
 export interface SerializedDocument {
+  dependencies?: readonly ContractDependency[];
+  extensions?: JsonObject;
   schemaVersion: number;
   metadata?: SerializedPublicationMetadata;
   blocks: SerializedBlock[];
@@ -20,12 +27,16 @@ export interface SerializedDocument {
 export interface Document<
   Blocks extends Block<BlockType, unknown> = UnknownBlock,
 > {
+  dependencies?: readonly ContractDependency[];
+  extensions?: JsonObject;
   schemaVersion: number;
   metadata?: PublicationMetadata;
   blocks: Blocks[];
 }
 
 export function document<Blocks extends Block<BlockType, unknown>>(input: {
+  dependencies?: readonly ContractDependency[];
+  extensions?: JsonObject;
   metadata?: PublicationMetadata;
   blocks: readonly Blocks[];
 }): Document<Blocks> {
@@ -33,6 +44,10 @@ export function document<Blocks extends Block<BlockType, unknown>>(input: {
     schemaVersion: DOCUMENT_SCHEMA_VERSION,
     blocks: [...input.blocks],
   };
+  if (input.dependencies !== undefined)
+    result.dependencies = parseContractDependencies(input.dependencies);
+  if (input.extensions !== undefined)
+    result.extensions = parseExtensions(input.extensions);
 
   if (input.metadata !== undefined) {
     result.metadata = input.metadata;
@@ -75,10 +90,23 @@ export function parseDocument(value: unknown): Document {
     schemaVersion,
     blocks: blocks.map((block) => parseBlock(block)),
   };
+  if (value["dependencies"] !== undefined)
+    result.dependencies = parseContractDependencies(value["dependencies"]);
+  if (value["extensions"] !== undefined)
+    result.extensions = parseExtensions(value["extensions"]);
 
   if (metadata !== undefined) {
     result.metadata = parsePublicationMetadata(metadata);
   }
 
   return result;
+}
+
+function parseExtensions(value: unknown): JsonObject {
+  if (!isPlainObject(value) || !isJsonValue(value))
+    throw new SchemaParseError(
+      "invalid-document",
+      "Document extensions must be a JSON object.",
+    );
+  return value;
 }

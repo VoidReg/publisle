@@ -60,7 +60,11 @@ function serializeNode(node: RenderNode): string {
   if (node.kind === "raw")
     return node.value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, "");
   if (node.kind === "component") {
-    return `<div data-publisle-static="${escapeAttribute(node.module)}" data-publisle-export="${escapeAttribute(node.exportName)}"></div>`;
+    if (!node.artifact?.length)
+      throw new Error(
+        "Cannot serialize a framework component without static lowering or authored fallback.",
+      );
+    return serializeNodes(node.artifact);
   }
   if (node.kind === "island") {
     const content = node.fallback.filter((child) => !isActivateButton(child));
@@ -115,6 +119,18 @@ function writeAttributes(attributes: ReadonlyMap<string, string>): string {
 
 /** Assign placement ids from recorded attributes. This walks tags, not document text. */
 export function instantiateHtml(html: string, instanceId: string): string {
+  if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/u.test(instanceId))
+    throw new Error("Placement ID must be a bounded safe host identifier.");
+  const generated = new Set<string>();
+  for (let offset = 0; offset < html.length;) {
+    const start = html.indexOf("<", offset);
+    if (start < 0) break;
+    const end = tagEnd(html, start);
+    const tag = html.slice(start, end + 1);
+    const id = /\bdata-publisle-id="([^"]*)"/u.exec(tag)?.[1];
+    if (id !== undefined) generated.add(id);
+    offset = end + 1;
+  }
   let result = "";
   let index = 0;
   while (index < html.length) {
@@ -126,7 +142,7 @@ export function instantiateHtml(html: string, instanceId: string): string {
     result += html.slice(index, start);
     const end = tagEnd(html, start);
     const tag = html.slice(start, end + 1);
-    result += rewriteTag(tag, instanceId);
+    result += rewriteTag(tag, instanceId, generated);
     index = end + 1;
   }
   return result;
@@ -149,7 +165,11 @@ function tagEnd(html: string, start: number): number {
   return html.length - 1;
 }
 
-function rewriteTag(tag: string, instanceId: string): string {
+function rewriteTag(
+  tag: string,
+  instanceId: string,
+  generated: ReadonlySet<string>,
+): string {
   if (!tag.startsWith("<") || tag.startsWith("</") || tag.startsWith("<!"))
     return tag;
   const nameEnd = tag.search(/[\s/>]/u);
@@ -164,6 +184,35 @@ function rewriteTag(tag: string, instanceId: string): string {
   const localRef = attributes.get("data-publisle-ref");
   if (localRef !== undefined)
     attributes.set("href", `#${instanceId}-${localRef}`);
+  for (const name of [
+    "aria-labelledby",
+    "aria-describedby",
+    "aria-controls",
+    "aria-owns",
+    "aria-flowto",
+    "aria-activedescendant",
+    "aria-details",
+    "aria-errormessage",
+    "for",
+    "headers",
+    "list",
+    "form",
+  ]) {
+    const value = attributes.get(name);
+    if (value !== undefined)
+      attributes.set(
+        name,
+        value
+          .split(/\s+/u)
+          .map((id) => (generated.has(id) ? `${instanceId}-${id}` : id))
+          .join(" "),
+      );
+  }
+  for (const name of ["href", "xlink:href"]) {
+    const value = attributes.get(name);
+    if (value?.startsWith("#") && generated.has(value.slice(1)))
+      attributes.set(name, `#${instanceId}-${value.slice(1)}`);
+  }
   const closing = tag.endsWith("/>") ? " />" : ">";
   return `<${tagName}${writeAttributes(attributes)}${closing}`;
 }

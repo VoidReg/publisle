@@ -11,7 +11,7 @@ import {
   instantiatePublication,
   type PublicationArtifact,
   type PublicationEnvironment,
-} from "@publisle/adapter-core";
+} from "@publisle/adapter-core/publication-runtime";
 import type { JsonValue } from "@publisle/schema";
 
 export interface PublisleArticleProps {

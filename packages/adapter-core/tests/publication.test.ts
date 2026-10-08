@@ -182,9 +182,9 @@ describe("publication artifact", () => {
       implementation: "publisle:interactive-schematic",
       activation: "interaction",
       mode: "mount",
-      props: { source: "./counter.json" },
+      props: { inputVersion: 1, payload: { source: "./counter.json" } },
     });
-    expect(publication.islands[0]?.props).not.toHaveProperty("content");
+    expect(publication.islands[0]?.props).toHaveProperty("content");
     expect(compilePublication(prepared).identity).toBe(publication.identity);
     expect(compilePublication(prepared, { styles: "none" }).styles).toEqual([]);
   });
@@ -234,6 +234,7 @@ describe("publication artifact", () => {
       },
     );
     expect(again).toBe(handle);
+    await Promise.resolve();
     expect(loader).toHaveBeenCalledOnce();
     const section = root.children[0];
     const fallback = section?.children[0];
@@ -252,7 +253,7 @@ describe("publication artifact", () => {
     expect(unmount).not.toHaveBeenCalled();
   });
 
-  it("reuses one module, reports missing implementations, and rejects hydrate", () => {
+  it("reuses one module, reports missing implementations, and rejects hydrate", async () => {
     const publication = compilePublication(preparedArticle());
     const island = publication.islands[0];
     if (!island) throw new Error("Expected an island.");
@@ -266,6 +267,7 @@ describe("publication artifact", () => {
       mount,
       unmount: vi.fn(),
     });
+    await Promise.resolve();
     expect(loader).toHaveBeenCalledOnce();
 
     const missing = new ElementStub();

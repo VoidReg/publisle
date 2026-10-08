@@ -4,7 +4,7 @@
     instantiatePublication,
     type PublicationArtifact,
     type PublicationEnvironment,
-  } from "@publisle/adapter-core";
+  } from "@publisle/adapter-core/publication-runtime";
   import { mount as mountComponent, unmount } from "svelte";
   import type { JsonValue } from "@publisle/schema";
 

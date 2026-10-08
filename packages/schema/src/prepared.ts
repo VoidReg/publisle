@@ -3,7 +3,7 @@ import type { BlockId } from "./block-id.ts";
 import type { BlockType } from "./block-type.ts";
 import type { Document } from "./document.ts";
 import { SchemaParseError } from "./error.ts";
-import type { JsonObject, JsonValue } from "./json.ts";
+import { isJsonValue, type JsonValue } from "./json.ts";
 import type { PublicationMetadata } from "./metadata.ts";
 import { isPlainObject } from "./object.ts";
 
@@ -36,6 +36,7 @@ export interface InteractiveAccessibility {
 }
 
 export interface InteractiveEnvelope<Payload> {
+  readonly initialState?: JsonValue;
   readonly activation: Activation;
   readonly content?: InteractiveContent;
   readonly fallback?: readonly JsonValue[];
@@ -49,6 +50,7 @@ export interface InteractiveContentParsers {
 }
 
 const envelopeKeys = new Set([
+  "initialState",
   "activation",
   "content",
   "fallback",
@@ -206,9 +208,14 @@ function parseAccessibility(value: unknown): InteractiveAccessibility {
 
 export function isInteractiveEnvelope(
   value: unknown,
-): value is InteractiveEnvelope<JsonObject> {
+): value is InteractiveEnvelope<JsonValue> {
   if (!isPlainObject(value) || !isActivation(value["activation"])) return false;
-  if ("alt" in value || !isPlainObject(value["payload"])) return false;
+  if (
+    "alt" in value ||
+    !Object.hasOwn(value, "payload") ||
+    !isJsonValue(value["payload"])
+  )
+    return false;
   if (value["content"] !== undefined && !isPlainObject(value["content"]))
     return false;
   if (value["fallback"] !== undefined && !Array.isArray(value["fallback"]))
@@ -233,6 +240,14 @@ export function parseInteractiveEnvelope<Payload>(
     );
   }
   rejectUnknown(value, envelopeKeys, "interactive");
+  if (
+    value["initialState"] !== undefined &&
+    !isJsonValue(value["initialState"])
+  )
+    throw new SchemaParseError(
+      "invalid-block-data",
+      "Initial state must be JSON.",
+    );
   const activation = value["activation"] ?? "visible";
   if (!isActivation(activation)) {
     throw new SchemaParseError(
@@ -257,6 +272,9 @@ export function parseInteractiveEnvelope<Payload>(
   return {
     activation,
     payload: parsePayload(value["payload"]),
+    ...(value["initialState"] === undefined
+      ? {}
+      : { initialState: value["initialState"] as JsonValue }),
     ...(content === undefined ? {} : { content }),
     ...(fallback === undefined ? {} : { fallback }),
     ...(accessibility === undefined ? {} : { accessibility }),
@@ -270,6 +288,13 @@ export interface ResourceReference {
 }
 
 export interface PlannedResource {
+  readonly originalUris?: readonly string[];
+  readonly resolvedLocation?: string;
+  readonly mediaType?: string;
+  /** Exact file bytes, not a JCS digest of a JSON representation. */
+  readonly byteDigest?: `sha256:${string}`;
+  readonly external?: boolean;
+  readonly dataset?: JsonValue;
   readonly uri: string;
   readonly identity: string;
   /** Host-supplied source content/revision identity, absent for unchecked references. */
@@ -319,6 +344,11 @@ export interface PreparedBlock extends Block<BlockType, unknown> {
 }
 
 export interface PreparedDocument {
+  readonly dependencies?: readonly import("./dependencies.ts").ContractDependency[];
+  readonly extensions?: import("./json.ts").JsonObject;
+  readonly sourceIdentity?: string;
+  readonly semanticIdentity?: string;
+  readonly diagnosticIdentity?: string;
   /** Declared locations in document order; opaque branches are excluded. */
   readonly traversal?: readonly (import("./traversal.ts").TraversalVisit & {
     readonly blockId: BlockId;

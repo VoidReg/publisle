@@ -4,6 +4,7 @@ import type {
   JsonValue,
   PreparedDocument,
   PublicationMetadata,
+  IslandInput,
 } from "@publisle/schema";
 import type { PrepareOptions } from "@publisle/core";
 import type { MarkdownBlockCodec } from "@publisle/markdown";
@@ -31,6 +32,9 @@ export type RenderNode =
     }
   | {
       readonly kind: "component";
+      readonly blockId?: string;
+      /** Artifact-only lowering or authored fallback; native targets still render the component. */
+      readonly artifact?: readonly RenderNode[];
       readonly module: string;
       readonly exportName: string;
       readonly props: JsonValue;
@@ -44,6 +48,7 @@ export interface RenderPlan {
 }
 
 export interface RendererModuleReference {
+  readonly lower?: (input: IslandInput) => readonly RenderNode[];
   readonly module: string;
   readonly exportName?: string;
 }
@@ -80,6 +85,8 @@ export type DiagramRenderer = (input: {
   readonly alt: string;
 }) => DiagramRenderResult;
 export interface AdapterCompilerOptions {
+  /** Raw HTML's authored IDs cannot be safely rewritten by a generic compiler. */
+  readonly rawHtmlPlacement?: "reject" | "preserve";
   readonly renderers?: Readonly<Record<string, IslandRendererReference>>;
   readonly rawHtml?:
     "escape" | "omit" | "trusted" | ((value: string) => string);

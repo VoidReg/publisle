@@ -101,6 +101,12 @@ export default function App() {
     download("document.json", editor.toJson(), "application/json");
   };
 
+  const handleExportArchive = () => {
+    const result = editor.exportMarkdown({ policy: "archival" });
+    if (result.markdown) download("document.archive.md", result.markdown);
+    setDiagnostics(result.diagnostics);
+  };
+
   return (
     <div className="playground">
       <header className="toolbar">
@@ -131,6 +137,9 @@ export default function App() {
           </button>
           <button type="button" onClick={handleExportMarkdown}>
             Export Markdown
+          </button>
+          <button type="button" onClick={handleExportArchive}>
+            Export archival Markdown
           </button>
           <label>
             Payload JSON{" "}

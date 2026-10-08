@@ -12,8 +12,7 @@ import type {
   RenderPlan,
 } from "./types.ts";
 
-const js = (value: unknown): string =>
-  JSON.stringify(value).replaceAll("<", "\\u003c");
+import { javascriptValue as js } from "./javascript.ts";
 
 export const publicationTarget: AdapterTarget = {
   name: "publication",

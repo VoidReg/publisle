@@ -278,7 +278,10 @@ describe("publication Vite target", () => {
       expect.objectContaining({
         implementation: "publisle:interactive-schematic",
         mode: "mount",
-        props: { source: "./counter.json" },
+        props: expect.objectContaining({
+          inputVersion: 1,
+          payload: { source: "./counter.json" },
+        }) as unknown,
       }),
     ]);
   });
