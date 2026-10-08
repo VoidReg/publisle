@@ -262,13 +262,9 @@ describe("offline directory exchange", () => {
     ).rejects.toThrow("digest mismatch");
     await expect(readFile(join(invalid, "exchange.json"))).rejects.toThrow();
   });
-  it("detects changed source/contracts/lock/assets on import", async () => {
-    for (const target of [
-      "source.json",
-      "contracts.json",
-      "lock.json",
-      "asset",
-    ]) {
+  it.each(["source.json", "contracts.json", "lock.json", "asset"])(
+    "detects changed %s bytes on import",
+    async (target) => {
       const input = await fixture();
       const manifest = await exportExchange(input.directory, {
         ...input,
@@ -285,8 +281,8 @@ describe("offline directory exchange", () => {
       await expect(importExchange(input.directory)).rejects.toThrow(
         "digest mismatch",
       );
-    }
-  });
+    },
+  );
   it("rejects symlinked roots, files and asset directories", async () => {
     const input = await fixture();
     const manifest = await exportExchange(input.directory, {
