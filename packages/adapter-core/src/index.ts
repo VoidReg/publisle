@@ -24,6 +24,12 @@ export type * from "./types.ts";
 export { placementProgram } from "./placement.ts";
 export { javascriptValue } from "./javascript.ts";
 export {
+  compileComposition,
+  type CompositionCompilation,
+  type CompositionInstance,
+  type PortConnection,
+} from "./composition.ts";
+export {
   publicationReaderManifest,
   type PublicationReaderManifest,
 } from "./publication.ts";

@@ -79,4 +79,4 @@ Serialize returned values with `canonicalizeJson` or ordinary JSON serialization
 
 See the [contract format](../standards/contracts.md) for exact preimages, scopes, limits and remaining groups.
 
-Read the [normative definitions](../standards/README.md) for exact limits, roles, distinctions and remaining work. Shared JSON fixtures are independent-consumer inputs; independent Python conformance is not yet implemented.
+Read the [normative definitions](../standards/README.md) for exact limits, roles, distinctions and remaining work. The [independent Python consumer](../../tools/python/README.md) validates shared structural/digest fixtures offline and serves approved precompiled publications without Node. Its structural role does not imply semantic execution or renderer equivalence.

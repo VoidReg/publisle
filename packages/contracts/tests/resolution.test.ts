@@ -4,6 +4,7 @@ import {
   createBlock,
   document,
   parseContractDependencies,
+  type ContractDependency,
 } from "@publisle/schema";
 import { defineSchemaBlock } from "../../block-sdk/src/index.ts";
 import { createRegistry, prepare } from "../../core/src/index.ts";
@@ -15,6 +16,8 @@ import {
   resolveContracts,
   validateLockedDocument,
   type ContractFetchPolicy,
+  type ContractBundle,
+  type ExportedContract,
 } from "@publisle/contracts";
 
 const definition = () =>
@@ -29,6 +32,11 @@ const policy: ContractFetchPolicy = {
   timeoutMs: 1000,
 };
 let baseline: Awaited<ReturnType<typeof lockDocument>> | undefined;
+let graphBaseline: {
+  bundle: ContractBundle;
+  entry: ExportedContract;
+  pins: readonly ContractDependency[];
+};
 beforeAll(async () => {
   const block = createBlock({ type: "example:counter", data: { count: 3 } });
   baseline = await lockDocument(
@@ -37,7 +45,42 @@ beforeAll(async () => {
     }),
     createRegistry([definition()]),
   );
-});
+  const base = definition();
+  const middle = {
+    ...base,
+    type: "example:middle" as const,
+    contract: {
+      ...base.contract,
+      dependencies: [{ type: base.type, schemaVersion: 1 }],
+    },
+  };
+  const root = {
+    ...base,
+    type: "example:root" as const,
+    contract: {
+      ...base.contract,
+      dependencies: [{ type: middle.type, schemaVersion: 1 }],
+    },
+  };
+  const bundle = await exportDocumentContracts(
+    { blocks: [{ type: root.type, schemaVersion: 1 }] },
+    createRegistry([base, middle, root]),
+  );
+  const entry = bundle.contracts.find((item) => bundle.roots.includes(item.id));
+  if (!entry) throw new Error("Missing graph root");
+  graphBaseline = {
+    bundle,
+    entry,
+    pins: [
+      {
+        type: entry.contract.identity.type,
+        schemaVersion: entry.contract.identity.schemaVersion,
+        id: entry.id,
+        digest: entry.digest,
+      },
+    ],
+  };
+}, 30_000);
 function fixture() {
   if (!baseline) throw new Error("Fixture setup must complete before use.");
   return Promise.resolve(structuredClone(baseline));
@@ -318,44 +361,16 @@ describe("locked source and bounded contract resolution", () => {
       }),
     ).rejects.toThrow("requested immutable");
   });
-  it("bounds transitive dependency depth/count", async () => {
-    const base = definition();
-    const middle = {
-      ...base,
-      type: "example:middle" as const,
-      contract: {
-        ...base.contract,
-        dependencies: [{ type: base.type, schemaVersion: 1 }],
-      },
-    };
-    const root = {
-      ...base,
-      type: "example:root" as const,
-      contract: {
-        ...base.contract,
-        dependencies: [{ type: middle.type, schemaVersion: 1 }],
-      },
-    };
-    const bundle = await exportDocumentContracts(
-      { blocks: [{ type: root.type, schemaVersion: 1 }] },
-      createRegistry([base, middle, root]),
-    );
-    const entry = bundle.contracts.find((item) =>
-      bundle.roots.includes(item.id),
-    );
-    if (!entry) throw new Error("Missing root.");
-    const pins = [
-      { ...entry.contract.identity, id: entry.id, digest: entry.digest },
-    ].map(({ type, schemaVersion, id, digest }) => ({
-      type,
-      schemaVersion,
-      id,
-      digest,
-    }));
+  it("resolves the exact transitive dependency closure offline", async () => {
+    const { bundle, pins } = structuredClone(graphBaseline);
     await expect(
       resolveContracts(pins, { bundle, offline: true }),
     ).resolves.toEqual(bundle);
-    for (const budget of [{ maxDepth: 1 }, { maxContracts: 2 }]) {
+  });
+  it.each([{ maxDepth: 1 }, { maxContracts: 2 }])(
+    "bounds transitive dependency depth/count with %j",
+    async (budget) => {
+      const { bundle, pins } = structuredClone(graphBaseline);
       const cache = new Map<string, unknown>();
       await expect(
         resolveContracts(pins, {
@@ -365,7 +380,10 @@ describe("locked source and bounded contract resolution", () => {
         }),
       ).rejects.toThrow("depth/count");
       expect(cache.size).toBe(0);
-    }
+    },
+  );
+  it("reports the missing offline transitive dependency without partial resolution", async () => {
+    const { entry, pins } = structuredClone(graphBaseline);
     const cache = new Map([[entry.id, entry]]);
     await expect(
       resolveContracts(pins, { cache, offline: true }),

@@ -10,9 +10,19 @@ import {
 } from "node:fs/promises";
 import { dirname, extname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { isPlainObject, type Diagnostic } from "@publisle/schema";
+import {
+  isPlainObject,
+  parseDocument,
+  parseJson,
+  type Diagnostic,
+} from "@publisle/schema";
+import { toReadingMarkdown } from "@publisle/markdown";
 import { processSource, lockSource, type CliConfig } from "./index.ts";
-import { validateContractBundle } from "@publisle/contracts";
+import {
+  exportSemanticDocument,
+  inspectDocument,
+  validateContractBundle,
+} from "@publisle/contracts";
 import { createRegistry } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 
@@ -22,6 +32,8 @@ export interface CliIo {
 }
 
 const help = `Usage: publisle validate|upgrade|lock <file.json|file.md> [--config <host.mjs|host.ts>] [--format json|markdown]
+JSON-only inspection: publisle inspect|semantic <source.json> [--bundle <contracts.json>] [--mode linked|standalone]
+Reading projection: publisle reading <source.json> (not a round trip).
 Upgrade: [--output <new-file> | --in-place]. Lock: [--output <new-file>] (never in-place).
 Validation never writes. Upgrade/lock default to stdout preview. --output refuses existing files.
 Config is trusted executable host code exporting a default CliConfig. Node >=24 required.
@@ -123,6 +135,55 @@ export async function runCli(
   }
   try {
     const command = args[0];
+    if (command === "reading") {
+      if (args.length !== 2 || !args[1] || args[1].startsWith("-"))
+        throw new Error("reading requires only canonical source.json");
+      const source = parseDocument(parseJson(await readFile(resolve(args[1]))));
+      const result = toReadingMarkdown(source);
+      for (const item of result.diagnostics)
+        io.stderr(diagnosticText(item, args[1]));
+      if (result.markdown === undefined) return 1;
+      io.stdout(result.markdown);
+      return 0;
+    }
+    if (command === "inspect" || command === "semantic") {
+      const file = args[1];
+      if (!file || file.startsWith("-"))
+        throw new Error("Inspection requires canonical source.json");
+      let bundleFile: string | undefined;
+      let mode: "linked" | "standalone" = "linked";
+      const seen = new Set<string>();
+      for (let index = 2; index < args.length; index += 2) {
+        const key = args[index];
+        const value = args[index + 1];
+        if (!key || seen.has(key) || !value || value.startsWith("-"))
+          throw new Error("Invalid or duplicate inspection option");
+        seen.add(key);
+        if (key === "--bundle") bundleFile = value;
+        else if (
+          key === "--mode" &&
+          (value === "linked" || value === "standalone")
+        )
+          mode = value;
+        else
+          throw new Error(
+            "Inspection accepts only --bundle and --mode linked|standalone; no executable config",
+          );
+      }
+      const source = parseJson(await readFile(resolve(file)));
+      const bundle = bundleFile
+        ? await validateContractBundle(
+            parseJson(await readFile(resolve(bundleFile))),
+          )
+        : undefined;
+      const options = { mode, offline: true, ...(bundle ? { bundle } : {}) };
+      const output =
+        command === "inspect"
+          ? await inspectDocument(source, options)
+          : await exportSemanticDocument(source, options);
+      io.stdout(JSON.stringify(output, null, 2) + "\n");
+      return 0;
+    }
     if (command !== "validate" && command !== "upgrade" && command !== "lock")
       throw new Error("Expected validate, upgrade or lock.");
     let file: string | undefined;

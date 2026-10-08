@@ -31,6 +31,7 @@ afterEach(async () => {
     await rm(path, { recursive: true, force: true });
 });
 let baseline: Awaited<ReturnType<typeof lockDocument>> | undefined;
+let resourceBaseline: Awaited<ReturnType<typeof lockDocument>> | undefined;
 beforeAll(async () => {
   const definition = defineSchemaBlock({
     type: "example:counter",
@@ -43,7 +44,26 @@ beforeAll(async () => {
     }),
     createRegistry([definition]),
   );
-});
+  const resourceBlock = defineSchemaBlock({
+    type: "example:resource",
+    schemaVersion: 1,
+    contract: source,
+    traversal: {
+      root: { properties: { label: { emit: { kind: "resource" } } } },
+    },
+  });
+  resourceBaseline = await lockDocument(
+    document({
+      blocks: [
+        createBlock({
+          type: resourceBlock.type,
+          data: { count: 1, label: "./missing.csv" },
+        }),
+      ],
+    }),
+    createRegistry([resourceBlock]),
+  );
+}, 30_000);
 async function fixture() {
   if (!baseline) throw new Error("Fixture setup must complete before use.");
   const locked = structuredClone(baseline);
@@ -59,37 +79,28 @@ async function fixture() {
 const digest = (bytes: Uint8Array) =>
   `sha256:${createHash("sha256").update(bytes).digest("hex")}` as const;
 describe("offline directory exchange", () => {
-  it("enumerates omitted declared resources and rejects inventories that hide them", async () => {
+  async function resourcePackage() {
     const input = await fixture();
-    const resourceBlock = defineSchemaBlock({
-      type: "example:resource",
-      schemaVersion: 1,
-      contract: source,
-      traversal: {
-        root: { properties: { label: { emit: { kind: "resource" } } } },
-      },
-    });
-    const locked = await lockDocument(
-      document({
-        blocks: [
-          createBlock({
-            type: resourceBlock.type,
-            data: { count: 1, label: "./missing.csv" },
-          }),
-        ],
-      }),
-      createRegistry([resourceBlock]),
-    );
+    if (!resourceBaseline)
+      throw new Error("Resource setup must complete before use");
+    const locked = structuredClone(resourceBaseline);
     const manifest = await exportExchange(input.directory, {
       source: locked.document,
       bundle: locked.bundle,
     });
+    return { input, manifest };
+  }
+  it("enumerates omitted declared resources without losing readable source", async () => {
+    const { input, manifest } = await resourcePackage();
     expect(manifest.resources).toHaveLength(1);
     expect(manifest.resources[0]).toMatchObject({
       status: "missing",
       resource: { uri: "./missing.csv" },
     });
     expect((await importExchange(input.directory)).resources.size).toBe(0);
+  });
+  it("rejects inventories that hide declared resources", async () => {
+    const { input, manifest } = await resourcePackage();
     await writeFile(
       join(input.directory, "exchange.json"),
       canonicalizeJson({ ...manifest, resources: [] }),

@@ -2,6 +2,7 @@ import { isJsonValue, type JsonValue } from "./json.ts";
 import { canonicalizeJson } from "./canonical.ts";
 import { isPlainObject } from "./object.ts";
 import { resolvePointer, TraversalError } from "./traversal.ts";
+import { parseComposition, type CompositionProfile } from "./composition.ts";
 
 export type SemanticKind =
   | "concept"
@@ -47,6 +48,7 @@ export interface SemanticEntity {
 }
 export interface SemanticDeclaration {
   readonly entities: readonly SemanticEntity[];
+  readonly composition?: CompositionProfile;
 }
 export interface SemanticDiagnostic {
   readonly code:
@@ -134,7 +136,9 @@ export function validateSemantics(
   if (
     !isPlainObject(value) ||
     !Array.isArray(value["entities"]) ||
-    Object.keys(value).some((key) => key !== "entities") ||
+    Object.keys(value).some(
+      (key) => key !== "entities" && key !== "composition",
+    ) ||
     value["entities"].length > 4096
   ) {
     add(
@@ -342,6 +346,21 @@ export function validateSemantics(
         `/entities/${String(index)}/reset`,
         "Reset must reference an action.",
       );
+  }
+  if (diagnostics.length === 0 && value["composition"] !== undefined) {
+    try {
+      parseComposition(
+        value["composition"],
+        data,
+        entities as SemanticEntity[],
+      );
+    } catch (error) {
+      add(
+        "invalid-semantics",
+        "/composition",
+        error instanceof Error ? error.message : "Invalid composition",
+      );
+    }
   }
   return diagnostics;
 }

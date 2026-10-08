@@ -12,7 +12,32 @@ A consumer MUST state the role, supported schema/profile subset and fixture evid
 | Interactive renderer   | Implement its declared behavior and lifecycle, not claim universal simulation                                    |
 | Artifact server        | Store/serve approved precompiled HTML/assets without recompiling each request                                    |
 
-These are role definitions, not declarations that every role is currently implemented. Current tooling provides JSON/digests, structural validation, descriptive meaning, bounded traversal, readable preservation, locked archival exchange and native/artifact delivery checks. Independent Python validation, semantic-export/behavior execution and the complete P0 conformance matrix remain separate milestones.
+These are role definitions, not declarations that every role is currently implemented. Current tooling provides JSON/digests, structural validation, descriptive meaning, bounded traversal, readable preservation, locked archival exchange, renderer-free semantic exports/inspection and native/artifact delivery checks. The [independent Python consumer and precompiled host](../../tools/python/README.md) have offline and real-browser evidence. Python reports semantic/traversal execution and opaque hooks as unsupported rather than claiming full preparer/renderer conformance. [Bounded composition](composition.md) has direct JavaScript lowering, scalar state, compatible snapshots and typed port propagation; it does not implement arbitrary simulation.
+
+## Required P0 gate
+
+`pnpm test:conformance:p0` runs the Python standard-library suite, TypeScript unit
+suite and Chromium acceptance suite, then verifies required passing evidence for
+every TEST-01–10 group and this batch's P1 TEST-11/13 in `tools/p0-gate.ts`. Empty, missing or skipped evidence is
+an error. CI installs Python 3.11 and executes this gate in its required check job.
+
+| Test    | Required executable evidence                                                                                                 |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| TEST-01 | Shared structural classifications and JCS Unicode/binary64 digests in independent Python and TypeScript                      |
+| TEST-02 | Offline Python built-in closure plus exact transitive TypeScript contract resolution                                         |
+| TEST-03 | Unfamiliar input/output/action declarations exposed through JSON, without renderer code                                      |
+| TEST-04 | Executable refinements/normalization/migrations retained as implementation-bound                                             |
+| TEST-05 | Object, array, scalar and null native/artifact inputs in both frameworks                                                     |
+| TEST-06 | Missing contracts/plugins preserve opaque source and substantive no-JavaScript explanation                                   |
+| TEST-07 | Unsupported vocabulary/pattern/ref/branching and substituted digest rejection                                                |
+| TEST-08 | Archival Markdown identity/pins and locked JSON/resource exchange round trips                                                |
+| TEST-09 | Python serves compiled host islands, shared chunks, independent placements and no-JavaScript fallback                        |
+| TEST-10 | Production reader excludes registry/schema/core/compiler/Ajv, preserving baseline lifecycle/module/state tests               |
+| TEST-11 | Renderer-free instance semantics and authored reading projections with exact source references                               |
+| TEST-13 | Sealed bounded profiles, snapshot compatibility/limits, typed ports, async isolation and repeated-placement browser evidence |
+
+These are scoped profile/fixture claims, not universal parser equivalence,
+scientific verification or a declaration that arbitrary HTML is safe.
 
 ## Capabilities
 
@@ -24,7 +49,7 @@ A portable claim requires an exportable verified contract. Arbitrary parse/refin
 
 JSON contracts, examples and descriptor strings are untrusted content, not host instructions. Validation does not authorize implementations or resources, sandbox plugins, sanitize arbitrary HTML, or verify scientific claims. Hosts separately approve executable modules, resources, capabilities, HTML/URL policy and asset serving. No document-provided import string grants execution authority.
 
-Validation/importing contracts MUST NOT perform network retrieval by default. Schema tooling compiles trusted/reviewed schema inputs at preparation time; it is not a sandbox for hostile executable code. Unknown-origin schema compilation requires host isolation/time/memory limits in addition to the synchronous profile's structural limits. Bounded fetch/discovery is a later group. Readers do not fetch schemas or receive the full registry/compiler merely to display a publication.
+Validation/importing contracts MUST NOT perform network retrieval by default. Schema tooling compiles trusted/reviewed schema inputs at preparation time; it is not a sandbox for hostile executable code. Unknown-origin schema compilation requires host isolation/time/memory limits in addition to the synchronous profile's structural limits. The contract resolver permits retrieval only under explicit host-origin, byte, graph and timeout policy. Readers do not fetch schemas or receive the full registry/compiler merely to display a publication.
 
 ## Beta policy and future release governance
 

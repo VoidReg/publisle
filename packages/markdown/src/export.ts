@@ -5,7 +5,12 @@ import { gfmToMarkdown } from "mdast-util-gfm";
 import { mathToMarkdown } from "mdast-util-math";
 import { toMarkdown as serialize } from "mdast-util-to-markdown";
 import YAML from "yaml";
+import { sha256Hex } from "@publisle/core";
 import {
+  canonicalizeJson,
+  parseReadable,
+  parseInteractiveContent,
+  resolveReadable,
   isInteractiveEnvelope,
   isPlainObject,
   type Block,
@@ -27,6 +32,150 @@ function serializeTree(tree: Root): string {
       mathToMarkdown(),
     ],
   });
+}
+
+/** Readable/searchable projection, deliberately NOT archival or a payload dump. */
+export function toReadingMarkdown(document: Document): MarkdownExportResult {
+  const sourceDigest = `sha256:${sha256Hex(canonicalizeJson(document))}`;
+  const diagnostics: Diagnostic[] = [];
+  const parts: string[] = [];
+  const native = new Set(
+    [
+      "paragraph",
+      "heading",
+      "list",
+      "quote",
+      "code",
+      "math",
+      "figure",
+      "table",
+      "callout",
+      "divider",
+      "footnote",
+      "raw-html",
+      "embed",
+      "diagram",
+    ].map((name) => `publisle:${name}`),
+  );
+  for (const [index, block] of document.blocks.entries()) {
+    if (native.has(block.type)) {
+      const exported = toMarkdown(
+        { schemaVersion: document.schemaVersion, blocks: [block] },
+        { policy: "standard" },
+      );
+      if (exported.markdown) parts.push(exported.markdown);
+      diagnostics.push(...exported.diagnostics);
+    } else {
+      let nodes: RootContent[] = [];
+      try {
+        const digest = `sha256:${sha256Hex(canonicalizeJson({ id: block.id, type: block.type, schemaVersion: block.schemaVersion, data: block.data }))}`;
+        let content;
+        if (block.readable) {
+          const readable = parseReadable(block.readable);
+          if (readable.sourceDigest !== digest)
+            throw new Error("Readable source revision does not match");
+          content = resolveReadable(readable, block.data);
+          if (readable.provenance.kind === "generated")
+            nodes.push({
+              type: "paragraph",
+              children: [
+                {
+                  type: "text",
+                  value: `Generated explanation (${readable.provenance.generator}, ${readable.provenance.version}); not independently verified.`,
+                },
+              ],
+            });
+        } else if (
+          isPlainObject(block.data) &&
+          Object.hasOwn(block.data, "content") &&
+          block.data["content"] !== undefined
+        ) {
+          content = resolveReadable(
+            {
+              sourceDigest: digest,
+              provenance: { kind: "authored" },
+              content: parseInteractiveContent(block.data["content"]),
+            },
+            block.data,
+          );
+        }
+        if (content?.title)
+          nodes.push({
+            type: "paragraph",
+            children: phrasing(content.title as readonly InlineNode[], true),
+          });
+        for (const key of [
+          "description",
+          "instructions",
+          "purpose",
+          "observations",
+          "assumptions",
+          "fallback",
+        ] as const)
+          if (content?.[key])
+            nodes.push(...flow(content[key] as readonly FlowNode[], true));
+        if (isInteractiveEnvelope(block.data))
+          nodes.push(...flow(block.data.fallback as readonly FlowNode[], true));
+        if (!nodes.length)
+          throw new Error("No portable readable explanation is available");
+      } catch (error) {
+        nodes = [
+          {
+            type: "paragraph",
+            children: [
+              {
+                type: "text",
+                value: `Interpretation unavailable for ${block.type}; its canonical payload is preserved in source.`,
+              },
+            ],
+          },
+        ];
+        diagnostics.push({
+          level: "warning",
+          code: "unresolved-reading-explanation",
+          blockId: block.id,
+          message:
+            error instanceof Error ? error.message : "Unresolved explanation",
+        });
+      }
+      parts.push(serializeTree({ type: "root", children: nodes }));
+    }
+    const pointer = `/blocks/${String(index)}`;
+    const pin = document.dependencies?.find(
+      (pin) =>
+        pin.type === block.type && pin.schemaVersion === block.schemaVersion,
+    );
+    const references: PhrasingContent[] = [
+      { type: "text", value: "Structured details omitted. " },
+      {
+        type: "link",
+        url: `urn:publisle:source:${sourceDigest}#${pointer}`,
+        children: [
+          { type: "text", value: `Source block ${block.id} (${pointer})` },
+        ],
+      },
+    ];
+    if (pin)
+      references.push(
+        { type: "text", value: "; " },
+        {
+          type: "link",
+          url: pin.id,
+          children: [{ type: "text", value: "declared immutable contract" }],
+        },
+      );
+    references.push({
+      type: "text",
+      value: ". Reading export is not a round trip.",
+    });
+    parts.push(
+      serializeTree({
+        type: "root",
+        children: [{ type: "paragraph", children: references }],
+      }),
+    );
+  }
+  return { markdown: parts.join("\n"), diagnostics };
 }
 
 function hasDirective(value: unknown): boolean {

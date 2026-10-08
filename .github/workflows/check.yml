@@ -20,10 +20,14 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm check
 
       - run: pnpm exec playwright-core install --with-deps chromium
 
-      - run: pnpm test:acceptance
+      - run: pnpm test:conformance:p0

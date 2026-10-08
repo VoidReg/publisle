@@ -13,7 +13,8 @@
     "blocks/**/*.ts",
     "blocks/**/*.tsx",
     "examples/**/*.ts",
-    "examples/**/*.tsx"
+    "examples/**/*.tsx",
+    "tools/**/*.ts"
   ],
   "exclude": ["**/dist/**", "**/node_modules/**"]
 }
