@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Plugin } from "vite";
+import type { Diagnostic } from "@publisle/schema";
 import { prepare } from "@publisle/core";
 import { fromMarkdown } from "@publisle/markdown";
 import { compilePublication } from "./publication.ts";
@@ -53,19 +54,40 @@ export function createPublisleVitePlugin(options: PublisleViteOptions): Plugin {
       if (!filename) return undefined;
       this.addWatchFile(filename);
       const source = await readFile(filename, "utf8");
+      const fail = (diagnostics: readonly Diagnostic[]) => {
+        const first =
+          diagnostics.find((diagnostic) => diagnostic.level === "error") ??
+          diagnostics[0];
+        const location = first?.sourceLocation;
+        return this.error({
+          message: diagnostics
+            .map(({ code, message }) => `${code}: ${message}`)
+            .join("\n"),
+          ...(location === undefined
+            ? {}
+            : {
+                loc: {
+                  file: location.source ?? filename,
+                  line: location.line,
+                  column: Math.max(0, location.column - 1),
+                },
+              }),
+        });
+      };
       const imported = fromMarkdown(source, { sourceName: filename });
       const sourceDocument = imported.document;
       if (!sourceDocument) {
-        return this.error(
-          imported.diagnostics.map(({ message }) => message).join("\n"),
-        );
+        return fail(imported.diagnostics);
       }
-      const prepared = prepare(sourceDocument, options);
+      const prepared = prepare(sourceDocument, {
+        ...options,
+        ...(imported.sourceMap === undefined
+          ? {}
+          : { sourceMap: imported.sourceMap }),
+      });
       const preparedDocument = prepared.document;
       if (!preparedDocument) {
-        return this.error(
-          prepared.diagnostics.map(({ message }) => message).join("\n"),
-        );
+        return fail(prepared.diagnostics);
       }
       const renderers = { ...(options.renderers ?? {}) };
       for (const island of preparedDocument.islands)

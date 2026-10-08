@@ -100,6 +100,40 @@ Observe the output on each clock edge.
 
 ## Publication
 
+### Migrations and diagnostic locations
+
+`prepare()` accepts `documentMigrations`, an ordered-by-version collection of
+`{ from, migrate }` steps separate from each block definition's migrations.
+An envelope step receives an isolated copy and must return a complete valid
+document at exactly `from + 1`. Envelope migration happens before block lookup,
+validation, and profile inspection; no source files are rewritten. Missing,
+duplicate, throwing, or invalid steps produce `document-migration-failed` errors.
+Unsupported envelope versions are rejected. Publisle's envelope remains v1:
+there is no invented v0 format or host option to accept a newer unsupported
+envelope. The hook supports future supported version upgrades.
+
+Markdown imports return an optional `sourceMap` sidecar keyed by stable block ID:
+
+```ts
+const imported = fromMarkdown(source, { sourceName: "article.md" });
+if (!imported.document) throw new Error("Invalid Markdown");
+const prepared = prepare(imported.document, {
+  registry,
+  ...(imported.sourceMap ? { sourceMap: imported.sourceMap } : {}),
+});
+```
+
+Locations use original-source, one-based lines/columns and zero-based character
+offsets, including after interactive fence normalization. Import, preparation,
+profile, and renderer diagnostics retain supplied locations; block-level findings
+point to the original block start, and envelope-level findings use the document
+start. The prepared plan can carry the sidecar, but article JSON and canonical
+Markdown do not. Code-authored documents do not need source maps. Migrations should
+retain block IDs; newly generated IDs without a mapping use the document location.
+Block migration failures now use `migration-failed`, distinct from
+`invalid-block-data`. Vite adapters propagate source maps and original locations
+to build errors without shipping Markdown parsers or migrations to readers.
+
 ### Optional conformance profiles
 
 Preparation enforces structural integrity by default. Publication conventions

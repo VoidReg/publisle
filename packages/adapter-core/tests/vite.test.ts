@@ -34,6 +34,35 @@ ${fence}
 `;
 
 describe("publication Vite target", () => {
+  it("reports preparation failures at original Markdown block locations", async () => {
+    const directory = await mkdtemp(
+      path.join(tmpdir(), "publisle-source-vite-"),
+    );
+    const filename = path.join(directory, "article.md");
+    await writeFile(filename, '# Title\n\nSee :ref[]{target="missing"}.\n');
+    const server = await createServer({
+      configFile: false,
+      root: directory,
+      logLevel: "silent",
+      server: { middlewareMode: true },
+      plugins: [
+        publislePublication({ registry: createRegistry(coreBlockDefinitions) }),
+      ],
+    });
+    try {
+      const resolved = await server.pluginContainer.resolveId(filename);
+      if (!resolved) throw new Error("Expected resolved article.");
+      const load = server.pluginContainer.load(resolved.id);
+      await expect(load).rejects.toThrow("unresolved-cross-reference");
+      await expect(load).rejects.toMatchObject({
+        loc: { file: filename, line: 3, column: 0 },
+      });
+    } finally {
+      await server.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it.each(["info", "warning", "error"] as const)(
     "applies %s profile policy at the build boundary",
     async (level) => {

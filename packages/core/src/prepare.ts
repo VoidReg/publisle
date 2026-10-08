@@ -1,8 +1,11 @@
 import { sha256Hex } from "./hash.ts";
 import { inspectProfiles } from "./profiles.ts";
+import { migrateDocument } from "./document-migrations.ts";
 
 import {
   DOCUMENT_SCHEMA_VERSION,
+  SchemaParseError,
+  locateDiagnostic,
   type Block,
   type BlockType,
   type Diagnostic,
@@ -59,8 +62,18 @@ function migrate(
   while (version < definition.schemaVersion) {
     const migration = migrations.get(version);
     if (!migration)
-      throw new Error(`No migration from schema version ${version}.`);
-    data = migration.migrate(data as JsonValue);
+      throw new SchemaParseError(
+        "migration-failed",
+        `No migration from schema version ${version}.`,
+      );
+    try {
+      data = migration.migrate(structuredClone(data) as JsonValue);
+    } catch (error) {
+      throw new SchemaParseError(
+        "migration-failed",
+        `Block migration from schema version ${version} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     version += 1;
   }
   if (version > definition.schemaVersion) {
@@ -137,12 +150,35 @@ export function prepare(
   document: Document<Block<BlockType, unknown>>,
   options: PrepareOptions,
 ): PrepareResult {
+  const result = prepareDocument(document, options);
+  return {
+    ...result,
+    diagnostics: result.diagnostics.map((diagnostic) =>
+      locateDiagnostic(diagnostic, options.sourceMap),
+    ),
+  };
+}
+
+function prepareDocument(
+  document: Document<Block<BlockType, unknown>>,
+  options: PrepareOptions,
+): PrepareResult {
   const diagnostics: Diagnostic[] = [];
-  if (document.schemaVersion > DOCUMENT_SCHEMA_VERSION) {
+  try {
+    document = migrateDocument(
+      document,
+      options.documentMigrations ?? [],
+      DOCUMENT_SCHEMA_VERSION,
+    );
+  } catch (error) {
     diagnostics.push({
       level: "error",
-      code: "unsupported-document-version",
-      message: `Document schema version ${document.schemaVersion} is not supported.`,
+      code:
+        error instanceof SchemaParseError
+          ? error.code
+          : "document-migration-failed",
+      message:
+        error instanceof Error ? error.message : "Document migration failed.",
     });
     return { diagnostics };
   }
@@ -245,9 +281,11 @@ export function prepare(
       diagnostics.push({
         level: "error",
         code:
-          error instanceof Error && error.name === "UnsupportedBlockVersion"
-            ? "unsupported-block-version"
-            : "invalid-block-data",
+          error instanceof SchemaParseError && error.code === "migration-failed"
+            ? "migration-failed"
+            : error instanceof Error && error.name === "UnsupportedBlockVersion"
+              ? "unsupported-block-version"
+              : "invalid-block-data",
         message:
           error instanceof Error
             ? error.message
@@ -287,10 +325,13 @@ export function prepare(
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
   const profileIdentity =
-    options.profiles?.length || options.diagnosticPolicy
-      ? `:${stable({ profiles: options.profiles?.map(({ name, version }) => ({ name, version: version ?? "1" })) ?? [], diagnosticPolicy: options.diagnosticPolicy ?? {} })}`
+    options.profiles?.length || options.diagnosticPolicy || options.sourceMap
+      ? `:${stable({ profiles: options.profiles?.map(({ name, version }) => ({ name, version: version ?? "1" })) ?? [], diagnosticPolicy: options.diagnosticPolicy ?? {}, ...(options.sourceMap === undefined ? {} : { sourceMap: options.sourceMap }) })}`
       : "";
   const base = {
+    ...(options.sourceMap === undefined
+      ? {}
+      : { sourceMap: options.sourceMap }),
     kind: "publisle:prepared-document" as const,
     schemaVersion: document.schemaVersion,
     blocks,

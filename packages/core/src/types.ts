@@ -4,6 +4,8 @@ import type {
   BlockDefinition,
   JsonValue,
   DiagnosticPolicy,
+  Document,
+  DocumentSourceMap,
   PublicationProfile,
   ResourceReference,
 } from "@publisle/schema";
@@ -11,6 +13,14 @@ import type {
 export interface BlockMigration {
   readonly from: number;
   readonly migrate: (data: JsonValue) => unknown;
+}
+
+export interface DocumentMigration {
+  readonly from: number;
+  /** Return a complete envelope at exactly from + 1; receives an isolated copy. */
+  readonly migrate: (
+    document: Document<Block<`${string}:${string}`, unknown>>,
+  ) => unknown;
 }
 
 export interface IslandDescriptor {
@@ -47,6 +57,8 @@ export interface PrepareOptions {
   readonly unknownBlocks?: "preserve" | "error";
   readonly profiles?: readonly PublicationProfile[];
   readonly diagnosticPolicy?: DiagnosticPolicy;
+  readonly documentMigrations?: readonly DocumentMigration[];
+  readonly sourceMap?: DocumentSourceMap;
 }
 
 export interface PreparedKnownBlock extends Block {

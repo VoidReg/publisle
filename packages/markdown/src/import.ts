@@ -10,6 +10,7 @@ import { math } from "micromark-extension-math";
 import type { Diagnostic } from "@publisle/schema";
 import { treeToDocument } from "./convert.ts";
 import type { MarkdownImportOptions, MarkdownImportResult } from "./types.ts";
+import { sourceLocator } from "./source.ts";
 
 const interactiveSlots = new Set([
   "title",
@@ -74,7 +75,7 @@ function nestInteractiveSlots(source: string): string {
 
 export function fromMarkdown(
   source: string,
-  _options: MarkdownImportOptions = {},
+  options: MarkdownImportOptions = {},
 ): MarkdownImportResult {
   const diagnostics: Diagnostic[] = [];
   try {
@@ -87,14 +88,20 @@ export function fromMarkdown(
         mathFromMarkdown(),
       ],
     });
-    const result = treeToDocument(tree, source, diagnostics);
+    const result = treeToDocument(
+      tree,
+      source,
+      diagnostics,
+      options.sourceName,
+    );
     return diagnostics.some(({ level }) => level === "error")
-      ? { diagnostics }
-      : { document: result, diagnostics };
+      ? { diagnostics, sourceMap: result.sourceMap }
+      : { ...result, diagnostics };
   } catch (error) {
     diagnostics.push({
       level: "error",
       code: "markdown-import-failed",
+      sourceLocation: sourceLocator(source, options.sourceName)({}),
       message:
         error instanceof Error ? error.message : "Markdown import failed.",
     });
