@@ -20,7 +20,7 @@ Use [RFC 8785](https://www.rfc-editor.org/info/rfc8785/) JCS: recursive UTF-16 c
 
 The generic digest preimage is exactly UTF-8(canonicalizeJson(value)). Hash with SHA-256 and encode as sha256: followed by 64 lowercase hexadecimal characters. No implicit property exclusions, Unicode normalization, salt or trailing newline. Binary assets are hashed over their actual bytes, not their descriptors.
 
-Keep a digest outside its own generic preimage. Future contract/lock formats must specify their exact digest-bearing wrapper and explicit projection exclusions before adopting them; this API does not guess or strip fields named digest/id. Existing internal sorted cache serializers are NOT advertised as this canonical digest profile; their migration belongs to resource/identity work.
+Keep a digest outside its own generic preimage. The [contract/lock format](contracts.md) specifies its wrapper and exact body preimage; this API does not guess or strip fields named digest/id. Existing internal sorted cache serializers are NOT advertised as this canonical digest profile; their migration belongs to resource/identity work.
 
 Programmatic canonicalization accepts plain data objects (including null-prototype objects), dense arrays and JSON primitives. Reject cycles, undefined, bigint, functions, symbols, non-finite numbers, non-data/accessor properties, exotic prototypes, sparse arrays and extra array properties. Never invoke toJSON or getters. Shared acyclic object values are allowed. Default byte/depth/node limits also apply. This is a data boundary, not protection against arbitrary malicious JavaScript proxies.
 

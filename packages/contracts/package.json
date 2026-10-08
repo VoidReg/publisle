@@ -12,6 +12,7 @@
       "default": "./src/index.ts"
     },
     "./schemas/*": "./schemas/*.json",
+    "./builtin-sources": "./src/builtin-sources.ts",
     "./fixtures/*": "./fixtures/*.json"
   },
   "files": [

@@ -122,3 +122,8 @@ export {
   type ReferencePlan,
   type ReferenceTarget,
 } from "./prepared.ts";
+export type {
+  ContractSchema,
+  ContractSource,
+  ContractExample,
+} from "./contract.ts";

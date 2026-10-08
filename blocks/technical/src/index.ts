@@ -3,6 +3,7 @@ import {
   migrateInteractiveEnvelope,
 } from "@publisle/block-sdk";
 import { parseFlowNodes, parseInlineNodes } from "@publisle/blocks-core";
+import { builtinContractSource } from "@publisle/contracts/builtin-sources";
 import {
   SchemaParseError,
   createBlock,
@@ -20,6 +21,7 @@ const payloadKeys = new Set(["source"]);
 
 export const interactiveSchematicDefinition = defineInteractiveBlock({
   type: "publisle:interactive-schematic",
+  contract: builtinContractSource("interactive-schematic"),
   schemaVersion: 2,
   descriptor: {
     displayName: "Interactive schematic",

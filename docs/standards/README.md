@@ -9,6 +9,7 @@ These documents define the implemented portable subset independently of SDK type
 | Structural validation          | [Schema profile](schema-profile.md)    | [Beta schemas](../../packages/contracts/schemas/)                                     |
 | Preparation                    | [Preparation order](preparation.md)    | Existing preparation APIs and regression fixtures                                     |
 | Semantic meaning and traversal | [Meaning and preservation](meaning.md) | Shared declaration, explanation and readable schemas/fixtures                         |
+| Portable contracts and bundles | [Contract export](contracts.md)        | Complete definition sources, sealed exports and offline lock/bundle APIs              |
 
 ## Status and frozen versions
 
@@ -18,7 +19,7 @@ The workspace schema snapshot may evolve in place before release. Contract conte
 
 Future version domains, transitions and deprecation enforcement are design policy only until release preparation is authorized. The beta freeze supersedes requirements for immediate envelope/artifact version transitions.
 
-SDK usage belongs in [the tooling guide](../guides/contracts.md) and [meaning guide](../guides/meaning.md), not these normative definitions. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. G1 and G2 implement JSON/schema foundations, descriptive semantic declarations, shared bounded traversal and digest-associated unknown readability. Complete contract bundle/export/discovery, locked dependencies/archival Markdown, semantic exports/inspectors, artifact/ABI changes, behavior execution and Python conformance remain future groups.
+SDK usage belongs in [the tooling guide](../guides/contracts.md) and [meaning guide](../guides/meaning.md), not these normative definitions. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. G1–G3 implement JSON/schema foundations, descriptive semantic declarations, shared bounded traversal, digest-associated unknown readability, schema-first/verified definitions and complete offline contract export/locks/bundles. Remote contract discovery, document manifests/archival Markdown, semantic exports/inspectors, artifact/ABI changes, behavior execution and Python conformance remain future groups.
 
 ## Implemented beta changes
 
@@ -26,3 +27,4 @@ SDK usage belongs in [the tooling guide](../guides/contracts.md) and [meaning gu
 - Added read-only offline structural validation and reviewed current-shape schemas.
 - Preserved existing version constants, dependencies' placement outside readers, and existing normalization APIs.
 - Added renderer-independent meaning, shared nested traversal and explicitly sourced readable preservation; corrected synchronous SHA-256 parity without changing versions.
+- Added full contract sources, fixture-verified bridges, schema-first parsing/types, exact dependency subset export and JSON-only integrity/lock validation.

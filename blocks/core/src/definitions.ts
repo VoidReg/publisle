@@ -1,4 +1,5 @@
 import { definePortableBlock } from "@publisle/block-sdk";
+import { builtinContractSource } from "@publisle/contracts/builtin-sources";
 import { coreTraversal } from "./traversal.ts";
 import { SchemaParseError } from "@publisle/schema";
 import {
@@ -70,6 +71,7 @@ function resource(value: unknown, label: string): DownloadableResource {
 
 export const paragraphDefinition = definePortableBlock({
   type: "publisle:paragraph",
+  contract: builtinContractSource("paragraph"),
   traversal: coreTraversal("paragraph"),
   schemaVersion: 1,
   schema: {
@@ -81,6 +83,7 @@ export const paragraphDefinition = definePortableBlock({
 });
 export const headingDefinition = definePortableBlock({
   type: "publisle:heading",
+  contract: builtinContractSource("heading"),
   traversal: coreTraversal("heading"),
   schemaVersion: 1,
   schema: {
@@ -102,6 +105,7 @@ export const headingDefinition = definePortableBlock({
 });
 export const listDefinition = definePortableBlock({
   type: "publisle:list",
+  contract: builtinContractSource("list"),
   traversal: coreTraversal("list"),
   schemaVersion: 1,
   schema: {
@@ -126,6 +130,7 @@ export const listDefinition = definePortableBlock({
 });
 export const quoteDefinition = definePortableBlock({
   type: "publisle:quote",
+  contract: builtinContractSource("quote"),
   traversal: coreTraversal("quote"),
   schemaVersion: 1,
   schema: {
@@ -136,6 +141,7 @@ export const quoteDefinition = definePortableBlock({
 });
 export const codeDefinition = definePortableBlock({
   type: "publisle:code",
+  contract: builtinContractSource("code"),
   traversal: coreTraversal("code"),
   schemaVersion: 1,
   schema: {
@@ -153,6 +159,7 @@ export const codeDefinition = definePortableBlock({
 });
 export const mathDefinition = definePortableBlock({
   type: "publisle:math",
+  contract: builtinContractSource("math"),
   traversal: coreTraversal("math"),
   schemaVersion: 1,
   schema: {
@@ -168,6 +175,7 @@ export const mathDefinition = definePortableBlock({
 });
 export const figureDefinition = definePortableBlock({
   type: "publisle:figure",
+  contract: builtinContractSource("figure"),
   traversal: coreTraversal("figure"),
   schemaVersion: 1,
   schema: {
@@ -195,6 +203,7 @@ export const figureDefinition = definePortableBlock({
 });
 export const tableDefinition = definePortableBlock({
   type: "publisle:table",
+  contract: builtinContractSource("table"),
   traversal: coreTraversal("table"),
   schemaVersion: 1,
   schema: {
@@ -243,6 +252,7 @@ export const tableDefinition = definePortableBlock({
 });
 export const embedDefinition = definePortableBlock({
   type: "publisle:embed",
+  contract: builtinContractSource("embed"),
   traversal: coreTraversal("embed"),
   schemaVersion: 1,
   schema: {
@@ -273,6 +283,7 @@ export const embedDefinition = definePortableBlock({
 });
 export const diagramDefinition = definePortableBlock({
   type: "publisle:diagram",
+  contract: builtinContractSource("diagram"),
   traversal: coreTraversal("diagram"),
   schemaVersion: 1,
   schema: {
@@ -312,6 +323,7 @@ export const diagramDefinition = definePortableBlock({
 });
 export const calloutDefinition = definePortableBlock({
   type: "publisle:callout",
+  contract: builtinContractSource("callout"),
   traversal: coreTraversal("callout"),
   schemaVersion: 1,
   schema: {
@@ -327,6 +339,7 @@ export const calloutDefinition = definePortableBlock({
 });
 export const dividerDefinition = definePortableBlock({
   type: "publisle:divider",
+  contract: builtinContractSource("divider"),
   traversal: coreTraversal("divider"),
   schemaVersion: 1,
   schema: {
@@ -338,6 +351,7 @@ export const dividerDefinition = definePortableBlock({
 });
 export const footnoteDefinition = definePortableBlock({
   type: "publisle:footnote",
+  contract: builtinContractSource("footnote"),
   traversal: coreTraversal("footnote"),
   schemaVersion: 1,
   schema: {
@@ -352,6 +366,7 @@ export const footnoteDefinition = definePortableBlock({
 });
 export const rawHtmlDefinition = definePortableBlock({
   type: "publisle:raw-html",
+  contract: builtinContractSource("raw-html"),
   traversal: coreTraversal("raw-html"),
   schemaVersion: 1,
   schema: {
