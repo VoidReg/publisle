@@ -1,5 +1,5 @@
 export { fromMarkdown } from "./import.ts";
-export { toMarkdown } from "./export.ts";
+export { toMarkdown, toReadingMarkdown } from "./export.ts";
 export { deterministicBlockId } from "./id.ts";
 export type * from "./types.ts";
 

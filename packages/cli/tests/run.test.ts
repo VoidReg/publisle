@@ -50,6 +50,19 @@ describe("Node CLI safety and entrypoint", () => {
   }
 
   // Repeated sealed-schema verification runs alongside the full worker suite, not a performance benchmark.
+  it("inspects/exports JSON without executable host config and leaves source untouched", async () => {
+    const original = await readFile(file, "utf8");
+    for (const command of ["inspect", "semantic", "reading"]) {
+      const result = await invoke([command, file]);
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain(
+        command === "reading" ? "Structured details omitted" : "unresolved",
+      );
+      expect((await invoke([command, file, "--config", host])).code).toBe(2);
+    }
+    expect(await readFile(file, "utf8")).toBe(original);
+  });
+
   it("locks canonical source explicitly without replacing it or overwriting outputs", async () => {
     const source =
       '{"schemaVersion":1,"blocks":[{"id":"00000000-0000-4000-a000-000000000001","type":"publisle:paragraph","schemaVersion":1,"data":{"content":[{"type":"text","value":"Hello"}]}}]}';

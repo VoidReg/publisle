@@ -28,6 +28,11 @@ export {
 } from "./export.ts";
 export { createSchemaParser, type SchemaValue } from "./schema-first.ts";
 export {
+  exportSemanticDocument,
+  inspectDocument,
+  type InspectionOptions,
+} from "./inspection.ts";
+export {
   resolveContracts,
   lockDocument,
   validateLockedDocument,
