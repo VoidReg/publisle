@@ -24,6 +24,7 @@ import {
 import { nativeRenderingFixture } from "./native-rendering.ts";
 import type { AdapterTarget } from "../src/types.ts";
 import type { Plugin } from "vite";
+import { javascriptValue } from "../src/javascript.ts";
 
 export function runDeliveryAcceptance(options: {
   readonly target: AdapterTarget;
@@ -35,7 +36,7 @@ export function runDeliveryAcceptance(options: {
   readonly plugins?: Plugin[];
 }): void {
   const values: readonly JsonValue[] = [
-    { sample: true },
+    JSON.parse('{"sample":true,"__proto__":{"polluted":true}}') as JsonValue,
     [1, null, "x"],
     "text",
     42,
@@ -110,7 +111,7 @@ export function runDeliveryAcceptance(options: {
         const artifactFiles = {
           "server.js": `export const markup=${JSON.stringify(instantiatePublication(artifact, "one").html + instantiatePublication(artifact, "two").html)};`,
           "client.js": `import {attachPublication} from ${JSON.stringify(fileURLToPath(new URL("../src/publication-runtime.ts", import.meta.url)))};${options.artifactMount}
-const artifact=${JSON.stringify(publicationReaderManifest(artifact)).replaceAll("<", "\\u003c")};window.__inputs=[];window.__moduleLoads=0;document.querySelectorAll("[data-publisle-root]").forEach(root=>attachPublication(root,artifact,{implementations:{"acceptance:any-json":()=>import(${JSON.stringify(options.islandModule)})},mount:hostMount,unmount:hostUnmount}));
+const artifact=${javascriptValue(publicationReaderManifest(artifact))};window.__inputs=[];window.__moduleLoads=0;document.querySelectorAll("[data-publisle-root]").forEach(root=>attachPublication(root,artifact,{implementations:{"acceptance:any-json":()=>import(${JSON.stringify(options.islandModule)})},mount:hostMount,unmount:hostUnmount}));
 window.__checkArtifactPolicy=(implementation)=>{const root=document.querySelector("[data-publisle-root]").cloneNode(true);root.querySelectorAll("[data-publisle-fallback]").forEach(node=>node.hidden=false);root.querySelectorAll("[data-publisle-mount]").forEach(node=>{node.hidden=true;node.replaceChildren()});const candidate=implementation===null?{...artifact,compatibility:{islandInputVersion:99}}:{...artifact,islands:artifact.islands.map(island=>({...island,implementation}))};const handle=attachPublication(root,candidate,{implementations:{},mount:hostMount,unmount:hostUnmount});const result={incompatible:root.hasAttribute("data-publisle-incompatible"),missing:root.querySelectorAll("[data-publisle-missing]").length,fallbacksVisible:[...root.querySelectorAll("[data-publisle-fallback]")].every(node=>!node.hidden)};handle.dispose();return result};`,
         };
         await nativeRenderingFixture({
@@ -145,18 +146,18 @@ window.__checkArtifactPolicy=(implementation)=>{const root=document.querySelecto
                   (window as unknown as { __inputs: unknown[] }).__inputs
                     ?.length === 12,
               );
-              const received = await page.evaluate(
-                () =>
-                  (
-                    window as unknown as {
-                      __inputs: {
-                        payload: JsonValue;
-                        inputVersion: number;
-                        block: { id: string };
-                      }[];
-                    }
-                  ).__inputs,
-              );
+              // Browser automation's object transport has its own prototype-key semantics.
+              const received = JSON.parse(
+                await page.evaluate(() =>
+                  JSON.stringify(
+                    (window as unknown as { __inputs: unknown[] }).__inputs,
+                  ),
+                ),
+              ) as {
+                payload: JsonValue;
+                inputVersion: number;
+                block: { id: string };
+              }[];
               for (const [index, block] of input.blocks.slice(2).entries()) {
                 expect(
                   received

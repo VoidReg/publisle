@@ -3,7 +3,10 @@ import type {
   RenderNode,
   RenderPlan,
 } from "@publisle/adapter-core";
-import { placementProgram } from "@publisle/adapter-core";
+import {
+  placementProgram,
+  javascriptValue as js,
+} from "@publisle/adapter-core";
 
 const html = (value: string): string =>
   value
@@ -11,8 +14,6 @@ const html = (value: string): string =>
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
-const js = (value: unknown): string =>
-  JSON.stringify(value).replaceAll("<", "\\u003c");
 
 type StaticComponent = Extract<RenderNode, { kind: "component" }>;
 
