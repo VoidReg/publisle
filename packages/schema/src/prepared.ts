@@ -201,12 +201,26 @@ export interface ResourceReference {
   readonly options?: JsonValue;
 }
 
-export interface PlannedResource extends ResourceReference {
+export interface PlannedResource {
+  readonly uri: string;
   readonly identity: string;
+  /** Host-supplied source content/revision identity, absent for unchecked references. */
+  readonly version?: string;
+  /** Source identities; transforms are represented separately in artifacts. */
+  readonly dependencies?: readonly string[];
+}
+
+export interface PlannedArtifact {
+  readonly identity: string;
+  readonly sourceIdentity: string;
+  readonly transform: string;
+  readonly options?: JsonValue;
 }
 
 export interface ResourcePlan {
   readonly resources: readonly PlannedResource[];
+  /** Optional for compatibility with previously constructed prepared plans. */
+  readonly artifacts?: readonly PlannedArtifact[];
 }
 
 export type ReferenceKind =

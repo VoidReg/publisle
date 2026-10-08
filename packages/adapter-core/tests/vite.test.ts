@@ -34,6 +34,38 @@ ${fence}
 `;
 
 describe("publication Vite target", () => {
+  it("forwards host resource resolution and locates missing-resource build errors", async () => {
+    const directory = await mkdtemp(
+      path.join(tmpdir(), "publisle-resource-vite-"),
+    );
+    const filename = path.join(directory, "article.md");
+    await writeFile(filename, '# Title\n\n:::figure{src="missing.svg"}\n:::\n');
+    const server = await createServer({
+      configFile: false,
+      root: directory,
+      logLevel: "silent",
+      server: { middlewareMode: true },
+      plugins: [
+        publislePublication({
+          registry: createRegistry(coreBlockDefinitions),
+          resourceResolver: { version: "1", resolve: () => undefined },
+        }),
+      ],
+    });
+    try {
+      const resolved = await server.pluginContainer.resolveId(filename);
+      if (!resolved) throw new Error("Expected resolved article.");
+      const load = server.pluginContainer.load(resolved.id);
+      await expect(load).rejects.toThrow("missing-resource");
+      await expect(load).rejects.toMatchObject({
+        loc: { file: filename, line: 3, column: 0 },
+      });
+    } finally {
+      await server.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("reports preparation failures at original Markdown block locations", async () => {
     const directory = await mkdtemp(
       path.join(tmpdir(), "publisle-source-vite-"),

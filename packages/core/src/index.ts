@@ -10,4 +10,7 @@ export type {
   IslandDescriptor,
   PortableBlockDefinition,
   PrepareOptions,
+  RegistryOptions,
+  ResourceResolution,
+  ResourceResolver,
 } from "./types.ts";

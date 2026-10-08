@@ -1,6 +1,8 @@
 import { sha256Hex } from "./hash.ts";
 import { inspectProfiles } from "./profiles.ts";
 import { migrateDocument } from "./document-migrations.ts";
+import { stable } from "./identity.ts";
+import { createResourcePlanner, ResourcePlanningError } from "./resources.ts";
 
 import {
   DOCUMENT_SCHEMA_VERSION,
@@ -11,27 +13,14 @@ import {
   type Diagnostic,
   type Document,
   type JsonValue,
-  type PlannedResource,
   type PrepareResult,
   type PreparedBlock,
   type PreparedDocument,
-  type ResourceReference,
   type ReferenceKind,
   type ReferenceTarget,
 } from "@publisle/schema";
 
 import type { AnyPortableBlockDefinition, PrepareOptions } from "./types.ts";
-
-function stable(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
-  if (value !== null && typeof value === "object") {
-    return `{${Object.entries(value)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stable(entry)}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value) ?? "null";
-}
 
 function mergeDefaults(defaults: unknown, data: unknown): unknown {
   if (
@@ -84,28 +73,6 @@ function migrate(
     throw error;
   }
   return { data, version };
-}
-
-function planResource(resource: ResourceReference): PlannedResource {
-  const uri = /^[a-z][a-z\d+.-]*:/iu.test(resource.uri)
-    ? resource.uri
-    : normalizePath(resource.uri).replace(/^\.\//u, "");
-  const normalized = { ...resource, uri };
-  const identity = sha256Hex(stable(normalized));
-  return { ...normalized, identity };
-}
-
-function normalizePath(path: string): string {
-  const parts = path.split("/");
-  const result: string[] = [];
-  for (const part of parts) {
-    if (part === "..") {
-      result.pop();
-    } else if (part !== "." && part !== "") {
-      result.push(part);
-    }
-  }
-  return result.join("/");
 }
 
 function plainInline(value: unknown): string {
@@ -164,6 +131,26 @@ function prepareDocument(
   options: PrepareOptions,
 ): PrepareResult {
   const diagnostics: Diagnostic[] = [];
+  if (
+    (options.preparationVersion !== undefined &&
+      (typeof options.preparationVersion !== "string" ||
+        !options.preparationVersion.trim())) ||
+    (options.resourceResolver !== undefined &&
+      (typeof options.resourceResolver.version !== "string" ||
+        !options.resourceResolver.version.trim() ||
+        typeof options.resourceResolver.resolve !== "function"))
+  ) {
+    return {
+      diagnostics: [
+        {
+          level: "error",
+          code: "invalid-preparation-options",
+          message:
+            "Preparation and resolver versions must be nonempty strings; a resolver must provide resolve().",
+        },
+      ],
+    };
+  }
   try {
     document = migrateDocument(
       document,
@@ -184,7 +171,7 @@ function prepareDocument(
   }
   const ids = new Set<string>();
   const blocks: PreparedBlock[] = [];
-  const resourceMap = new Map<string, PlannedResource>();
+  const resourcePlanner = createResourcePlanner(options.resourceResolver);
   const islands: PreparedDocument["islands"][number][] = [];
   const targets: ReferenceTarget[] = [];
   const targetLabels = new Set<string>();
@@ -263,9 +250,24 @@ function prepareDocument(
       pendingReferences.push(
         ...references.map((label) => ({ label, blockId: block.id })),
       );
-      for (const resource of definition.resources?.(data) ?? []) {
-        const planned = planResource(resource);
-        resourceMap.set(planned.identity, planned);
+      let declaredResources: unknown;
+      try {
+        declaredResources = definition.resources
+          ? definition.resources(data)
+          : [];
+      } catch (error) {
+        throw new ResourcePlanningError(
+          "resource-analysis-failed",
+          `Resource declarations for ${block.type} failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      if (!Array.isArray(declaredResources))
+        throw new ResourcePlanningError(
+          "invalid-resource",
+          `Resource declarations for ${block.type} must be an array.`,
+        );
+      for (const resource of declaredResources as readonly unknown[]) {
+        resourcePlanner.add(resource);
       }
       const island = definition.island?.(data);
       if (island)
@@ -281,11 +283,15 @@ function prepareDocument(
       diagnostics.push({
         level: "error",
         code:
-          error instanceof SchemaParseError && error.code === "migration-failed"
-            ? "migration-failed"
-            : error instanceof Error && error.name === "UnsupportedBlockVersion"
-              ? "unsupported-block-version"
-              : "invalid-block-data",
+          error instanceof ResourcePlanningError
+            ? error.code
+            : error instanceof SchemaParseError &&
+                error.code === "migration-failed"
+              ? "migration-failed"
+              : error instanceof Error &&
+                  error.name === "UnsupportedBlockVersion"
+                ? "unsupported-block-version"
+                : "invalid-block-data",
         message:
           error instanceof Error
             ? error.message
@@ -324,10 +330,22 @@ function prepareDocument(
   }
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
-  const profileIdentity =
-    options.profiles?.length || options.diagnosticPolicy || options.sourceMap
-      ? `:${stable({ profiles: options.profiles?.map(({ name, version }) => ({ name, version: version ?? "1" })) ?? [], diagnosticPolicy: options.diagnosticPolicy ?? {}, ...(options.sourceMap === undefined ? {} : { sourceMap: options.sourceMap }) })}`
-      : "";
+  const resources = resourcePlanner.plan();
+  const preparationIdentity = {
+    // Bump when built-in preparation semantics or plan format changes.
+    coreVersion: "2",
+    hostVersion: options.preparationVersion ?? "1",
+    unknownBlocks: options.unknownBlocks ?? "preserve",
+    profiles:
+      options.profiles?.map(({ name, version }) => ({
+        name,
+        version: version ?? "1",
+      })) ?? [],
+    diagnosticPolicy: options.diagnosticPolicy ?? {},
+    sourceMap: options.sourceMap ?? null,
+    resolverVersion: options.resourceResolver?.version ?? null,
+    resources,
+  };
   const base = {
     ...(options.sourceMap === undefined
       ? {}
@@ -335,11 +353,15 @@ function prepareDocument(
     kind: "publisle:prepared-document" as const,
     schemaVersion: document.schemaVersion,
     blocks,
-    resources: { resources: [...resourceMap.values()] },
+    resources,
     references: { targets },
     islands,
     cacheIdentity: sha256Hex(
-      `${stable(document)}:${options.registry.version}${profileIdentity}`,
+      stable({
+        document,
+        registry: options.registry.version,
+        preparation: preparationIdentity,
+      }),
     ),
   };
   const prepared: PreparedDocument =
