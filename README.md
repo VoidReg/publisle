@@ -102,6 +102,26 @@ Observe the output on each clock edge.
 
 `publislePublication` compiles each Markdown module into a publication artifact. The host renders that artifact with `PublisleArticle` and supplies island implementations at runtime. `publisleSvelte()` and `publisleReact()` remain available when a project wants native Svelte or React components instead of a publication fragment.
 
+### Native static components
+
+For an interactive block's native static visualization, register a host renderer with
+`renderers: { "acme:example": { static: { module: "./StaticExample", exportName: "default" } } }`
+in the React or Svelte adapter options. Static renderers are imported directly
+and rendered with the block's props during SSR/build rendering, including when
+used as an interactive island's fallback. Named exports are supported, repeated
+instances share an import, and each instance receives its own props. Missing
+modules or exports fail the host build rather than producing empty placeholders.
+Static renderer modules must be SSR-safe; keep interactive code in the separately
+registered `interactive` module. Static-only generated documents do not import
+Publisle's island bootstrap; any framework JavaScript follows the host's policy.
+
+The runtime `PublisleContent` convenience components instead walk a render plan.
+Their async component loaders mount static components on the client and do not
+provide SSR for those components. Use native generated output when a registered
+static component must be readable before activation or without JavaScript.
+Publication artifacts continue to support authored fallback markup; registering
+a native component is not an HTML-fragment renderer.
+
 ### SvelteKit
 
 ```ts

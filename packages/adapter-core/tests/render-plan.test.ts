@@ -22,6 +22,44 @@ describe("createRenderPlan", () => {
     interactiveSchematicDefinition,
   ]);
 
+  it("plans a registered static visualization with the full interactive envelope", () => {
+    const input = document({
+      blocks: [
+        interactiveSchematic({
+          activation: "interaction",
+          payload: { source: "./counter.json" },
+          content: { title: [{ type: "text", value: "Counter" }] },
+        }),
+      ],
+    });
+    const prepared = prepare(input, { registry }).document;
+    if (!prepared) throw new Error("Expected prepared fixture.");
+    const staticRenderer = { module: "./StaticCounter", exportName: "Counter" };
+    for (const interactive of [undefined, { module: "./InteractiveCounter" }]) {
+      const plan = createRenderPlan(prepared, {
+        renderers: {
+          "publisle:interactive-schematic": {
+            static: staticRenderer,
+            ...(interactive === undefined ? {} : { interactive }),
+          },
+        },
+      });
+      expect(JSON.stringify(plan.nodes)).toContain(
+        JSON.stringify({
+          kind: "component",
+          module: staticRenderer.module,
+          exportName: staticRenderer.exportName,
+          props: input.blocks[0]?.data,
+        }),
+      );
+      expect(
+        plan.diagnostics.some(
+          (item) => item.code === "missing-static-representation",
+        ),
+      ).toBe(false);
+    }
+  });
+
   it("keeps the explanation outside the island and activates from a button", () => {
     const input = document({
       blocks: [
