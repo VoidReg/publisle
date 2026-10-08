@@ -89,7 +89,7 @@ describe("prepare", () => {
           createBlock({
             type: "publisle:figure",
             schemaVersion: 1,
-            data: { src: "diagram.svg" },
+            data: { src: "diagram.svg", alt: 123 },
           }),
         ],
       }),

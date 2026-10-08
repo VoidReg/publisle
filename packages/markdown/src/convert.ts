@@ -530,7 +530,9 @@ function blockFor(
           schemaVersion: 1,
           data: {
             src: attributes["src"] ?? "",
-            alt: attributes["alt"] ?? "",
+            ...(attributes["alt"] === undefined
+              ? {}
+              : { alt: attributes["alt"] }),
             ...(attributes["title"] ? { title: attributes["title"] } : {}),
             ...(attributes["label"] ? { label: attributes["label"] } : {}),
             ...(caption ? { caption: flow(children(caption)) } : {}),
