@@ -28,6 +28,14 @@ export {
   type SerializedDocument,
 } from "./document.ts";
 export { SchemaParseError } from "./error.ts";
+export {
+  parseJson,
+  assertUnicode,
+  JsonBoundaryError,
+  DEFAULT_JSON_LIMITS,
+  type JsonBoundaryCode,
+  type JsonBoundaryLimits,
+} from "./strict-json.ts";
 export type { DiagnosticPolicy, PublicationProfile } from "./profile.ts";
 export type {
   PortableSchema,

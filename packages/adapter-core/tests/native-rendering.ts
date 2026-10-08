@@ -132,7 +132,7 @@ export async function nativeRenderingFixture(options: {
             id,
           )
             ? "frameworkRenderedBytes"
-            : /\/(?:packages\/adapter-|packages\/(?:core|schema|markdown|block-sdk)\/)/u.test(
+            : /\/(?:packages\/adapter-|packages\/(?:core|schema|markdown|block-sdk|contracts)\/)/u.test(
                   id,
                 )
               ? "publisleRenderedBytes"

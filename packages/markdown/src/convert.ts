@@ -12,6 +12,8 @@ import {
   isBlockType,
   parseBlockId,
   parsePublicationMetadata,
+  parseJson,
+  SchemaParseError,
 } from "@publisle/schema";
 import type { FlowNode, InlineNode } from "@publisle/blocks-core";
 import YAML from "yaml";
@@ -151,12 +153,17 @@ function inline(nodes: readonly Node[]): InlineNode[] {
             .filter(({ id }) => id.length > 0);
           if (attributes["data"]) {
             try {
-              const parsed = JSON.parse(
+              const parsed = parseJson(
                 decodeURIComponent(attributes["data"]),
               ) as typeof items;
-              if (Array.isArray(parsed)) items = parsed;
+              if (!Array.isArray(parsed))
+                throw new Error("Expected citation array");
+              items = parsed;
             } catch {
-              /* The block parser will report malformed authored data. */
+              throw new SchemaParseError(
+                "invalid-block-data",
+                "Citation data must be a strict JSON array.",
+              );
             }
           } else if (items[0]) {
             items[0] = {
@@ -318,9 +325,7 @@ function interactiveBlock(
     }
     if (child.type === "code" && object(child)["lang"] === "publisle-payload") {
       try {
-        const parsed: unknown = JSON.parse(
-          String(object(child)["value"] ?? ""),
-        );
+        const parsed: unknown = parseJson(String(object(child)["value"] ?? ""));
         if (
           typeof parsed !== "object" ||
           parsed === null ||
@@ -632,7 +637,7 @@ function blockFor(
       if (name === "publisle") {
         const code = children(node).find((child) => child.type === "code");
         try {
-          const blockData = JSON.parse(
+          const blockData = parseJson(
             String(code ? object(code)["value"] : "null"),
           ) as JsonValue;
           return {

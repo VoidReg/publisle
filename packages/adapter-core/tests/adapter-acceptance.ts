@@ -26,7 +26,7 @@ interface AcceptanceOptions extends Omit<
 }
 
 const forbiddenTooling =
-  /\/(?:packages\/(?:schema|core|markdown|block-sdk|profiles)|blocks\/(?:core|technical)|examples\/playground-core)\//u;
+  /\/(?:packages\/(?:schema|core|markdown|block-sdk|profiles|contracts)|blocks\/(?:core|technical)|examples\/playground-core)\/|\/node_modules\/(?:\.pnpm\/)?ajv(?:@|\/)/u;
 const state = () => ({
   ready: false,
   moduleLoads: 0,

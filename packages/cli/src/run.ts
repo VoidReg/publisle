@@ -173,7 +173,19 @@ export async function runCli(
           "Unknown file extension; provide --format json|markdown.",
         );
     }
-    const original = await readFile(file, "utf8");
+    const bytes = await readFile(file);
+    let original: string;
+    try {
+      original = new TextDecoder("utf-8", {
+        fatal: true,
+        ignoreBOM: true,
+      }).decode(bytes);
+    } catch {
+      io.stderr(
+        `${file}: error [invalid-json-unicode]: Input is not valid UTF-8.\n`,
+      );
+      return 1;
+    }
     const config = await loadConfig(configFile);
     const result = processSource(original, {
       command,

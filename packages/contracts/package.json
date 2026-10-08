@@ -1,0 +1,30 @@
+{
+  "name": "@publisle/contracts",
+  "version": "0.0.0",
+  "description": "Preparation-only portable schema validation and canonical contract digests.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./schemas/*": "./schemas/*.json",
+    "./fixtures/*": "./fixtures/*.json"
+  },
+  "files": [
+    "src",
+    "schemas",
+    "fixtures"
+  ],
+  "dependencies": {
+    "@publisle/schema": "workspace:*",
+    "ajv": "8.20.0"
+  },
+  "scripts": {
+    "test": "vitest run --config ../../vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}
