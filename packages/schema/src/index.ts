@@ -30,6 +30,16 @@ export {
 export { SchemaParseError } from "./error.ts";
 export { canonicalizeJson } from "./canonical.ts";
 export {
+  COMPOSITION_PROFILE,
+  parseComposition,
+  matchesStateField,
+  type CompositionProfile,
+  type StateField,
+  type StateType,
+  type AuthoredPreset,
+  type BoundedOperation,
+} from "./composition.ts";
+export {
   parseReadable,
   resolveReadable,
   type ReadableRepresentation,

@@ -103,6 +103,18 @@ export function verifyP0Evidence(
       ),
       ...require("adapter-core/tests/python.acceptance.test.ts", "working host-owned islands"),
     ],
+    "TEST-11": [
+      ...require("contracts/tests/inspection.test.ts", "extracts unfamiliar instance values"),
+      ...require("markdown/tests/reading.test.ts", "reading"),
+    ],
+    "TEST-13": [
+      ...require("contracts/tests/composition.test.ts", "seals the behavior profile"),
+      ...require("adapter-core/tests/composition.test.ts", "restores atomically"),
+      ...require("adapter-core/tests/composition.test.ts", "snapshot byte overflow"),
+      ...require("adapter-core/tests/composition.test.ts", "unsupported cycles"),
+      ...require("adapter-core/tests/composition.test.ts", "asynchronous host failures"),
+      ...require("adapter-core/tests/composition.acceptance.test.ts", "without cross-binding repeated placements"),
+    ],
   };
 }
 

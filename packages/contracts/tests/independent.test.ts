@@ -18,12 +18,16 @@ import {
   digestJson,
   exportRegistryContracts,
   lockDocument,
+  collectSchemaClosure,
+  createSnapshotSchema,
   validateStructure,
   type PortableJsonSchema,
 } from "@publisle/contracts";
 import canonical from "../fixtures/canonical.json" with { type: "json" };
 import structural from "../fixtures/structural.json" with { type: "json" };
 import source from "../fixtures/portable-counter.json" with { type: "json" };
+import composition from "../fixtures/composition.json" with { type: "json" };
+import { parseComposition } from "@publisle/schema";
 
 function python(input: unknown): JsonValue {
   // The consumer has no subprocess/network authority and never imports TS code.
@@ -46,6 +50,37 @@ function python(input: unknown): JsonValue {
 }
 
 describe("independent offline Python conformance", () => {
+  it("validates emitted snapshot schemas independently while rejecting stale revisions and transient fields", () => {
+    const profile = parseComposition(
+      composition.semantics.composition,
+      composition.data,
+      composition.semantics.entities,
+    );
+    const target = {
+      documentDigest: `sha256:${"a".repeat(64)}`,
+      contractDigest: `sha256:${"b".repeat(64)}`,
+      blockId: "example",
+    };
+    const schema = createSnapshotSchema(profile, target);
+    const value = {
+      profile: "urn:publisle:snapshot:beta",
+      ...target,
+      state: { value: 8 },
+    };
+    const actual = python({
+      operation: "structure",
+      cases: [
+        { value, schema },
+        { value: { ...value, contractDigest: "stale" }, schema },
+        { value: { ...value, state: { value: 8, mode: "running" } }, schema },
+      ],
+    });
+    expect(actual).toMatchObject([
+      { valid: true },
+      { valid: false },
+      { valid: false },
+    ]);
+  });
   it("validates locked documents and exact transitive pins without a plugin or migration", async () => {
     const base = defineSchemaBlock({
       type: "example:base",
@@ -170,7 +205,10 @@ describe("independent offline Python conformance", () => {
       return {
         value: case_.value,
         schema,
-        dependencies: BETA_SCHEMA_DEPENDENCIES.filter((v) => v !== schema),
+        dependencies: collectSchemaClosure(
+          [schema],
+          BETA_SCHEMA_DEPENDENCIES,
+        ).filter((v) => !isPlainObject(v) || v["$id"] !== schema.$id),
       };
     });
     const classify = (result: ReturnType<typeof validateStructure>) => ({

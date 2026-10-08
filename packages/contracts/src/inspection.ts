@@ -258,6 +258,18 @@ export async function exportSemanticDocument(
       sourceDigest,
       dataDigest: await digestJson(block.data),
       contract: pin ? json(pin) : null,
+      composition:
+        body?.semantics?.composition && diagnostics.length === 0
+          ? {
+              declaration: boundJson(body.semantics.composition),
+              pointer: "/semantics/composition",
+              status: "declared-rule",
+              verification: "not-executed",
+              sourceBlockId: block.id,
+              sourceDigest,
+              contract: pin ? json(pin) : null,
+            }
+          : null,
       represents: body
         ? {
             name: body.source.documentation.name,
@@ -339,6 +351,7 @@ export async function inspectDocument(
         illustratedStates: {
           declared: select(["state"]),
           presets: block["presets"] ?? [],
+          composition: block["composition"] ?? null,
         },
         assumptions: {
           declared: select(["assumption"]),

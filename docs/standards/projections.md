@@ -63,7 +63,8 @@ immutable contract ID. These are identity references, not promises that a websit
 implements a fetch endpoint. Hosts may expose corresponding approved JSON through
 their own API. Reading output explicitly says it is not an archival round trip.
 
-State execution, compatible shareable snapshots and typed cross-block propagation
-remain a separate bounded-composition layer; describing preset associations does
-not yet implement their execution. Schema validity still proves neither HTML
-safety nor scientific correctness. Existing beta versions remain frozen.
+The optional [bounded-composition layer](composition.md) implements scalar state,
+validated authored presets, revision-targeted snapshots and typed cross-block ports.
+Semantic export includes its declarations, source/contract associations and assertion
+provenance without executing them. Schema validity still proves neither HTML safety
+nor scientific correctness. Existing beta versions remain frozen.
