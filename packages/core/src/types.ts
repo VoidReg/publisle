@@ -10,6 +10,7 @@ import type {
   ResourceReference,
   TraversalDeclaration,
   SemanticDeclaration,
+  ContractSource,
 } from "@publisle/schema";
 
 export interface BlockMigration {
@@ -35,6 +36,7 @@ export interface PortableBlockDefinition<
   Data = JsonValue,
   SchemaVersion extends number = number,
 > extends BlockDefinition<Type, Data, SchemaVersion> {
+  readonly contract?: ContractSource;
   readonly traversal?: TraversalDeclaration;
   readonly semantics?: SemanticDeclaration;
   readonly defaults?: Partial<Data>;

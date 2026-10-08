@@ -26,6 +26,7 @@ export function createRegistry(
   for (const definition of definitions) {
     if (definition.traversal) validateTraversal(definition.traversal);
     if (definition.semantics) canonicalizeJson(definition.semantics);
+    if (definition.contract) canonicalizeJson(definition.contract);
     if (entries.has(definition.type)) {
       throw new Error(`Duplicate block definition: ${definition.type}`);
     }
@@ -36,11 +37,12 @@ export function createRegistry(
     canonicalizeJson([
       preparationVersion,
       [...entries.values()]
-        .map(({ type, schemaVersion, traversal, semantics }) => [
+        .map(({ type, schemaVersion, traversal, semantics, contract }) => [
           type,
           schemaVersion,
           traversal ?? null,
           semantics ?? null,
+          contract ?? null,
         ])
         .sort(([left], [right]) =>
           String(left) < String(right)

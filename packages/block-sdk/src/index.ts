@@ -1,4 +1,5 @@
 import type { BlockMigration, PortableBlockDefinition } from "@publisle/core";
+import { createSchemaParser, type SchemaValue } from "@publisle/contracts";
 import {
   defineBlock,
   parseInteractiveEnvelope,
@@ -11,6 +12,8 @@ import {
   INTERACTIVE_TRAVERSAL,
   type TraversalDeclaration,
   type SemanticDeclaration,
+  type ContractSource,
+  type ContractSchema,
 } from "@publisle/schema";
 
 export interface InteractiveBlockDescriptor {
@@ -61,6 +64,36 @@ export function definePortableBlock<
   return definition;
 }
 
+/** Complete schema is the source of truth; generated parser/type cannot silently diverge. */
+export function defineSchemaBlock<
+  const Type extends `${string}:${string}`,
+  const Version extends number,
+  const S extends ContractSchema,
+>(
+  definition: Omit<
+    PortableBlockDefinition<Type, SchemaValue<S>, Version>,
+    "schema" | "contract" | "defaults"
+  > & {
+    readonly contract: Omit<ContractSource, "mode" | "dataSchema"> & {
+      readonly dataSchema: S;
+    };
+  },
+): Omit<
+  PortableBlockDefinition<Type, SchemaValue<S>, Version>,
+  "defaults" | "contract"
+> & { readonly contract: ContractSource } {
+  const result = {
+    ...definition,
+    contract: { ...definition.contract, mode: "schema-first" as const },
+    schema: createSchemaParser(
+      definition.contract.dataSchema,
+      definition.contract.schemaDependencies,
+    ),
+  };
+  defineBlock(result);
+  return result;
+}
+
 export function defineInteractiveBlock<
   const Type extends `${string}:${string}`,
   Payload,
@@ -69,6 +102,8 @@ export function defineInteractiveBlock<
   readonly type: Type;
   readonly schemaVersion: Version;
   readonly schema: Schema<Payload>;
+  /** Describes the complete interactive envelope, not just its payload. */
+  readonly contract?: ContractSource;
   readonly descriptor: InteractiveBlockDescriptor;
   readonly traversal?: TraversalDeclaration;
   readonly semantics?: SemanticDeclaration;
@@ -90,6 +125,9 @@ export function defineInteractiveBlock<
   >({
     type: definition.type,
     schemaVersion: definition.schemaVersion,
+    ...(definition.contract === undefined
+      ? {}
+      : { contract: definition.contract }),
     traversal: definition.traversal ?? INTERACTIVE_TRAVERSAL,
     ...(definition.semantics === undefined
       ? {}

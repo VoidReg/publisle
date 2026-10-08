@@ -255,6 +255,9 @@ importers:
       '@publisle/block-sdk':
         specifier: workspace:*
         version: link:../../packages/block-sdk
+      '@publisle/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@publisle/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -267,6 +270,9 @@ importers:
       '@publisle/blocks-core':
         specifier: workspace:*
         version: link:../core
+      '@publisle/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@publisle/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -582,6 +588,9 @@ importers:
 
   packages/block-sdk:
     dependencies:
+      '@publisle/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@publisle/core':
         specifier: workspace:*
         version: link:../core

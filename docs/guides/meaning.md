@@ -49,7 +49,7 @@ const wave = definePortableBlock({
 });
 ```
 
-Keep constraints in the structural schema. `domain`, units and effects explain the contract; they are not executable equations. `validateSemanticBindings(semantics, normalizedData, schema, dependencies)` from `@publisle/contracts` checks both the real instance and explicit schema locations offline. It does not infer a portable schema from a callback. Schema-first definitions and complete contract export follow in G3.
+Keep constraints in the structural schema. `domain`, units and effects explain the contract; they are not executable equations. `validateSemanticBindings(semantics, normalizedData, schema, dependencies)` from `@publisle/contracts` checks both the real instance and explicit schema locations offline. It does not infer a portable schema from a callback. See [schema-first definitions and complete contract export](contracts.md) to expose this meaning without loading renderers.
 
 For interactive blocks, `defineInteractiveBlock` already declares the shared explanation paths by default. A custom traversal replaces that declaration, so compose/include those paths explicitly. Arbitrary JSON fields do not become headings, resources or references just because their names resemble built-ins.
 

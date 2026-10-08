@@ -18,7 +18,7 @@ These are role definitions, not declarations that every role is currently implem
 
 Structural, descriptive, declarative and implementation-bound capabilities are orthogonal. A block MAY be descriptive and implementation-bound simultaneously. A schema does not prove semantic equivalence, numerical correctness, visual fidelity or accessible usability. Unknown or unsupported behavior MUST remain preserved where the supported archival contract permits it and MUST be reported rather than treated as implemented.
 
-A portable claim requires an exportable verified contract. Arbitrary parse/refinement/normalization/migration callbacks MUST be declared executable and implementation-bound; do not serialize callback source or fabricate complete schemas from callbacks. Current lightweight SDK descriptors are documentation, NOT complete portable contracts. Schema-first SDK/export tooling is a later group.
+A portable claim requires an exportable verified contract. Arbitrary parse/refinement/normalization/migration callbacks MUST be declared executable and implementation-bound; do not serialize callback source or fabricate complete schemas from callbacks. Lightweight SDK descriptors are documentation, NOT complete portable contracts. [Schema-first definitions, verified adapters and offline export](contracts.md) now implement this boundary; fixture parity does not prove universal code/schema equivalence.
 
 ## Trust boundary
 
