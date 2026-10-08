@@ -182,6 +182,38 @@ Observe the output on each clock edge.
 
 ## Publication
 
+### Pure document helpers
+
+At a server/build boundary, `@publisle/core` provides optional data-only helpers:
+
+```ts
+import {
+  getDocumentMetadata,
+  getDocumentOutline,
+  getDocumentReferences,
+} from "@publisle/core";
+
+const metadata = getDocumentMetadata(prepared); // PublicationMetadata | undefined
+const outline = getDocumentOutline(prepared); // readonly DocumentOutlineEntry[]
+const references = getDocumentReferences(prepared); // readonly ReferenceTarget[]
+```
+
+Each call returns an independent view; mutating a result cannot change the prepared
+document or its cache identity. Metadata preserves authored fields and extensions,
+returning `undefined` when absent. Nothing is inferred for SEO or the page head.
+The flat outline contains `{ blockId, level, title, label? }` for top-level
+`publisle:heading` blocks in document order, including unlabeled headings and level
+jumps. It does not traverse nested flow nodes or custom plugin payloads, synthesize
+anchors, or impose a hierarchy. Titles flatten formatting/link children, preserve
+inline code and literal LaTeX, use image alt text, and replace breaks with spaces.
+Raw HTML, citations, footnote markers, and implicit cross-reference labels are
+omitted rather than interpreted; explicit cross-reference children are retained.
+References are copied directly from preparation's targets, preserving their
+existing titles and kind-specific numbering, not recalculated outline titles.
+The host owns linking block IDs to rendered elements, head/search contributions,
+routing, layout, and metadata policy. These helpers require no browser or adapter
+and should not be imported into a static reader bundle.
+
 ### Migrations and diagnostic locations
 
 `prepare()` accepts `documentMigrations`, an ordered-by-version collection of
