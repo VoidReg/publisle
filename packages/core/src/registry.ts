@@ -1,4 +1,5 @@
 import { sha256Hex } from "./hash.ts";
+import { validateTraversal, canonicalizeJson } from "@publisle/schema";
 
 import type {
   BlockRegistry,
@@ -23,6 +24,8 @@ export function createRegistry(
   >();
 
   for (const definition of definitions) {
+    if (definition.traversal) validateTraversal(definition.traversal);
+    if (definition.semantics) canonicalizeJson(definition.semantics);
     if (entries.has(definition.type)) {
       throw new Error(`Duplicate block definition: ${definition.type}`);
     }
@@ -30,10 +33,15 @@ export function createRegistry(
   }
 
   const version = sha256Hex(
-    JSON.stringify([
+    canonicalizeJson([
       preparationVersion,
       [...entries.values()]
-        .map(({ type, schemaVersion }) => [type, schemaVersion])
+        .map(({ type, schemaVersion, traversal, semantics }) => [
+          type,
+          schemaVersion,
+          traversal ?? null,
+          semantics ?? null,
+        ])
         .sort(([left], [right]) =>
           String(left) < String(right)
             ? -1

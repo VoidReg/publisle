@@ -4,9 +4,11 @@ import {
   type PreparedDocument,
   type PublicationMetadata,
   type ReferenceTarget,
+  richText,
 } from "@publisle/schema";
 
 export interface DocumentOutlineEntry {
+  readonly pointer?: string;
   readonly blockId: BlockId;
   readonly level: 1 | 2 | 3 | 4 | 5 | 6;
   readonly title: string;
@@ -22,40 +24,22 @@ export function getDocumentMetadata(
     : structuredClone(document.metadata);
 }
 
-function inlineTitle(value: unknown): string {
-  if (!Array.isArray(value)) return "";
-  return value
-    .map((node: unknown): string => {
-      if (!isPlainObject(node)) return "";
-      switch (node["type"]) {
-        case "text":
-        case "inlineCode":
-        case "inlineMath":
-          return typeof node["value"] === "string" ? node["value"] : "";
-        case "inlineImage":
-          return typeof node["alt"] === "string" ? node["alt"] : "";
-        case "hardBreak":
-        case "softBreak":
-          return " ";
-        case "emphasis":
-        case "strong":
-        case "strikethrough":
-        case "link":
-        case "crossReference":
-          return inlineTitle(node["children"]);
-        default:
-          return "";
-      }
-    })
-    .join("");
-}
-
-/** Top-level portable headings in document order, including unlabeled headings. */
+/** Declared portable headings, including nested content, in traversal order. */
 export function getDocumentOutline(
   document: PreparedDocument,
 ): readonly DocumentOutlineEntry[] {
   const outline: DocumentOutlineEntry[] = [];
-  for (const block of document.blocks) {
+  const blocks = document.traversal
+    ? document.traversal
+        .filter((visit) => visit.kind === "node" && visit.type === "heading")
+        .map((visit) => ({
+          id: visit.blockId,
+          type: "publisle:heading",
+          data: visit.value,
+          pointer: visit.pointer,
+        }))
+    : document.blocks;
+  for (const block of blocks) {
     if (block.type !== "publisle:heading" || !isPlainObject(block.data))
       continue;
     const level = block.data["level"];
@@ -72,7 +56,12 @@ export function getDocumentOutline(
     outline.push({
       blockId: block.id,
       level,
-      title: inlineTitle(block.data["content"]),
+      title: richText(block.data["content"]),
+      ...("pointer" in block &&
+      typeof block.pointer === "string" &&
+      block.pointer
+        ? { pointer: block.pointer }
+        : {}),
       ...(typeof label === "string" ? { label } : {}),
     });
   }

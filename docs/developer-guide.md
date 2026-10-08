@@ -281,10 +281,11 @@ const references = getDocumentReferences(prepared); // readonly ReferenceTarget[
 Each call returns an independent view; mutating a result cannot change the prepared
 document or its cache identity. Metadata preserves authored fields and extensions,
 returning `undefined` when absent. Nothing is inferred for SEO or the page head.
-The flat outline contains `{ blockId, level, title, label? }` for top-level
-`publisle:heading` blocks in document order, including unlabeled headings and level
-jumps. It does not traverse nested flow nodes or custom plugin payloads, synthesize
-anchors, or impose a hierarchy. Titles flatten formatting/link children, preserve
+The flat outline contains `{ blockId, level, title, label?, pointer? }` for
+declared headings in document order, including unlabeled headings, nested flow
+nodes and custom paths explicitly registered through a bounded traversal. It does
+not scan opaque payloads, synthesize anchors, or impose a hierarchy. Nested paths
+carry a pointer relative to their owning block. Titles flatten formatting/link children, preserve
 inline code and literal LaTeX, use image alt text, and replace breaks with spaces.
 Raw HTML, citations, footnote markers, and implicit cross-reference labels are
 omitted rather than interpreted; explicit cross-reference children are retained.
@@ -357,12 +358,16 @@ fatal `profile-inspection-failed` diagnostics and cannot be suppressed by policy
 Profiles are trusted host code, not a sandbox for arbitrary JavaScript.
 
 The research-paper profile checks nonblank titles, authors, author affiliations,
-missing figure alternative text, and top-level heading jumps (including starting
+missing figure alternative text, and declared nested heading jumps (including starting
 below level 1). It recognizes an abstract heading named **Abstract** or labeled
 `abstract`, immediately followed by a nonempty prose paragraph. For other titles,
 use `researchPaperProfile({ abstractLabel: "sec:summary" })`. Metadata descriptions
 are not abstracts; this profile does not assess scientific quality or infer an
-abstract from arbitrary custom blocks. Figure alt is structurally optional:
+abstract from opaque custom blocks. Preparation supplies each profile a separate
+deeply frozen traversal context, so explicitly declared custom heading/paragraph
+paths participate in the same abstract check. Direct profile calls without a
+context retain their top-level behavior. See the [meaning guide](guides/meaning.md)
+for declarations, readable associations and limits. Figure alt is structurally optional:
 omission means undescribed, while an explicit empty string marks a decorative
 image. Missing descriptions render a visible "Figure description missing."
 notice and nonempty placeholder alt, without changing the source document.

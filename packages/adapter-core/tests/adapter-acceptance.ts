@@ -2,7 +2,12 @@ import { existsSync } from "node:fs";
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { chromium, type Browser, type Page } from "playwright-core";
 import { coreBlockDefinitions, paragraph, figure } from "@publisle/blocks-core";
-import { createRegistry, prepare, assertPrepared } from "@publisle/core";
+import {
+  createRegistry,
+  prepare,
+  assertPrepared,
+  getBlockSourceDigest,
+} from "@publisle/core";
 import {
   createBlock,
   document,
@@ -335,6 +340,69 @@ export function runAdapterAcceptance(options: AcceptanceOptions) {
         } finally {
           await page.close();
         }
+      });
+      assertBundle(result, options.target.name);
+    });
+
+    it("renders digest-associated unknown content without JavaScript, contracts or a renderer", async () => {
+      const block = createBlock({
+        type: "future:canvas",
+        data: { opaque: [1, 2, 3] },
+      });
+      const prepared = assertPrepared(
+        prepare(
+          document({
+            blocks: [
+              {
+                ...block,
+                readable: {
+                  sourceDigest: getBlockSourceDigest(block),
+                  provenance: { kind: "authored" },
+                  content: {
+                    fallback: [
+                      {
+                        type: "paragraph",
+                        content: text("Authored unknown-canvas fallback."),
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { registry: createRegistry([]) },
+        ),
+      );
+      const plan = createRenderPlan(prepared);
+      expect(plan.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+        "missing-renderer",
+      ]);
+      const result = await nativeRenderingFixture({
+        ...options,
+        nodes: plan.nodes,
+        plan,
+        minify: true,
+        browser: async ({ url }) => {
+          const context = await browser.newContext({
+            javaScriptEnabled: false,
+          });
+          try {
+            const page = await context.newPage();
+            await page.goto(url);
+            expect(
+              await page
+                .getByText("Authored unknown-canvas fallback.", { exact: true })
+                .isVisible(),
+            ).toBe(true);
+            expect(
+              await page
+                .locator("[data-publisle-unknown-block='future:canvas']")
+                .count(),
+            ).toBe(1);
+          } finally {
+            await context.close();
+          }
+        },
       });
       assertBundle(result, options.target.name);
     });

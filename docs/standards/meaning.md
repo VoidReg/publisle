@@ -1,0 +1,62 @@
+# Meaning, traversal and readable preservation
+
+This is the implemented **beta** vocabulary for SEM-01–03, SEM-07–08, PROJ-03 and DOC-02. It is a descriptive contract, not a simulator. Existing version numbers remain frozen; immutable revisions use different content digests. The schemas [semantics](../../packages/contracts/schemas/semantics.json), [traversal](../../packages/contracts/schemas/traversal.json), [explanation](../../packages/contracts/schemas/explanation.json) and [readable](../../packages/contracts/schemas/readable.json) define their portable structure. Their resource IDs identify this beta vocabulary; future release versioning is not implemented here.
+
+## Semantic declarations
+
+A declaration contains `entities`. Each entity MUST have a unique stable `id`, `kind`, nonblank `name`, and explicit `origin`. Supported kinds are concept, quantity, input, output, action, state, view, assumption, evidence and relation. Origins are `authored`, `declared-rule` and `calculated-result`: an authored observation MUST NOT be relabeled as a verified calculation.
+
+An entity MAY declare description, value type, units, dimensions, domain, default/initial values, interpretation, view role, evidence source and transient state. Domains are JSON annotations, not a second expression language; structural constraints belong in the payload schema. `references`, input `effects`, action `inputs` and `results` contain semantic IDs. They MUST resolve within this declaration. A state's `reset` MUST identify an action. Declaring these relationships does not compute an output or execute a transition. State validation, typed composition and executable bounded behaviors are later groups.
+
+`binding` is a fixed [RFC 6901 JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) into normalized `block.data`, with the empty pointer identifying the entire data value. It MUST resolve to an own property or canonical, existing array index. No wildcard, append operation, CSS selector or query is supported; array iteration uses traversal declarations instead. This beta profile excludes literal `*` and `-` pointer/property tokens to avoid confusing them with selectors. Escapes `~0` and `~1` retain their RFC meanings. Missing and explicit null remain distinct.
+
+Inputs, outputs, states and views MUST have a structural binding or explicitly identify implementation-bound behavior with a nonblank limitation. `implementation.status` is `declarative` or `implementation-bound`; optional identity identifies required host code. Actions can describe input/result contracts by referring to the corresponding entities. A 3D canvas, numerical solver or arbitrary plugin remains implementation-bound unless an actual portable behavior contract specifies its operations. A generic consumer MUST NOT claim equivalent rendering, simulation or scientific correctness.
+
+`validateSemantics` checks structure, IDs, references, instance bindings and declared value-type agreement without invoking plugin code. `validateSemanticBindings` additionally checks normalized data with the supplied structural schema and verifies that bindings name explicit schema locations. It supports provided-set/local pointer refs, properties, items/prefix items, schema-valued additional properties, combinators and conditional branches. Location checks use the union of explicitly declared branches; they are not a discriminator-specific semantic type proof. Data must separately pass structural validation. It does not fetch contracts, infer undeclared locations from `additionalProperties: true`, or infer action behavior. Schema traversal is bounded to 100,000 total steps and depth 128. Declarations contain at most 4096 entities and each ID-reference list at most 4096 entries; the JSON wire limits also apply.
+
+Unsupported declarations are diagnosed rather than guessed. Invalid known contracts prevent successful preparation, leaving the original source untouched. Unknown blocks retain their JSON and report the missing definition. An unknown contract's private semantic fields are not heuristically interpreted. The [shared unfamiliar-wave fixture](../../packages/contracts/fixtures/meaning.json) exposes inputs, output, reset action, state, plot, assumptions and evidence entirely as JSON, while expressly declaring the unverified host computation.
+
+## One declared traversal
+
+The data-only program has `root` and optional named `rules`. A rule MAY emit a `node`, `reference` or `resource`; enumerate literal `properties`; traverse array `items`; mark a missing location `optional`; select a `tag` property from explicitly named `cases`; or refer to a named rule with `ref`. There is no callback, expression string, wildcard pointer or unrestricted selector. Programs and input data MUST be bounded plain JSON, without accessors or executable hooks. This is not a sandbox for hostile JavaScript objects/proxies or trusted host callbacks.
+
+Declaration validation permits at most 4096 rule nodes and depth 64. Evaluation permits at most 100,000 rule applications and depth 128, including reference expansion. Productive child recursion is supported. Nonproductive cycles fail safely at evaluation. A failure returns no partial traversal result. Unknown tagged branches emit an unresolved location, retain the original data and receive a preparation warning; their descendants are not visited.
+
+All participating operations consume the same document-ordered visits:
+
+| Operation                 | Participating declared locations                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Outline                   | `node` emissions with type `heading`, including unlabeled nested headings; title uses declared rich content                                                                 |
+| Reference targets         | `node` emissions for heading, figure, table, math/equation and diagram, with a stable `label`; non-heading numbering is kind-specific                                       |
+| Cross-reference integrity | `reference` emissions with type `crossReference` and a target label; citation/footnote references are recognized but their separate resolution protocols are not added here |
+| Resources                 | `resource` emissions containing a URI string or resource-reference object; inline images and declared downloadable originals/print fallbacks participate                    |
+| Built-in profiles         | Declared block/flow node emissions; research-paper headings, adjacent abstract paragraph and figure descriptions share this view                                            |
+
+Top-level core definitions explicitly declare their root and rich slots. Recursive rich content declares formatting children, inline images/references, paragraphs, headings, quotes, lists and list-item branches. Tables declare cells and captions; figures declare captions/credits/resources; embeds and diagrams declare captions/fallbacks; callouts/footnotes declare children. The interactive SDK defaults to the shared title/description/instructions/purpose/observations/assumptions/preset-description/fallback traversal and does not inspect `payload`.
+
+A custom block participates only through its declared paths. An undeclared code-first payload remains opaque; the old arbitrary recursive cross-reference scan is removed. Hosts that supply their own interactive traversal must include their shared prose paths as well as any payload paths. Existing executable resource callbacks remain trusted, explicitly implementation-bound additions; they are not inferred into portable rules. Declarative core resource paths replace the equivalent built-in callbacks, avoiding double declaration.
+
+Prepared traversal visits are a derived tooling view, not a new authored wire format or an independent editable copy. Profiles receive an isolated, deeply frozen traversal context alongside their normalized document snapshot. Custom inspectors remain trusted host code and can perform their own checks. Direct profile calls without a preparation context retain their top-level behavior; a hand-constructed prepared document without traversal retains the outline's top-level fallback.
+
+Nested locations include `blockId` and a pointer, not invented block IDs or anchors. Declaring a nested label does not guarantee a custom renderer will emit its corresponding HTML anchor; the host renderer remains responsible for that representation.
+
+## Instance explanation and unknown readability
+
+Common explanation slots are rich title, description, instructions, purpose, observations, assumptions and fallback. Preset associations have unique nonblank IDs, optional fixed bindings into block data and rich descriptions. Bindings are checked at explicitly declared preset-reference traversal locations. Presets are associations only in this group, not executable state assignment or verified observations. No invented alt text or copied plugin documentation is required. Unresolved references in an unknown block's readable view warn and preserve the article; the corresponding registered structural reference checks remain errors.
+
+An optional `block.readable` associates readable content with the containing stable block ID and `sourceDigest`. The exact digest preimage is the UTF-8 JCS serialization of `{ id, type, schemaVersion, data }`. The association deliberately excludes `readable` and all prepared-only fields, avoiding self-reference. `getBlockSourceDigest` agrees with independent JCS/SHA-256 tooling. Source identity is checked **before** trusted normalization; rendering never rewrites the source or repins a stale digest.
+
+The association MUST choose exactly one of:
+
+- `binding`: a fixed pointer to the existing explanation object in `block.data`, commonly `/content`; prose is authored once and reused.
+- `content`: the explanation object stored once in this envelope, useful when the payload has no portable explanation slot.
+
+Provenance MUST be `{ kind: "authored" }` or `{ kind: "generated", generator, version, source }` with nonblank generator/version/source. Generated prose must remain distinguishable from authored facts. This group does not generate prose automatically. Stale digests, missing bindings and unsupported readable branches produce precise warnings; raw data and the original association remain available for recovery, but a stale or unsupported projection is not presented as current meaning.
+
+Preparation produces a verified, noneditable readable view. The missing-renderer fallback prefers authored fallback; otherwise it displays shared prose and preset descriptions as escaped portable text. It does not execute raw HTML, infer calculations, mount a renderer or require schema/compiler code in a reader. Rich structure remains in source JSON; this first generic fallback is not a full citation/footnote/image-layout renderer. Existing native interactive rendering additionally handles the expanded explanation slots and content fallback.
+
+Extended interactive Markdown retains the new prose slots and preset associations, and standard Markdown retains readable prose while diagnosing lost interaction. The digest-associated block sidecar itself is **not** yet archival Markdown: export emits `readable-representation-not-exported`, and callers must preserve source JSON. Locked archival envelope exchange belongs to G4, semantic/reading export and generic inspection to G8. No full-contract discovery, behavior interpreter or scientific-equivalence claim is made by G2.
+
+## Digest correction during beta
+
+Synchronous core SHA-256 previously repeated low message-length bits into the high footer through JavaScript's modulo-32 shifts. This group corrects the footer and adds independent vectors, UTF-8, padding and multi-block parity tests. Existing nonempty registry/cache/resource/publication identity outputs consequently change; old outputs must not be relabeled as standards-compliant SHA-256 or silently repinned. This is a beta correctness fix, not a version bump or automatic source migration. Existing pinned content remains immutable; broader identity-domain migration remains G6.

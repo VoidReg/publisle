@@ -28,6 +28,13 @@ export {
   type SerializedDocument,
 } from "./document.ts";
 export { SchemaParseError } from "./error.ts";
+export { canonicalizeJson } from "./canonical.ts";
+export {
+  parseReadable,
+  resolveReadable,
+  type ReadableRepresentation,
+  type ReadableProvenance,
+} from "./readable.ts";
 export {
   parseJson,
   assertUnicode,
@@ -36,7 +43,11 @@ export {
   type JsonBoundaryCode,
   type JsonBoundaryLimits,
 } from "./strict-json.ts";
-export type { DiagnosticPolicy, PublicationProfile } from "./profile.ts";
+export type {
+  DiagnosticPolicy,
+  PublicationProfile,
+  ProfileContext,
+} from "./profile.ts";
 export type {
   PortableSchema,
   PortableSchemaField,
@@ -58,6 +69,27 @@ export {
 } from "./json.ts";
 export { isPlainObject } from "./object.ts";
 export {
+  resolvePointer,
+  pointerToken,
+  traverseDeclared,
+  validateTraversal,
+  TraversalError,
+  RICH_TRAVERSAL_RULES,
+  EXPLANATION_TRAVERSAL,
+  INTERACTIVE_TRAVERSAL,
+  richText,
+  type TraversalRule,
+  type TraversalDeclaration,
+  type TraversalVisit,
+} from "./traversal.ts";
+export {
+  validateSemantics,
+  type SemanticKind,
+  type SemanticEntity,
+  type SemanticDeclaration,
+  type SemanticDiagnostic,
+} from "./semantics.ts";
+export {
   isIsoDateTime,
   parseIsoDateTime,
   parsePublicationMetadata,
@@ -72,6 +104,7 @@ export {
   isInteractiveEnvelope,
   isPreparedDocument,
   parseInteractiveEnvelope,
+  parseInteractiveContent,
   type Activation,
   type InteractiveAccessibility,
   type InteractiveContent,

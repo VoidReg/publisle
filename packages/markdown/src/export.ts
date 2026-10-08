@@ -232,6 +232,31 @@ function interactiveDirective(
     slots.push(
       directiveSlot("fallback", flow(value.fallback as readonly FlowNode[])),
     );
+  for (const key of [
+    "purpose",
+    "observations",
+    "assumptions",
+    "fallback",
+  ] as const) {
+    const content = value.content?.[key];
+    if (content?.length)
+      slots.push(
+        directiveSlot(
+          key === "fallback" ? "content-fallback" : key,
+          flow(content as readonly FlowNode[]),
+        ),
+      );
+  }
+  if (value.content?.presets)
+    slots.push({
+      type: "code",
+      lang: "publisle-presets",
+      value: JSON.stringify(
+        value.content.presets,
+        null,
+        payloadFormatting === "compact" ? undefined : 2,
+      ),
+    });
   slots.push({
     type: "code",
     lang: "publisle-payload",
@@ -272,6 +297,18 @@ function standardInteractive(block: AnyBlock): RootContent[] {
     nodes.push(...flow(value.content.instructions as readonly FlowNode[]));
   if (value.fallback?.length)
     nodes.push(...flow(value.fallback as readonly FlowNode[]));
+  for (const key of [
+    "purpose",
+    "observations",
+    "assumptions",
+    "fallback",
+  ] as const) {
+    const content = value.content?.[key];
+    if (content?.length) nodes.push(...flow(content as readonly FlowNode[]));
+  }
+  for (const preset of value.content?.presets ?? [])
+    if (preset.description?.length)
+      nodes.push(...flow(preset.description as readonly FlowNode[]));
   return nodes;
 }
 
@@ -665,6 +702,14 @@ export function toMarkdown(
   const metadata = frontmatter(document);
   if (metadata) nodes.push(metadata);
   for (const block of document.blocks) {
+    if (block.readable)
+      diagnostics.push({
+        level: "warning",
+        code: "readable-representation-not-exported",
+        message:
+          "This Markdown policy does not retain the block's digest-associated readable sidecar. Preserve the source JSON; archival envelope export is not yet supported.",
+        blockId: block.id,
+      });
     const codec = codecs.byType.get(block.type);
     if (codec) {
       let converted: RootContent | undefined;

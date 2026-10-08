@@ -41,7 +41,9 @@ function sha256(ascii: Uint8Array): Uint8Array {
   padded.set(ascii);
   padded[ascii.length] = 0x80;
   for (let i = 0; i < 8; i++) {
-    padded[padded.length - 1 - i] = (asciiBitLength >>> (i * 8)) & 0xff;
+    // Bitwise shifts wrap at 32 bits; division preserves the high length bytes.
+    padded[padded.length - 1 - i] =
+      Math.floor(asciiBitLength / 2 ** (i * 8)) & 0xff;
   }
 
   const w = new Array<number>(64);

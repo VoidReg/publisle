@@ -2,12 +2,13 @@
 
 These documents define the implemented portable subset independently of SDK types. They are not a claim that the entire standardization roadmap is complete.
 
-| Contract                      | Normative definition                | Machine-readable source                                                               |
-| ----------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
-| Roles, trust and beta changes | [Conformance](conformance.md)       | [Foundation diagnostics](../../packages/contracts/schemas/foundation-diagnostic.json) |
-| JSON boundaries and digests   | [JSON wire profile](json-wire.md)   | Shared canonical fixtures                                                             |
-| Structural validation         | [Schema profile](schema-profile.md) | [Beta schemas](../../packages/contracts/schemas/)                                     |
-| Preparation                   | [Preparation order](preparation.md) | Existing preparation APIs and regression fixtures                                     |
+| Contract                       | Normative definition                   | Machine-readable source                                                               |
+| ------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------- |
+| Roles, trust and beta changes  | [Conformance](conformance.md)          | [Foundation diagnostics](../../packages/contracts/schemas/foundation-diagnostic.json) |
+| JSON boundaries and digests    | [JSON wire profile](json-wire.md)      | Shared canonical fixtures                                                             |
+| Structural validation          | [Schema profile](schema-profile.md)    | [Beta schemas](../../packages/contracts/schemas/)                                     |
+| Preparation                    | [Preparation order](preparation.md)    | Existing preparation APIs and regression fixtures                                     |
+| Semantic meaning and traversal | [Meaning and preservation](meaning.md) | Shared declaration, explanation and readable schemas/fixtures                         |
 
 ## Status and frozen versions
 
@@ -17,10 +18,11 @@ The workspace schema snapshot may evolve in place before release. Contract conte
 
 Future version domains, transitions and deprecation enforcement are design policy only until release preparation is authorized. The beta freeze supersedes requirements for immediate envelope/artifact version transitions.
 
-SDK usage belongs in [the tooling guide](../guides/contracts.md), not these normative definitions. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. Semantic vocabulary/traversal, contract bundle/export/discovery, locked dependencies, projections, artifact/ABI changes, Python conformance and publishing profiles are NOT implemented by this foundation group.
+SDK usage belongs in [the tooling guide](../guides/contracts.md) and [meaning guide](../guides/meaning.md), not these normative definitions. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. G1 and G2 implement JSON/schema foundations, descriptive semantic declarations, shared bounded traversal and digest-associated unknown readability. Complete contract bundle/export/discovery, locked dependencies/archival Markdown, semantic exports/inspectors, artifact/ABI changes, behavior execution and Python conformance remain future groups.
 
 ## Implemented beta changes
 
 - Added strict text/UTF-8 JSON ingestion and JCS/SHA-256 tooling.
 - Added read-only offline structural validation and reviewed current-shape schemas.
 - Preserved existing version constants, dependencies' placement outside readers, and existing normalization APIs.
+- Added renderer-independent meaning, shared nested traversal and explicitly sourced readable preservation; corrected synchronous SHA-256 parity without changing versions.

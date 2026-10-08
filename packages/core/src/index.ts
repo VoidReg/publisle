@@ -1,6 +1,7 @@
 export { prepare, assertPrepared } from "./prepare.ts";
 export { sha256Hex } from "./hash.ts";
 export { createRegistry } from "./registry.ts";
+export { getBlockSourceDigest, inspectReadable } from "./readable.ts";
 export {
   getDocumentMetadata,
   getDocumentOutline,

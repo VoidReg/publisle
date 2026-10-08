@@ -13,6 +13,7 @@ import {
   parseBlockId,
   parsePublicationMetadata,
   parseJson,
+  parseInteractiveContent,
   SchemaParseError,
 } from "@publisle/schema";
 import type { FlowNode, InlineNode } from "@publisle/blocks-core";
@@ -300,6 +301,11 @@ function interactiveBlock(
     title?: ReturnType<typeof inline>;
     description?: ReturnType<typeof flow>;
     instructions?: ReturnType<typeof flow>;
+    purpose?: ReturnType<typeof flow>;
+    observations?: ReturnType<typeof flow>;
+    assumptions?: ReturnType<typeof flow>;
+    fallback?: ReturnType<typeof flow>;
+    presets?: import("@publisle/schema").InteractiveContent["presets"];
   } = {};
   let fallback: ReturnType<typeof flow> | undefined;
   let payload: JsonValue | undefined;
@@ -315,9 +321,37 @@ function interactiveBlock(
       else if (slot === "instructions")
         content.instructions = flow(children(child));
       else if (slot === "fallback") fallback = flow(children(child));
+      else if (
+        slot === "purpose" ||
+        slot === "observations" ||
+        slot === "assumptions"
+      )
+        content[slot] = flow(children(child));
+      else if (slot === "content-fallback")
+        content.fallback = flow(children(child));
       else {
         diagnostics.push(
           interactiveDiagnostic(`Unexpected interactive slot ${slot}.`),
+        );
+        return undefined;
+      }
+      continue;
+    }
+    if (child.type === "code" && object(child)["lang"] === "publisle-presets") {
+      try {
+        if (content.presets !== undefined)
+          throw new Error("Duplicate preset associations.");
+        const presets = parseInteractiveContent({
+          presets: parseJson(String(object(child)["value"] ?? "")),
+        }).presets;
+        if (presets === undefined)
+          throw new Error("Missing preset associations.");
+        content.presets = presets;
+      } catch {
+        diagnostics.push(
+          interactiveDiagnostic(
+            "Preset associations must be one validated JSON array with unique ids.",
+          ),
         );
         return undefined;
       }

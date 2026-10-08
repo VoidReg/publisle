@@ -2,6 +2,7 @@ import { sha256Hex } from "./hash.ts";
 import { inspectProfiles } from "./profiles.ts";
 import { migrateDocument } from "./document-migrations.ts";
 import { stable } from "./identity.ts";
+import { inspectReadable } from "./readable.ts";
 import { createResourcePlanner, ResourcePlanningError } from "./resources.ts";
 
 import {
@@ -18,6 +19,14 @@ import {
   type PreparedDocument,
   type ReferenceKind,
   type ReferenceTarget,
+  traverseDeclared,
+  validateSemantics,
+  resolvePointer,
+  TraversalError,
+  EXPLANATION_TRAVERSAL,
+  RICH_TRAVERSAL_RULES,
+  richText,
+  isPlainObject,
 } from "@publisle/schema";
 
 import type { AnyPortableBlockDefinition, PrepareOptions } from "./types.ts";
@@ -75,20 +84,6 @@ function migrate(
   return { data, version };
 }
 
-function plainInline(value: unknown): string {
-  if (!Array.isArray(value)) return "";
-  return value
-    .map((entry) => {
-      if (typeof entry !== "object" || entry === null || Array.isArray(entry))
-        return "";
-      const node = entry as Record<string, unknown>;
-      if (node["type"] === "text" && typeof node["value"] === "string")
-        return node["value"];
-      return plainInline(node["children"]);
-    })
-    .join("");
-}
-
 function referenceKind(type: string): ReferenceKind | undefined {
   if (type === "publisle:heading") return "heading";
   if (type === "publisle:figure") return "figure";
@@ -96,21 +91,6 @@ function referenceKind(type: string): ReferenceKind | undefined {
   if (type === "publisle:math") return "equation";
   if (type === "publisle:diagram") return "diagram";
   return undefined;
-}
-
-function collectReferences(value: unknown, output: string[]): void {
-  if (Array.isArray(value)) {
-    for (const entry of value) collectReferences(entry, output);
-    return;
-  }
-  if (typeof value !== "object" || value === null) return;
-  const record = value as Record<string, unknown>;
-  if (
-    record["type"] === "crossReference" &&
-    typeof record["target"] === "string"
-  )
-    output.push(record["target"]);
-  for (const entry of Object.values(record)) collectReferences(entry, output);
 }
 
 export function prepare(
@@ -175,8 +155,106 @@ function prepareDocument(
   const islands: PreparedDocument["islands"][number][] = [];
   const targets: ReferenceTarget[] = [];
   const targetLabels = new Set<string>();
-  const pendingReferences: { label: string; blockId: Block["id"] }[] = [];
+  const pendingReferences: {
+    label: string;
+    blockId: Block["id"];
+    level: "warning" | "error";
+    pointer: string;
+  }[] = [];
   const ordinals = new Map<ReferenceKind, number>();
+  const traversal: NonNullable<PreparedDocument["traversal"]>[number][] = [];
+  const visited = new Set<string>();
+  const collect = (
+    block: Block<BlockType, unknown>,
+    visits: readonly import("@publisle/schema").TraversalVisit[],
+    referenceLevel: "warning" | "error" = "error",
+  ): void => {
+    for (const visit of visits) {
+      const key = `${block.id}:${visit.kind}:${visit.pointer}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+      traversal.push({ ...visit, blockId: block.id });
+      if (visit.kind === "unresolved") {
+        diagnostics.push({
+          level: "warning",
+          code: "unresolved-traversal-branch",
+          message: `Preserved unrecognized content branch ${visit.type ?? ""} without interpreting it.`,
+          pointer: visit.pointer,
+          blockId: block.id,
+        });
+        continue;
+      }
+      if (visit.kind === "resource") {
+        resourcePlanner.add(
+          typeof visit.value === "string" ? { uri: visit.value } : visit.value,
+        );
+        continue;
+      }
+      const data = isPlainObject(visit.value) ? visit.value : {};
+      if (
+        visit.kind === "reference" &&
+        visit.type === "preset" &&
+        data["binding"] !== undefined
+      ) {
+        let resolved = false;
+        try {
+          resolved =
+            typeof data["binding"] === "string" &&
+            resolvePointer(block.data, data["binding"]).found;
+        } catch {
+          /* Invalid fixed pointer, not executable behavior. */
+        }
+        if (!resolved)
+          diagnostics.push({
+            level: referenceLevel,
+            code: "unresolved-preset-binding",
+            message: `Preset ${typeof data["id"] === "string" ? data["id"] : ""} binding does not exist or is not a fixed pointer.`,
+            blockId: block.id,
+            pointer: `${visit.pointer}/binding`,
+          });
+      }
+      if (
+        visit.kind === "reference" &&
+        visit.type === "crossReference" &&
+        typeof data["target"] === "string"
+      )
+        pendingReferences.push({
+          label: data["target"],
+          blockId: block.id,
+          level: referenceLevel,
+          pointer: visit.pointer,
+        });
+      const kind =
+        visit.kind === "node" && visit.type
+          ? referenceKind(`publisle:${visit.type}`)
+          : undefined;
+      if (kind && typeof data["label"] === "string") {
+        const label = data["label"];
+        if (targetLabels.has(label))
+          diagnostics.push({
+            level: "error",
+            code: "duplicate-reference-label",
+            message: `Duplicate reference label ${label}.`,
+            blockId: block.id,
+            pointer: visit.pointer,
+          });
+        else {
+          targetLabels.add(label);
+          const ordinal =
+            kind === "heading" ? undefined : (ordinals.get(kind) ?? 0) + 1;
+          if (ordinal !== undefined) ordinals.set(kind, ordinal);
+          targets.push({
+            label,
+            blockId: block.id,
+            kind,
+            ...(visit.pointer ? { pointer: visit.pointer } : {}),
+            ...(ordinal === undefined ? {} : { ordinal }),
+            ...(kind === "heading" ? { title: richText(data["content"]) } : {}),
+          });
+        }
+      }
+    }
+  };
 
   for (const block of document.blocks) {
     if (ids.has(block.id)) {
@@ -190,6 +268,39 @@ function prepareDocument(
     }
     ids.add(block.id);
     const definition = options.registry.get(block.type);
+    let readableContent:
+      import("@publisle/schema").InteractiveContent | undefined;
+    try {
+      const content = inspectReadable(block);
+      readableContent = content;
+      if (content && !definition)
+        collect(
+          block,
+          traverseDeclared(content, {
+            root: EXPLANATION_TRAVERSAL,
+            rules: RICH_TRAVERSAL_RULES,
+          }).map((visit) => ({
+            ...visit,
+            pointer: `${block.readable?.binding ?? "/readable/content"}${visit.pointer}`,
+          })),
+          definition ? "error" : "warning",
+        );
+    } catch (error) {
+      diagnostics.push({
+        level: "warning",
+        code:
+          error instanceof SchemaParseError
+            ? error.code
+            : error instanceof ResourcePlanningError
+              ? error.code
+              : "invalid-readable-representation",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Invalid readable representation.",
+        blockId: block.id,
+      });
+    }
     if (!definition) {
       diagnostics.push({
         level: options.unknownBlocks === "error" ? "error" : "warning",
@@ -198,7 +309,14 @@ function prepareDocument(
         blockId: block.id,
       });
       if (options.unknownBlocks !== "error")
-        blocks.push({ ...block, prepared: true });
+        blocks.push({
+          ...block,
+          data: structuredClone(block.data),
+          ...(readableContent
+            ? { readableContent: structuredClone(readableContent) }
+            : {}),
+          prepared: true,
+        });
       continue;
     }
 
@@ -212,44 +330,35 @@ function prepareDocument(
         ...block,
         schemaVersion: definition.schemaVersion,
         data,
+        ...(readableContent
+          ? { readableContent: structuredClone(readableContent) }
+          : {}),
         prepared: true,
       } as PreparedBlock;
       blocks.push(prepared);
-      const kind = referenceKind(block.type);
-      const recordData =
-        typeof data === "object" && data !== null && !Array.isArray(data)
-          ? (data as Record<string, unknown>)
-          : {};
-      if (kind && typeof recordData["label"] === "string") {
-        const label = recordData["label"];
-        if (targetLabels.has(label)) {
-          diagnostics.push({
-            level: "error",
-            code: "duplicate-reference-label",
-            message: `Duplicate reference label ${label}.`,
-            blockId: block.id,
-          });
-        } else {
-          targetLabels.add(label);
-          const ordinal =
-            kind === "heading" ? undefined : (ordinals.get(kind) ?? 0) + 1;
-          if (ordinal !== undefined) ordinals.set(kind, ordinal);
-          targets.push({
-            label,
-            blockId: block.id,
-            kind,
-            ...(ordinal === undefined ? {} : { ordinal }),
-            ...(kind === "heading"
-              ? { title: plainInline(recordData["content"]) }
-              : {}),
-          });
-        }
-      }
-      const references: string[] = [];
-      collectReferences(data, references);
-      pendingReferences.push(
-        ...references.map((label) => ({ label, blockId: block.id })),
-      );
+      if (definition.semantics)
+        diagnostics.push(
+          ...validateSemantics(definition.semantics, data).map(
+            (diagnostic) => ({
+              ...diagnostic,
+              level: "error" as const,
+              blockId: block.id,
+            }),
+          ),
+        );
+      if (definition.traversal)
+        collect(prepared, traverseDeclared(data, definition.traversal));
+      if (readableContent)
+        collect(
+          prepared,
+          traverseDeclared(readableContent, {
+            root: EXPLANATION_TRAVERSAL,
+            rules: RICH_TRAVERSAL_RULES,
+          }).map((visit) => ({
+            ...visit,
+            pointer: `${block.readable?.binding ?? "/readable/content"}${visit.pointer}`,
+          })),
+        );
       let declaredResources: unknown;
       try {
         declaredResources = definition.resources
@@ -285,13 +394,14 @@ function prepareDocument(
         code:
           error instanceof ResourcePlanningError
             ? error.code
-            : error instanceof SchemaParseError &&
-                error.code === "migration-failed"
-              ? "migration-failed"
-              : error instanceof Error &&
-                  error.name === "UnsupportedBlockVersion"
-                ? "unsupported-block-version"
-                : "invalid-block-data",
+            : error instanceof TraversalError
+              ? "invalid-traversal"
+              : error instanceof SchemaParseError
+                ? error.code
+                : error instanceof Error &&
+                    error.name === "UnsupportedBlockVersion"
+                  ? "unsupported-block-version"
+                  : "invalid-block-data",
         message:
           error instanceof Error
             ? error.message
@@ -304,10 +414,11 @@ function prepareDocument(
   for (const reference of pendingReferences) {
     if (!targetLabels.has(reference.label))
       diagnostics.push({
-        level: "error",
+        level: reference.level,
         code: "unresolved-cross-reference",
         message: `Cross-reference target ${reference.label} does not exist.`,
         blockId: reference.blockId,
+        pointer: reference.pointer,
       });
   }
 
@@ -326,7 +437,7 @@ function prepareDocument(
         ? {}
         : { metadata: document.metadata }),
     };
-    diagnostics.push(...inspectProfiles(semanticDocument, options));
+    diagnostics.push(...inspectProfiles(semanticDocument, options, traversal));
   }
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
@@ -353,6 +464,7 @@ function prepareDocument(
     kind: "publisle:prepared-document" as const,
     schemaVersion: document.schemaVersion,
     blocks,
+    traversal,
     resources,
     references: { targets },
     islands,
