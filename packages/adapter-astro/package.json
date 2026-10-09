@@ -1,0 +1,22 @@
+{
+  "name": "@publisle/adapter-astro",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./Article.astro": "./src/Article.astro",
+    "./runtime": "./src/runtime.ts"
+  },
+  "dependencies": {
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/schema": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": "^6.0.0"
+  },
+  "devDependencies": {
+    "astro": "^6.0.0"
+  }
+}

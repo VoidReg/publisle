@@ -1,0 +1,26 @@
+---
+import Article from "@publisle/adapter-astro/Article.astro";
+import {preparePublication} from "@publisle/adapter-astro";
+import {publicationReaderManifest} from "@publisle/adapter-core";
+import {coreBlockDefinitions} from "@publisle/blocks-core";
+import {createRegistry} from "@publisle/core";
+import {document,createBlock,parseInteractiveEnvelope,isJsonValue} from "@publisle/schema";
+const definition={type:"host:counter" as const,schemaVersion:1,schema:{parse:(value:unknown)=>parseInteractiveEnvelope(value,payload=>{if(!isJsonValue(payload)) throw new Error("Invalid payload");return payload;})},island:()=>({activation:"load" as const})};
+const source=document({blocks:[createBlock({type:"host:counter",data:{payload:{},activation:"load",fallback:[{type:"paragraph",content:[{type:"text",value:"Counter fallback"}]}]}})]});
+const publication=preparePublication(source,{registry:createRegistry([...coreBlockDefinitions,definition]),renderers:{"host:counter":{module:"host:counter"}}});
+const manifest=JSON.stringify(publicationReaderManifest(publication));
+---
+<html lang="en"><head><title>Host-owned Astro islands</title></head><body>
+{["one","two"].map(instanceId=><publisle-reader data-manifest={manifest}><Article publication={publication} instanceId={instanceId}/></publisle-reader>)}
+<script>
+import {attachArticle} from "@publisle/adapter-astro/runtime";
+import type {PublicationReaderManifest} from "@publisle/adapter-core";
+import type {JsonValue} from "@publisle/schema";
+class Reader extends HTMLElement {
+ dispose?:()=>void;
+ connectedCallback(){const manifest=JSON.parse(this.dataset.manifest ?? "{}");this.dispose=attachArticle(this,manifest,{implementations:{"host:counter":()=>import("../counter.ts")},mount(module,target,input){return (module as {default:(target:HTMLElement,input:JsonValue)=>{dispose:()=>void}}).default(target,input);},unmount(instance){(instance as {dispose:()=>void}).dispose();}});}
+ disconnectedCallback(){this.dispose?.();this.dispose=undefined;}
+}
+if(!customElements.get("publisle-reader")) customElements.define("publisle-reader",Reader);
+</script>
+</body></html>

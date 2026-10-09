@@ -1,0 +1,7 @@
+---
+import {instantiatePublication,type PublicationArtifact} from "@publisle/adapter-core/publication-runtime";
+interface Props {publication:PublicationArtifact;instanceId:string;}
+const {publication,instanceId}=Astro.props;
+const placement=instantiatePublication(publication,instanceId);
+---
+<div data-publisle-article={instanceId}><div data-publisle-content set:html={placement.html}/><slot/></div>

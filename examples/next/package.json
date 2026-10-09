@@ -1,0 +1,21 @@
+{
+  "name": "@publisle/example-next",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build --webpack"
+  },
+  "dependencies": {
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "@publisle/adapter-next": "workspace:*",
+    "next": "16.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "~6.0.3"
+  }
+}

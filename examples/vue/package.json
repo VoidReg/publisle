@@ -1,0 +1,17 @@
+{
+  "name": "@publisle/example-vue",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "@publisle/adapter-vue": "workspace:*",
+    "vue": "^3.5.0",
+    "vite": "^8.0.0"
+  }
+}

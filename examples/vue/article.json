@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "title": "Local portable article",
+    "language": "en"
+  },
+  "blocks": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "type": "publisle:heading",
+      "schemaVersion": 1,
+      "data": {
+        "level": 2,
+        "label": "intro",
+        "content": [
+          {
+            "type": "text",
+            "value": "Local portable article"
+          }
+        ]
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "type": "publisle:paragraph",
+      "schemaVersion": 1,
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "value": "Prepared on the server; routing and page metadata belong to the host."
+          },
+          {
+            "type": "crossReference",
+            "target": "intro"
+          }
+        ]
+      }
+    }
+  ]
+}

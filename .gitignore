@@ -17,4 +17,5 @@ SPECS.md
 
 .next/
 .astro/
+.next-env.d.ts
 .publisle-cache/

@@ -1,0 +1,8 @@
+---
+import {getEntry} from "astro:content";
+import Article from "@publisle/adapter-astro/Article.astro";
+const entry=await getEntry("articles","local");
+if(!entry) throw new Error("Missing local article");
+const publication=entry.data.publication;
+---
+<html lang="en"><head><title>Host-owned Astro article</title></head><body><Article publication={publication} instanceId="one"/><Article publication={publication} instanceId="two"/></body></html>
