@@ -14,7 +14,7 @@ These documents define the implemented portable subset independently of SDK type
 | Native/artifact parity          | [Delivery](delivery.md)                 | Common island input, placement and fidelity regression fixtures                       |
 | Semantic exports and inspection | [Projections](projections.md)           | Linked/standalone JSON and authored reading Markdown                                  |
 | State and bounded composition   | [Composition](composition.md)           | Closed profile, direct lowering, compatible snapshots and typed ports                 |
-| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; accepted caps are separate                               |
+| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; accepted caps are separate                 |
 
 ## Status and frozen versions
 
