@@ -11,6 +11,7 @@
     BLOCK_LABELS,
     DocumentEditor,
     FOURIER_ARTICLE,
+    FOURIER_PARTIAL_SUMS,
   } from "@publisle/playground-core";
   import BlockEditor from "$lib/BlockEditor.svelte";
   import Schematic from "$lib/Schematic.svelte";
@@ -18,6 +19,7 @@
 
   const implementations = {
     "demo:interactive-scene": () => import("@publisle/example-scene/svelte"),
+    "demo:fourier-partial-sum": () => import("@publisle/example-fourier/svelte"),
     "publisle:interactive-schematic": () => Promise.resolve({ default: Schematic }),
   };
 
@@ -113,6 +115,12 @@
         onclick={() => { diagnostics = editor.importMarkdown(FOURIER_ARTICLE).diagnostics; }}
       >
         Load Fourier article
+      </button>
+      <button
+        type="button"
+        onclick={() => { diagnostics = editor.importMarkdown(FOURIER_PARTIAL_SUMS).diagnostics; }}
+      >
+        Load Fourier model
       </button>
       <button type="button" onclick={() => markdownInput?.click()}>
         Import Markdown

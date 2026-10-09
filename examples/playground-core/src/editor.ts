@@ -1,3 +1,4 @@
+import { fourierDefinition } from "@publisle/example-fourier";
 import { sceneDefinition } from "@publisle/example-scene";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
@@ -27,6 +28,7 @@ export const CORE_REGISTRY: BlockRegistry = createRegistry([
   ...coreBlockDefinitions,
   interactiveSchematicDefinition,
   sceneDefinition,
+  fourierDefinition,
 ]);
 
 export type DocumentEditorListener = () => void;

@@ -100,6 +100,36 @@ describe("shared JSON/JCS fixtures", () => {
       await digestJson({ id: "x", digest: "b" }),
     );
   });
+  it("enforces the exact UTF-8 output boundary for ASCII, BMP and astral text", () => {
+    const limit = 2 * 1024 * 1024;
+    for (const fragment of ["a", "é", "€", "🌍", "\\", "\n", '"']) {
+      const width =
+        new TextEncoder().encode(JSON.stringify(fragment)).length - 2;
+      const count = Math.floor((limit - 2) / width);
+      const value = fragment.repeat(count) + "a".repeat((limit - 2) % width);
+      const canonical = canonicalizeJson(value);
+      expect(new TextEncoder().encode(canonical).length).toBe(limit);
+      expect(canonical).toBe(JSON.stringify(value));
+      expect(() => canonicalizeJson(value + "a")).toThrow(
+        expect.objectContaining({ code: "json-limit-exceeded" }),
+      );
+    }
+  });
+
+  it("counts multibyte keys and nested punctuation in the byte limit", () => {
+    const key = "é€🌍";
+    const overhead = new TextEncoder().encode(
+      JSON.stringify({ [key]: [""] }),
+    ).length;
+    const value = "a".repeat(2 * 1024 * 1024 - overhead);
+    expect(canonicalizeJson({ [key]: [value] })).toBe(
+      JSON.stringify({ [key]: [value] }),
+    );
+    expect(() => canonicalizeJson({ [key]: [value + "a"] })).toThrow(
+      expect.objectContaining({ code: "json-limit-exceeded" }),
+    );
+  });
+
   it("rejects programmatic lone surrogates and excessive output", () => {
     expect(() => canonicalizeJson({ "\ud800": 1 })).toThrow(JsonBoundaryError);
     expect(() => canonicalizeJson("x".repeat(2 * 1024 * 1024))).toThrow(

@@ -16,7 +16,8 @@
     "@publisle/playground-core": "workspace:*",
     "@publisle/schema": "workspace:*",
     "svelte": "^5.0.0",
-    "@publisle/example-scene": "workspace:*"
+    "@publisle/example-scene": "workspace:*",
+    "@publisle/example-fourier": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.0",

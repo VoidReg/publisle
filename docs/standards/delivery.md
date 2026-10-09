@@ -40,3 +40,22 @@ Static lowering/fallback is reported and is not a promise of arbitrary framework
 Compiler-generated IDs, fragment links, label/form associations and ARIA token references are namespaced per placement. Hosts supply a unique instance ID matching `[A-Za-z][A-Za-z0-9_-]{0,63}`. Generated React/Svelte targets use framework-owned IDs when a host does not supply one. Repeated placements do not share interactive state. Compiler-generated CSS is rooted under Publisle classes; approved components/styles remain the host's responsibility. Arbitrary authored trusted HTML cannot be generically rewritten into safe scoped markup; artifact compilation rejects identity-bearing raw HTML by default. `rawHtmlPlacement: preserve` produces a warning and requires host restrictions.
 
 Hosts remain responsible for sanitization, CSP, stylesheet/asset origins and internal component IDs. Raw HTML opt-in is not a sanitizer. Browser acceptance verifies native/artifact JSON input parity, repeated ID/reference behavior, independent state and the absence of preparation tooling from readers. It does not claim a universal CSS reset or numerical equivalence of user engines.
+
+## Lifecycle and activation
+
+`createIslandController` is the framework-independent browser lifecycle. React and Svelte leaf adapters, and artifact `attachPublication`, call it. A small vanilla host can call it directly. There is no separate reader ABI version; `inputVersion` and the publication format remain 1. `hydrate` stays unsupported and is marked `data-publisle-unsupported-mode` rather than partially applied.
+
+| Activation    | Behavior                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `load`        | Mount during controller setup                                                                   |
+| `visible`     | Mount when the scope intersects the viewport; without `IntersectionObserver`, mount immediately |
+| `idle`        | Mount from `requestIdleCallback`, or on the next turn when it is absent                         |
+| `interaction` | Mount from click, Enter, or Space on `[data-publisle-activate]`                                 |
+
+The first gesture only activates. It does not replay the browser event and it does not invoke a named semantic action. `props` stay the authored island input.
+
+`load` receives an `AbortSignal`. `destroy` aborts that signal, ignores a late result, and unmounts at most once. A second `activate` while a mount is pending or complete does not mount again. A failed load leaves the fallback visible, marks `data-publisle-status="failed"`, and moves focus back to the activate control. A successful load moves focus from that control to the mount root and marks `data-publisle-status="ready"`. During the load the scope is `aria-busy="true"`. That status is not an invented description of the output. Hosts announce meaningful output changes themselves.
+
+Repeated placements share a module load and keep independent mounts. Optional `suspend: true` unmounts a `visible` island that leaves the viewport and mounts it again on return. Suspension is off unless the host opts in. When `prefers-reduced-motion: reduce` matches, idle activation runs immediately and publication CSS disables animation and transitions on interactive regions. Print CSS hides the activate control and the mount root and shows the authored fallback. A locked contract id and digest are copied onto `data-publisle-contract`. That attribute records provenance; it does not make a snapshot the editable source.
+
+Pointer-only host canvases still have to expose this keyboard activate control or another documented keyboard alternative, plus the authored instructions. These checks do not claim WCAG conformance.

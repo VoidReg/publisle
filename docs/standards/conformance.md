@@ -18,23 +18,24 @@ These are role definitions, not declarations that every role is currently implem
 
 `pnpm test:conformance:p0` runs the Python standard-library suite, TypeScript unit
 suite and Chromium acceptance suite, then verifies required passing evidence for
-every TEST-01–10 group and this batch's P1 TEST-11/13 in `tools/p0-gate.ts`. Empty, missing or skipped evidence is
+every TEST-01–10 group and this batch's P1 TEST-11/12/13 in `tools/p0-gate.ts`. Empty, missing or skipped evidence is
 an error. CI installs Python 3.11 and executes this gate in its required check job.
 
-| Test    | Required executable evidence                                                                                                 |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| TEST-01 | Shared structural classifications and JCS Unicode/binary64 digests in independent Python and TypeScript                      |
-| TEST-02 | Offline Python built-in closure plus exact transitive TypeScript contract resolution                                         |
-| TEST-03 | Unfamiliar input/output/action declarations exposed through JSON, without renderer code                                      |
-| TEST-04 | Executable refinements/normalization/migrations retained as implementation-bound                                             |
-| TEST-05 | Object, array, scalar and null native/artifact inputs in both frameworks                                                     |
-| TEST-06 | Missing contracts/plugins preserve opaque source and substantive no-JavaScript explanation                                   |
-| TEST-07 | Unsupported vocabulary/pattern/ref/branching and substituted digest rejection                                                |
-| TEST-08 | Archival Markdown identity/pins and locked JSON/resource exchange round trips                                                |
-| TEST-09 | Python serves compiled host islands, shared chunks, independent placements and no-JavaScript fallback                        |
-| TEST-10 | Production reader excludes registry/schema/core/compiler/Ajv, preserving baseline lifecycle/module/state tests               |
-| TEST-11 | Renderer-free instance semantics and authored reading projections with exact source references                               |
-| TEST-13 | Sealed bounded profiles, snapshot compatibility/limits, typed ports, async isolation and repeated-placement browser evidence |
+| Test    | Required executable evidence                                                                                                                       |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TEST-01 | Shared structural classifications and JCS Unicode/binary64 digests in independent Python and TypeScript                                            |
+| TEST-02 | Offline Python built-in closure plus exact transitive TypeScript contract resolution                                                               |
+| TEST-03 | Unfamiliar input/output/action declarations exposed through JSON, without renderer code                                                            |
+| TEST-04 | Executable refinements/normalization/migrations retained as implementation-bound                                                                   |
+| TEST-05 | Object, array, scalar and null native/artifact inputs in both frameworks                                                                           |
+| TEST-06 | Missing contracts/plugins preserve opaque source and substantive no-JavaScript explanation                                                         |
+| TEST-07 | Unsupported vocabulary/pattern/ref/branching and substituted digest rejection                                                                      |
+| TEST-08 | Archival Markdown identity/pins and locked JSON/resource exchange round trips                                                                      |
+| TEST-09 | Python serves compiled host islands, shared chunks, independent placements and no-JavaScript fallback                                              |
+| TEST-10 | Production reader excludes registry/schema/core/compiler/Ajv, preserving baseline lifecycle/module/state tests                                     |
+| TEST-11 | Fourier numerical fixtures and both delivery paths; renderer-free instance semantics and authored reading projections with exact source references |
+| TEST-12 | Keyboard activation, focus retention, cancelled loads, reduced motion, and substantive print/no-JavaScript alternatives                            |
+| TEST-13 | Sealed bounded profiles, snapshot compatibility/limits, typed ports, async isolation and repeated-placement browser evidence                       |
 
 These are scoped profile/fixture claims, not universal parser equivalence,
 scientific verification or a declaration that arbitrary HTML is safe.
@@ -58,3 +59,5 @@ Existing numeric versions MUST remain frozen while this roadmap runs in beta. Co
 Future independent domains are document envelope, payload schema, contract format, semantic vocabulary/profile, implementation ABI, publication artifact, snapshot schema and implementation/build revision. Once release policy is activated, a change to accepted wire meaning, required fields or behavior is breaking in its own domain; framework upgrades do not automatically change block payload versions. No new version counter is introduced solely to distinguish beta changes.
 
 Changes require a proposal documenting affected roles, shapes, fixtures, preservation/conversion, security and reader costs. Retain regression fixtures and a beta change log. Release deprecation periods and version transitions remain deferred until explicitly approved; no current deprecation duration is promised. A migration declares whether it is portable/declarative or executable/host-bound. Consumers without its capability preserve or reject source explicitly. Missing explanations require authorship, not generated migration facts.
+
+TEST-14 measurements are produced by `tools/benchmarks/{measure,matched,browser}.ts` and CI calibration. TEST-15 incremental reuse and TEST-16 reviewed numeric regression gates remain incomplete at the budget checkpoint; passing the P0 gate does not imply they are implemented.

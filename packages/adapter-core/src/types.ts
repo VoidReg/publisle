@@ -29,6 +29,8 @@ export type RenderNode =
       readonly exportName: string;
       readonly props: JsonValue;
       readonly fallback: readonly RenderNode[];
+      /** Contract id and digest when the source is locked. Absent when unpinned. */
+      readonly provenance?: string;
     }
   | {
       readonly kind: "component";

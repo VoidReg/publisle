@@ -9,9 +9,14 @@ export function canonicalizeJson(value: unknown): string {
   const ancestors = new Set<object>();
   let nodes = 0;
   let bytes = 0;
-  const encoder = new TextEncoder();
+  let encoder: TextEncoder | undefined;
   const emit = (text: string): string => {
-    bytes += encoder.encode(text).byteLength;
+    // Native encoding wins for large ASCII strings; avoid its buffer allocation
+    // for the many small fragments emitted by declarations and document trees.
+    bytes +=
+      text.length >= 1024
+        ? (encoder ??= new TextEncoder()).encode(text).byteLength
+        : utf8ByteLength(text);
     if (bytes > DEFAULT_JSON_LIMITS.maxBytes) {
       throw new JsonBoundaryError(
         "json-limit-exceeded",
@@ -124,4 +129,20 @@ export function canonicalizeJson(value: unknown): string {
     return result;
   };
   return visit(value, 0);
+}
+
+/** Emitted fragments contain valid Unicode; count UTF-8 without allocating a buffer. */
+function utf8ByteLength(text: string): number {
+  let bytes = text.length;
+  for (let index = 0; index < text.length; index++) {
+    const unit = text.charCodeAt(index);
+    if (unit < 0x80) continue;
+    if (unit < 0x800) bytes += 1;
+    else if (unit >= 0xd800 && unit <= 0xdbff) {
+      // A valid surrogate pair occupies two UTF-16 units and four UTF-8 bytes.
+      bytes += 2;
+      index++;
+    } else bytes += 2;
+  }
+  return bytes;
 }

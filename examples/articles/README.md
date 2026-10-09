@@ -19,7 +19,9 @@ Diagram sources demonstrate Mermaid, Graphviz, WaveDrom, PlantUML, and a custom
 engine ID. The default playground uses their textual/source fallbacks; supplying
 actual engine renderers remains a host responsibility. The Three.js illustration
 is a geometric projection scene. The schematic island is only a manual counter,
-not a Fourier simulator. The optional YouTube embed is an external resource.
+not a Fourier simulator. `fourier-partial-sums.md` is the separate host-owned
+model: it evaluates the square-wave sine series for authored harmonic counts.
+Load it in either playground with **Load Fourier model**. The optional YouTube embed is an external resource.
 
 The SVG is an original plot of the square-wave partial sums with 1, 3, and 15 odd
 harmonics, sampled at 1001 equally spaced points across one period. The article's

@@ -69,7 +69,10 @@ function serializeNode(node: RenderNode): string {
   if (node.kind === "island") {
     const content = node.fallback.filter((child) => !isActivateButton(child));
     const button = node.fallback.find(isActivateButton);
-    return `<section data-publisle-island="${escapeAttribute(node.blockId)}" aria-label="${escapeAttribute(node.label)}"><div data-publisle-fallback>${serializeNodes(content)}</div><div data-publisle-mount hidden></div>${button ? serializeNode(button) : ""}</section>`;
+    const provenance = node.provenance
+      ? ` data-publisle-contract="${escapeAttribute(node.provenance)}"`
+      : "";
+    return `<section data-publisle-island="${escapeAttribute(node.blockId)}" aria-label="${escapeAttribute(node.label)}"${provenance}><div data-publisle-fallback>${serializeNodes(content)}</div><div data-publisle-mount hidden></div>${button ? serializeNode(button) : ""}</section>`;
   }
   if (node.tag === "script") return "";
   const attributes = publicationAttributes(node.attributes);
