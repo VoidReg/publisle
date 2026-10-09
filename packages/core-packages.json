@@ -1,0 +1,30 @@
+{
+  "comment": "Publisle package sets. Core packages MUST NOT import Research packages (enforced by eslint.config.ts). The Core CLI is the single sanctioned seam: it may load @publisle/cli-research dynamically so a Core-only install carries no research, template, or TeX tooling. Versions stay frozen during beta; this manifest describes boundaries, not releases.",
+  "core": [
+    "@publisle/schema",
+    "@publisle/contracts",
+    "@publisle/core",
+    "@publisle/block-sdk",
+    "@publisle/blocks-core",
+    "@publisle/blocks-technical",
+    "@publisle/markdown",
+    "@publisle/profiles",
+    "@publisle/adapter-core",
+    "@publisle/adapter-react",
+    "@publisle/adapter-svelte",
+    "@publisle/adapter-next",
+    "@publisle/adapter-astro",
+    "@publisle/adapter-vue",
+    "@publisle/cli"
+  ],
+  "research": [
+    "@publisle/research",
+    "@publisle/template-sdk",
+    "@publisle/template-article",
+    "@publisle/template-ieee",
+    "@publisle/template-acm",
+    "@publisle/template-elsevier",
+    "@publisle/template-springer",
+    "@publisle/cli-research"
+  ]
+}

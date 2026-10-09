@@ -55,6 +55,51 @@ export default defineConfig(
       ],
     },
   },
+  {
+    // Publisle Core boundary: see packages/core-packages.json. No Core package
+    // may import Research machinery (citeproc, templates, compilers).
+    files: [
+      "packages/schema/**/*.ts",
+      "packages/contracts/**/*.ts",
+      "packages/core/**/*.ts",
+      "packages/block-sdk/**/*.ts",
+      "packages/markdown/**/*.ts",
+      "packages/profiles/**/*.ts",
+      "packages/adapter-*/**/*.ts",
+      "blocks/**/*.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            "@publisle/research",
+            "@publisle/research/*",
+            "@publisle/template-*",
+            "@publisle/cli-research",
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The Core CLI owns the single dynamic plugin seam. It may reference
+    // @publisle/cli-research (loaded on demand, guidance when absent) but never
+    // the Research machinery directly.
+    files: ["packages/cli/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            "@publisle/research",
+            "@publisle/research/*",
+            "@publisle/template-*",
+          ],
+        },
+      ],
+    },
+  },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
   tseslint.configs.stylisticTypeChecked,
