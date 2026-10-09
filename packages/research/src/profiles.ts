@@ -95,22 +95,10 @@ export function researchPaperProfile(
           });
       }
       let hasAbstract = false;
-      let previousLevel = 0;
       const blocks = contentBlocks(document, context);
       for (const [index, block] of blocks.entries()) {
         const data = record(block.data);
         if (block.type === "publisle:heading") {
-          const level = data["level"];
-          if (typeof level === "number") {
-            if (level > previousLevel + 1)
-              diagnostics.push({
-                level: "warning",
-                code: "irregular-heading-hierarchy",
-                message: `Heading level ${String(level)} skips a level after ${previousLevel === 0 ? "the start of the document" : `level ${String(previousLevel)}`}.`,
-                blockId: block.id,
-              });
-            previousLevel = level;
-          }
           const abstractHeading =
             data["role"] === "abstract" ||
             (options.abstractLabel === undefined

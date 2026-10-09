@@ -377,13 +377,23 @@ for declarations, readable associations and limits. Figure alt is structurally o
 omission means undescribed, while an explicit empty string marks a decorative
 image. Missing descriptions render a visible "Figure description missing."
 notice and nonempty placeholder alt, without changing the source document.
-Use `accessibilityProfile()` from `@publisle/profiles` to check missing figure
-descriptions without research-paper conventions; it is not a comprehensive
-accessibility audit. Both profiles report `missing-alternative-text` (warning
-by default), configurable through `diagnosticPolicy`. Invalid non-string alt
-remains a structural error. Native Markdown export preserves missing alt in a
-figure directive; standard Markdown uses placeholder alt and reports semantic
-loss as usual.
+Use `accessibilityProfile()` from `@publisle/profiles` for the automatable
+accessibility checks without research-paper conventions. Version 2 covers, all
+warnings by default and policy-mappable: declared document language (WCAG
+3.1.1), heading level jumps from the document start (1.3.1, 2.4.6), missing
+figure alternative text (1.1.1), tables without captions (1.3.1), and links
+without accessible names (2.4.4; a link named by an image's alt passes).
+Diagram alternative text and embed titles are structural schema requirements
+enforced at preparation, so the profile does not recheck them. Math
+accessibility is a renderer contract — every math output must carry MathML or a
+text alternative — and is asserted in renderer conformance fixtures, not here.
+This profile is a presence-and-references check, not a WCAG conformance claim;
+keyboard, focus, motion, and announcement behavior need browser or manual
+review. Both this profile and the research-paper profile report
+`missing-alternative-text`, configurable through `diagnosticPolicy`. Invalid
+non-string alt remains a structural error. Native Markdown export preserves
+missing alt in a figure directive; standard Markdown uses placeholder alt and
+reports semantic loss as usual.
 
 Custom profiles implement the `PublicationProfile` contract exported by schema,
 core, and profiles. Give them a stable name and bump their optional `version`

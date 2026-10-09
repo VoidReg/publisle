@@ -110,6 +110,7 @@ describe("bounded declared traversal", () => {
     const input = document({
       metadata: {
         title: "Nested paper",
+        language: "en",
         authors: [{ name: "Ada", affiliation: "Lab" }],
       },
       blocks: [block],

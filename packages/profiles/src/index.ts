@@ -180,27 +180,111 @@ export function interactivePublicationProfile(): PublicationProfile {
   };
 }
 
-/** Checks figure descriptions only; not a comprehensive accessibility audit. */
+/**
+ * Automatable presence checks mapped to WCAG 2.2 success criteria. Presence and
+ * references only: this profile is not a WCAG conformance claim, and usable
+ * keyboard/motion/announcement behavior needs browser or manual review.
+ * Diagram alternative text and embed titles are already structural schema
+ * requirements, so they are enforced at preparation, not rechecked here. Math
+ * accessibility is a renderer contract (MathML or a text alternative in every
+ * output), not a preparation check. All findings warn by default and stay
+ * policy-mappable per the preparation contract.
+ */
 export function accessibilityProfile(): PublicationProfile {
   return {
     name: "accessibility",
-    version: "1",
+    version: "2",
     inspect(document, context) {
-      return contentBlocks(document, context).flatMap((block): Diagnostic[] =>
-        block.type === "publisle:figure" &&
-        record(block.data)["alt"] === undefined
-          ? [
-              {
+      const diagnostics: Diagnostic[] = [];
+      if (!document.metadata?.language?.trim())
+        diagnostics.push({
+          level: "warning",
+          code: "missing-document-language",
+          message:
+            "Document metadata should declare a language for assistive technology (WCAG 3.1.1).",
+        });
+      let previousLevel = 0;
+      for (const block of contentBlocks(document, context)) {
+        const data = record(block.data);
+        if (block.type === "publisle:heading") {
+          const level = data["level"];
+          if (typeof level === "number") {
+            if (level > previousLevel + 1)
+              diagnostics.push({
                 level: "warning",
-                code: "missing-alternative-text",
-                message: "A figure is missing alternative text.",
+                code: "irregular-heading-hierarchy",
+                message: `Heading level ${String(level)} skips a level after ${previousLevel === 0 ? "the start of the document" : `level ${String(previousLevel)}`} (WCAG 1.3.1, 2.4.6).`,
                 blockId: block.id,
-              },
-            ]
-          : [],
-      );
+              });
+            previousLevel = level;
+          }
+        }
+        if (block.type === "publisle:figure" && data["alt"] === undefined)
+          diagnostics.push({
+            level: "warning",
+            code: "missing-alternative-text",
+            message: "A figure is missing alternative text (WCAG 1.1.1).",
+            blockId: block.id,
+          });
+        if (block.type === "publisle:table" && data["caption"] === undefined)
+          diagnostics.push({
+            level: "warning",
+            code: "table-without-caption",
+            message:
+              "A table has no caption; header rows and captions explain table structure (WCAG 1.3.1).",
+            blockId: block.id,
+          });
+        walkNodes(data, (node) => {
+          if (
+            node["type"] === "link" &&
+            !hasAccessibleName(node) &&
+            !hasNamedImage(node)
+          )
+            diagnostics.push({
+              level: "warning",
+              code: "link-without-accessible-name",
+              message:
+                "A link has no text or named image content (WCAG 2.4.4).",
+              blockId: block.id,
+            });
+        });
+      }
+      return diagnostics;
     },
   };
+}
+
+function walkNodes(
+  value: unknown,
+  visit: (node: Record<string, unknown>) => void,
+): void {
+  if (Array.isArray(value)) {
+    for (const entry of value) walkNodes(entry, visit);
+    return;
+  }
+  if (value === null || typeof value !== "object") return;
+  const node = value as Record<string, unknown>;
+  if (typeof node["type"] === "string") visit(node);
+  for (const key of ["children", "content", "caption", "cells", "items"]) {
+    if (node[key] !== undefined) walkNodes(node[key], visit);
+  }
+}
+
+function hasAccessibleName(node: Record<string, unknown>): boolean {
+  return flowText(node["children"]).trim().length > 0;
+}
+
+function hasNamedImage(node: Record<string, unknown>): boolean {
+  let named = false;
+  walkNodes(node["children"], (child) => {
+    if (
+      (child["type"] === "inlineImage" || child["type"] === "image") &&
+      typeof child["alt"] === "string" &&
+      child["alt"].trim().length > 0
+    )
+      named = true;
+  });
+  return named;
 }
 
 export function printProfile(): PublicationProfile {

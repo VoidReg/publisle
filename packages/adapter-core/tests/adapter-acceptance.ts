@@ -81,7 +81,7 @@ function planFor(
   intents: readonly { name: string; activation: Activation; start?: number }[],
 ) {
   const input = document({
-    metadata: { title: "Authored Title" },
+    metadata: { title: "Authored Title", language: "en" },
     blocks: [
       paragraph({ content: text("Readable article text.") }),
       ...intents.map(({ name, activation, start = 0 }) =>
@@ -322,7 +322,7 @@ export function runAdapterAcceptance(options: AcceptanceOptions) {
           const head = await page.locator("head").innerHTML();
           expect(
             await page.evaluate<JsonObject>("window.__acceptance.metadata"),
-          ).toEqual({ title: "Authored Title" });
+          ).toEqual({ title: "Authored Title", language: "en" });
           expect(
             await page
               .getByText("Readable article text.", { exact: true })

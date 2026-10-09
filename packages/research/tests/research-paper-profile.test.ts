@@ -8,6 +8,7 @@ const validPaper = () =>
   document({
     metadata: {
       title: "A paper",
+      language: "en",
       authors: [{ name: "Author", affiliation: "University" }],
     },
     blocks: [
@@ -29,6 +30,7 @@ describe("research-paper conformance", () => {
     expect(diagnostics.map((item) => item.code)).toEqual([
       "missing-title",
       "missing-authors",
+      "missing-document-language",
       "missing-abstract",
     ]);
     expect(diagnostics.every((item) => item.level === "warning")).toBe(true);
@@ -36,6 +38,7 @@ describe("research-paper conformance", () => {
   it("reports missing or blank author affiliations", () => {
     const doc = validPaper();
     if (!doc.metadata) throw new Error("Expected fixture metadata.");
+    doc.metadata.language = "en";
     doc.metadata.authors = [
       { name: "First" },
       { name: "Second", affiliation: " " },
@@ -57,6 +60,7 @@ describe("research-paper conformance", () => {
         .map((item) => item.code),
     ).toEqual(["missing-abstract"]);
   });
+
   it("recognizes rich-text Abstract headings and custom labeled sections", () => {
     const doc = validPaper();
     doc.blocks[1] = heading({
@@ -85,7 +89,11 @@ describe("research-paper conformance", () => {
       skipped,
       heading({ level: 2, content: text("Discussion") }),
     );
-    expect(researchPaperProfile().inspect(doc)).toEqual([
+    expect(
+      researchPaperProfile()
+        .inspect(doc)
+        .filter((item) => item.code === "irregular-heading-hierarchy"),
+    ).toEqual([
       expect.objectContaining({
         code: "irregular-heading-hierarchy",
         blockId: skipped.id,

@@ -96,7 +96,7 @@ describe("preparation profiles", () => {
 
   it("keeps profiles opt-in and accepts conformance warnings without changing semantic output", () => {
     const doc = document({
-      metadata: { title: "A paper" },
+      metadata: { title: "A paper", language: "en" },
       blocks: [figure({ src: "plot.svg" })],
     });
     const plain = prepare(doc, { registry });
