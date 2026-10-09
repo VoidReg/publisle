@@ -1,10 +1,8 @@
-# Performance calibration and budget review
+# Performance calibration and accepted budgets
 
-Batch C retains the baseline/budget checkpoint from #58–60. No numerical
-performance threshold is accepted yet. The grouped PR stays draft during
-calibration; incremental host compilation (#60) follows review of the measured
-baselines and proposed budgets. The earlier canonical byte-accounting improvement
-has separate before/after evidence and exact-output regression checks.
+The caps in [`tools/benchmarks/accepted-budgets.json`](../../tools/benchmarks/accepted-budgets.json) are the reviewed budgets. They come from the three full CI repetitions recorded in [the proposal](performance-budget-proposal.md) (run 37934846094, baseline `1753e9b`). Timing caps are the largest observed run p95 plus twice the largest run standard deviation, rounded up to whole milliseconds. Byte caps are the largest observation plus the larger of the observed spread or 1%. Heap, long tasks, CLS, separate parse/eval, mobile devices, external datasets, and publishing compilers other than the pinned MDX comparison stay observations.
+
+No cap is raised to make an optimization pass. A hardware or software pin change requires a new calibration proposal. The earlier canonical byte-accounting improvement has separate before/after evidence and exact-output regression checks. Host compilation caching reuses unchanged documents outside reader bundles; the budgeted preparation rows stay uncached.
 
 ## Calibration
 
@@ -27,9 +25,12 @@ are checks that instrumentation works, not evidence of p95 latency.
 
 Each workflow uploads complete or partial raw runs for 30 days. Reports reject
 incomplete runs. Correctness failures, reader tooling leaks, premature island
-imports and browser errors fail immediately. No numerical latency/byte gate is
-enforced during calibration. Ignored local artifacts can be regenerated using
-the commands in `tools/benchmarks/README.md`.
+imports and browser errors fail immediately. Every run enforces the accepted
+preparation timing caps and the byte caps for measurements it actually
+produced. Reader latency caps run only on the scheduled job, manual full
+runs, and pull requests labeled `performance:full`. A smoke reader's p95 is
+an instrumentation check, not a latency gate. Ignored local artifacts can be
+regenerated using the commands in `tools/benchmarks/README.md`.
 
 ## Proposed review method
 
@@ -41,18 +42,17 @@ budgets independently for registry setup, reused-registry preparation, end-to-en
 preparation, corpus throughput and first/all-island activation. No single
 whole-system score can substitute for these boundaries.
 
-The review table must record observed p50/p95/variance, the proposed numeric cap,
+The review table records observed p50/p95/variance, the accepted numeric cap,
 its headroom and rationale for every chosen gate. The [concrete proposal](performance-budget-proposal.md) records three full CI
-repetitions and the explicit headroom heuristic. Its numeric caps are awaiting
-review and are not enforced. JS heap, long tasks and CLS remain observations until stable,
+repetitions and the explicit headroom heuristic. Those numeric caps are now
+enforced from the budget file. JS heap, long tasks and CLS remain observations until stable,
 meaningful scopes support their own budgets. Separate parse and evaluation costs,
 other publishing compilers, external dataset delivery and mobile devices are not
 yet measured. The synthetic identity graph is not a contract-resolution benchmark.
 
-After acceptance, deterministic byte/correctness regressions fail on the first
-run. A timing breach triggers exactly one clean rerun on the same software and
-workload settings; preserve both raw runs and runner metadata. If both exceed
-the accepted cap, fail the gate. If only one exceeds it, label the result noisy
-and require review rather than silently declaring it passing. A hardware or
-software change requires a new calibration proposal; never move thresholds to
-make an optimization pass.
+Deterministic byte and correctness regressions fail on the first run. A timing
+breach reruns that workload once on the same software and workload settings;
+both raw runs and runner metadata are kept. If both exceed the accepted cap,
+the gate fails. If only one exceeds it, the result is noisy and fails closed
+so it cannot pass without review. A hardware or software change requires a new
+calibration proposal; never move thresholds to make an optimization pass.

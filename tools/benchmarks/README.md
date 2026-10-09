@@ -43,8 +43,6 @@ and browser runs should execute sequentially on an idle host.
 `node tools/benchmarks/report.ts benchmarks/browser` writes a summary table with
 nearest-rank percentiles and sample variance. Partial runs cannot produce an
 accepted report. Production builds fail for reader tooling leaks, premature
-implementation requests and browser errors. CI uploads the raw observations;
-[numerical budget review](../../docs/standards/performance-budgets.md) remains a
-checkpoint before incremental host compilation and threshold enforcement.
+implementation requests and browser errors. CI uploads the raw observations. [Accepted budgets](../../docs/standards/performance-budgets.md) are enforced by `node tools/benchmarks/gate.ts`. A timing breach reruns the workload once; byte breaches fail immediately. Reader latency caps apply only to full calibrations.
 
 `node tools/benchmarks/propose.ts <artifact-directory-1> <artifact-directory-2> <artifact-directory-3>` derives an unenforced review table from three complete full calibration artifacts. It rejects smoke runs, differing source/input hashes and differing software/sampling settings. The timing headroom is a review heuristic, not a confidence interval. The [current proposed caps](../../docs/standards/performance-budget-proposal.md) cite the immutable baseline run.

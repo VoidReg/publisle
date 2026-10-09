@@ -61,7 +61,7 @@ The [preparation analysis](performance-analysis.md) records the optimization and
 
 ## Limits
 
-- Repeated prepare is uncached. Host-cache hits and incremental preparation are not implemented or measured.
+- Budgeted prepare rows stay uncached. A separate host compilation cache reuses unchanged corpus documents and is not a numerical cap.
 - HTML sizes exclude CSS, JavaScript, island props delivered separately, requests, activation latency and reader memory.
 - Repeated paragraphs compress unusually well; mixed-content size comparisons remain follow-up work.
 - Inline code text is not fetched dataset delivery. Island preparation does not measure browser mounting or selective bundle loading.

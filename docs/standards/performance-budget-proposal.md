@@ -1,6 +1,6 @@
-# Proposed CI performance budgets — awaiting review
+# Proposed CI performance budgets — accepted
 
-Calibration: [GitHub Actions run 37934846094](https://github.com/VoidReg/publisle/actions/runs/37934846094), repetitions 1–3, baseline commit `1753e9b526bee12c349420a82a0722968f011dd9`. Download the three `performance-calibration-37934846094-1-{1,2,3}` artifacts; inputs and commit hashes are verified before generating this table. Local copies remain in ignored `benchmarks/ci-calibration-{1,2,3}/`. CPU models: Intel(R) Xeon(R) 6973P-C; AMD EPYC 7763 64-Core Processor; AMD EPYC 9V74 80-Core Processor. Node v24.21.0; Chromium 153.0.8010.12. These values are proposals only, with no enforcement.
+Calibration: [GitHub Actions run 37934846094](https://github.com/VoidReg/publisle/actions/runs/37934846094), repetitions 1–3, baseline commit `1753e9b526bee12c349420a82a0722968f011dd9`. Download the three `performance-calibration-37934846094-1-{1,2,3}` artifacts; inputs and commit hashes are verified before generating this table. Local copies remain in ignored `benchmarks/ci-calibration-{1,2,3}/`. CPU models: Intel(R) Xeon(R) 6973P-C; AMD EPYC 7763 64-Core Processor; AMD EPYC 9V74 80-Core Processor. Node v24.21.0; Chromium 153.0.8010.12. These values are the accepted reviewed budgets, enforced from `tools/benchmarks/accepted-budgets.json`. Do not edit the figures below to clear a gate.
 
 Timing caps use the largest observed run p95 plus twice the largest run standard deviation, rounded upward to whole milliseconds. This is conservative headroom for review, not a confidence interval. Byte caps use the largest observation plus the larger of observed spread or 1% as an explicit small review allowance beyond observed identifier/compression variation. Review each allowance before acceptance.
 
@@ -156,6 +156,6 @@ Timing caps use the largest observed run p95 plus twice the largest run standard
 | svelte/artifact/100 × 2 initialJsGzipBytes   | 20074              | 20082              | 20283              |
 | svelte/artifact/100 × 2 activatedJsGzipBytes | 21877              | 21886              | 22105              |
 
-The baseline predates the final native provenance-marker correction; current smoke calibration checks that small reader change. These proposed allowances remain unaccepted.
+The baseline predates the final native provenance-marker correction; current smoke calibration checks that small reader change. These allowances are the accepted caps. Smoke runs cannot revise them.
 
 Three independent runner repetitions are calibration evidence, not proof of stable tail latency. Smoke runs cannot produce this proposal. Script, heap, long tasks and CLS remain observations. CSS and props overlap HTML/JS. An accepted deterministic breach fails immediately; timing gets one clean rerun, with both results preserved and noisy disagreement requiring review. No cap is raised automatically.

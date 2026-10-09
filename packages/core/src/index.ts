@@ -1,4 +1,15 @@
 export { prepare, assertPrepared } from "./prepare.ts";
+export {
+  CompilationCacheError,
+  compileCorpus,
+  createCompilationCache,
+  type CompilationCache,
+  type CompileCorpusOptions,
+  type CompileCorpusResult,
+  type CorpusDocument,
+  type CorpusDocumentResult,
+  type SharedCacheEntry,
+} from "./compilation.ts";
 export { sha256Hex } from "./hash.ts";
 export { createRegistry } from "./registry.ts";
 export { getBlockSourceDigest, inspectReadable } from "./readable.ts";
