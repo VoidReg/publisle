@@ -797,9 +797,15 @@ importers:
 
   packages/cli-research:
     dependencies:
+      '@publisle/adapter-core':
+        specifier: workspace:*
+        version: link:../adapter-core
       '@publisle/cli':
         specifier: workspace:*
         version: link:../cli
+      '@publisle/core':
+        specifier: workspace:*
+        version: link:../core
       '@publisle/markdown':
         specifier: workspace:*
         version: link:../markdown

@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -76,6 +76,38 @@ describe("Research CLI plugin", () => {
     expect(code).toBe(0);
     expect(io.stdout).toContain("key2026");
     expect(io.stdout).toContain("Portable articles");
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  it("exports a zero-TeX html preview from an article", async () => {
+    directory = await mkdtemp(join(tmpdir(), "publisle-cli-research-"));
+    const file = join(directory, "article.json");
+    const output = join(directory, "preview.html");
+    await writeFile(
+      file,
+      JSON.stringify(
+        document({
+          metadata: { title: "Preview article", language: "en" },
+          blocks: [
+            createBlock({
+              type: "publisle:paragraph",
+              schemaVersion: 1,
+              data: { content: [{ type: "text", value: "Readable body." }] },
+            }),
+          ],
+        }),
+      ),
+    );
+    await invoke(["export", file, "--to", "html", "--output", output]);
+    expect(code).toBe(0);
+    const page = await readFile(output, "utf8");
+    expect(page.startsWith("<!doctype html>")).toBe(true);
+    expect(page).toContain('<html lang="en">');
+    expect(page).toContain("<title>Preview article</title>");
+    expect(page).toContain("Readable body.");
+    await invoke(["export", file, "--to", "html", "--output", output]);
+    expect(code).toBe(2);
+    expect(io.stderr).toContain("already exists");
     await rm(directory, { recursive: true, force: true });
   });
 

@@ -6,10 +6,17 @@ import {
 } from "@publisle/template-elsevier";
 import { template as springer } from "@publisle/template-springer";
 import { writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { dirname, extname, resolve } from "node:path";
+import { createRequire } from "node:module";
 import type { Diagnostic } from "@publisle/schema";
 import { document, parseDocument, parseJson } from "@publisle/schema";
 import { fromMarkdown } from "@publisle/markdown";
+import { prepare } from "@publisle/core";
+import {
+  compilePublication,
+  KATEX_STYLESHEET_ID,
+} from "@publisle/adapter-core";
 import type { TemplateRegistry } from "@publisle/template-sdk";
 import type { MarkdownBlockCodec } from "@publisle/markdown";
 import {
@@ -38,6 +45,7 @@ import {
 export interface ResearchCliConfig {
   readonly templates?: TemplateRegistry;
   readonly markdown?: { readonly codecs?: readonly MarkdownBlockCodec[] };
+  readonly prepare?: { readonly registry?: unknown };
 }
 
 export interface ResearchCommandIo {
@@ -60,17 +68,26 @@ export const researchCommandNames = [
 
 export type ResearchCommandName = (typeof researchCommandNames)[number];
 
-export const researchCommandHelp = `Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf [--style numeric|author-date|file.csl] [--output <new-file>]
+export const researchCommandHelp = `Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf|html [--style numeric|author-date|file.csl] [--output <new-file>]
 Journal templates: publisle export <file.json|file.md> --to pdf|submission --template ieee-journal [--engine pdflatex|lualatex] --output <new-file|new-directory>
 BibTeX import: publisle bibliography <file.bib>
 Compiler: publisle doctor | publisle setup compiler
 Submission: --config host.ts --template-data data.json --compiler auto|native|container [--archive]
-pdf and submission require --output. --output refuses existing files.
+pdf, submission, and html require --output. --output refuses existing files.
+html writes a self-contained zero-TeX preview page from the publication artifact; journals still need PDF tiers.
 These commands require the optional @publisle/cli-research plugin.
 `;
 
 function isResearchConfig(value: unknown): ResearchCliConfig {
   return typeof value === "object" && value !== null ? value : {};
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 /** Research-profile commands, loaded dynamically by the Core CLI when installed. */
@@ -159,6 +176,7 @@ async function exportCommand(
     | "pdf"
     | "submission"
     | "jats-submission"
+    | "html"
     | undefined;
   let style = "numeric";
   let template: string | undefined;
@@ -190,7 +208,8 @@ async function exportCommand(
         value === "jats" ||
         value === "pdf" ||
         value === "submission" ||
-        value === "jats-submission")
+        value === "jats-submission" ||
+        value === "html")
     )
       target = value;
     else if (key === "--template") template = value;
@@ -215,7 +234,7 @@ async function exportCommand(
   }
   if (target === undefined)
     throw new Error(
-      "--to must be bibtex, csl-json, latex, jats, pdf, or submission.",
+      "--to must be bibtex, csl-json, latex, jats, pdf, submission, or html.",
     );
   if (
     template &&
@@ -229,10 +248,11 @@ async function exportCommand(
   if (
     (target === "pdf" ||
       target === "submission" ||
-      target === "jats-submission") &&
+      target === "jats-submission" ||
+      target === "html") &&
     outputFile === undefined
   )
-    throw new Error("pdf and submission export require --output.");
+    throw new Error("pdf, submission, and html export require --output.");
   const sourceName = resolve(file);
   const source = await readFile(sourceName, "utf8");
   const extension = extname(sourceName).toLowerCase();
@@ -258,6 +278,62 @@ async function exportCommand(
     );
     if (archive) await writePackageArchive(result, resolve(outputFile ?? ""));
     else await writeLatexPackage(result, resolve(outputFile ?? ""));
+    return 0;
+  }
+  if (target === "html") {
+    const destination = resolve(outputFile ?? "");
+    try {
+      if (!outputFile) {
+        const error = new Error("No output file");
+        Object.assign(error, { code: "ENOENT" });
+        throw error;
+      }
+      await lstat(destination);
+      throw new Error("Export output already exists.");
+    } catch (error) {
+      if (!(
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ))
+        throw error;
+    }
+    const { coreBlockDefinitions } = await import("@publisle/blocks-core");
+    const { createRegistry } = await import("@publisle/core");
+    const configured = config.prepare?.registry;
+    const registry =
+      configured !== null &&
+      typeof configured === "object" &&
+      typeof (configured as { get?: unknown }).get === "function"
+        ? (configured as Parameters<typeof prepare>[1]["registry"])
+        : createRegistry(coreBlockDefinitions);
+    const prepared = prepare(loaded.document, { registry });
+    for (const item of prepared.diagnostics)
+      io.stderr(context.diagnosticText(item, sourceName));
+    if (prepared.document === undefined) return 1;
+    const artifact = compilePublication(prepared.document, {
+      styles: "minimal",
+    });
+    const require = createRequire(import.meta.url);
+    const stylesheet = (id: string) =>
+      id === KATEX_STYLESHEET_ID
+        ? require.resolve("@publisle/adapter-core/katex.css")
+        : require.resolve("@publisle/adapter-core/document.css");
+    const css = artifact.styles
+      .map((entry) => readFileSync(stylesheet(entry.id), "utf8"))
+      .join("\n");
+    const title = artifact.metadata?.title ?? "Publisle article";
+    await writeFile(
+      destination,
+      `<!doctype html>\n` +
+        `<!-- Publisle zero-TeX preview from the publication artifact; hosts own real pages. -->\n` +
+        `<html lang="${escapeHtml(artifact.metadata?.language ?? "en")}">\n` +
+        `<head>\n<meta charset="utf-8">\n` +
+        `<meta name="viewport" content="width=device-width, initial-scale=1">\n` +
+        `<title>${escapeHtml(title)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
+        `<body>\n<main>\n${artifact.html}\n</main>\n</body>\n</html>\n`,
+      { flag: "wx" },
+    );
     return 0;
   }
   if (

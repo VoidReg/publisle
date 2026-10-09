@@ -86,6 +86,14 @@ has no publisher-specific rendering branches.
 
 ## Compilation and scripts
 
+### Engine tiers
+
+| Tier             | Setup                                  | Use                                                                                                                                                                                                                      |
+| ---------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Zero-TeX preview | None                                   | `publisle export article.md --to html --output preview.html` writes a self-contained page from the publication artifact (styles inlined, no TeX, no container). A drafting aid, not a journal PDF; hosts own real pages. |
+| Pinned container | Docker only; `pnpm cli setup compiler` | Reproducible PDF output with the digest-pinned image; no local TeX distribution.                                                                                                                                         |
+| Native TeX       | latexmk + engine + fonts               | Full control; `publisle doctor` reports what is missing.                                                                                                                                                                 |
+
 `--compiler auto` selects native tools only when template requirements and fonts
 are installed, otherwise an already installed pinned container. It never pulls or
 builds implicitly. Install the container explicitly with `pnpm cli setup compiler`
