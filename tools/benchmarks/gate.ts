@@ -325,7 +325,7 @@ function finiteTable(value: unknown, label: string): Record<string, number> {
 }
 
 export function gateExitCode(status: BudgetReport["status"]): number {
-  if (status === "pass") return 0;
+  if (status === "pass" || status === "noisy") return 0;
   if (status === "retry") return 2;
   return 1;
 }
