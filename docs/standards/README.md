@@ -14,7 +14,7 @@ These documents define the implemented portable subset independently of SDK type
 | Native/artifact parity          | [Delivery](delivery.md)                 | Common island input, placement and fidelity regression fixtures                       |
 | Semantic exports and inspection | [Projections](projections.md)           | Linked/standalone JSON and authored reading Markdown                                  |
 | State and bounded composition   | [Composition](composition.md)           | Closed profile, direct lowering, compatible snapshots and typed ports                 |
-| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; accepted caps are separate                 |
+| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; recorded caps are not a merge gate         |
 | Scholarly and publishing        | [Publishing profiles](publishing.md)    | Optional bibliography, direction, header rows, and print warnings                     |
 | MyST                            | [MyST mapping](myst.md)                 | Loss table exported as `MYST_LOSS_TABLE`                                              |
 
@@ -26,7 +26,7 @@ The workspace schema snapshot may evolve in place before release. Contract conte
 
 Future version domains, transitions and deprecation enforcement are design policy only until release preparation is authorized. The beta freeze supersedes requirements for immediate envelope/artifact version transitions.
 
-SDK usage belongs in the [contract](../guides/contracts.md), [meaning](../guides/meaning.md) and [exchange](../guides/exchange.md) guides. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. G1–G12 cover JSON/schema foundations, semantic declarations/traversal, unknown readability, sealed contracts, bounded discovery, locked exchange, native/artifact parity, resource provenance, independent Python structural consumption, semantic exports/inspection, directly compiled bounded composition, the interactive publication profile with shared lifecycle and substantive fallback, matched baselines, accepted scale budgets, and host-side incremental reuse. No universal simulation or full roadmap conformance is claimed.
+SDK usage belongs in the [contract](../guides/contracts.md), [meaning](../guides/meaning.md) and [exchange](../guides/exchange.md) guides. GitHub [tracker #28](https://github.com/VoidReg/publisle/issues/28) identifies remaining deliverables. G1–G12 cover JSON/schema foundations, semantic declarations/traversal, unknown readability, sealed contracts, bounded discovery, locked exchange, native/artifact parity, resource provenance, independent Python structural consumption, semantic exports/inspection, directly compiled bounded composition, the interactive publication profile with shared lifecycle and substantive fallback, matched baselines, a recorded scale-budget snapshot that is not a merge gate, and host-side incremental reuse. No universal simulation or full roadmap conformance is claimed.
 
 ## Implemented beta changes
 
@@ -39,8 +39,8 @@ SDK usage belongs in the [contract](../guides/contracts.md), [meaning](../guides
 - Added offline Python consumption/precompiled serving, required cross-language/browser evidence and renderer-free semantic/reading exports.
 - Added optional bounded state, compatible snapshots, typed relationships/ports and direct JavaScript lowering without adding reader schema/compiler tooling.
 - Added an opt-in interactive publication profile, shared keyboard/cancel/focus lifecycle, print and no-JavaScript explanations, and a host-owned Fourier partial-sum example.
-- Accepted the reviewed preparation and reader budgets and enforced them in CI. Host compilation caching reuses unchanged documents without entering reader bundles.
+- Recorded the reviewed preparation and reader budgets as a local comparison snapshot. GitHub Actions does not enforce them. Host compilation caching reuses unchanged documents without entering reader bundles.
 - Added optional bibliography resolution, heading roles, table header rows, language direction, and print warnings. None of these profiles are mandatory.
 - Added an initial MyST mapping with an explicit loss table and opaque preservation for unsupported interactive blocks. A packed schema starter shows a clean-install import.
 
-Performance evidence: [preparation measurements](performance.md), [profiling analysis](performance-analysis.md), and [CI calibration and budget review](performance-budgets.md). Production reader and MDX harness commands and measurement boundaries are documented in [the benchmark instructions](../../tools/benchmarks/README.md).
+Performance evidence: [preparation measurements](performance.md), [profiling analysis](performance-analysis.md), and the [recorded calibration snapshot](performance-budgets.md). Production reader and MDX harness commands and measurement boundaries are documented in [the benchmark instructions](../../tools/benchmarks/README.md).

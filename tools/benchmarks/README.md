@@ -10,7 +10,7 @@ Run `node tools/benchmarks/measure.ts --profile --output benchmarks/profile` sep
 
 After an optimization, run `node tools/benchmarks/compare.ts benchmarks/before benchmarks/latest`. It replays baseline inputs with the original IDs and verifies prepared documents, diagnostics, identities and publication output exactly, then writes the median comparison to `benchmarks/latest/comparison.md`. It does not compare snapshots from independently generated fixtures because block IDs are random. For repeatable comparisons, keep the same Node version, hardware, workload order and sampling settings, and run the two measurements without competing work.
 
-These results are not budgets or evidence of comparative whole-system speed. Repeated preparation is uncached. Persistent host caching, incremental reuse, mixed-content size comparisons, interactive competing compilers and independent contract-resolution measurements remain follow-up work.
+These results are a local comparison, not a GitHub check and not evidence of comparative whole-system speed. Budgeted preparation rows stay uncached. An optional host compilation cache can reuse an unchanged corpus outside readers. Mixed-content size comparisons, interactive competing compilers and independent contract-resolution measurements remain follow-up work.
 
 ## Matched static compilers and production readers
 
@@ -27,10 +27,10 @@ Fourier React/Svelte components in production for native and artifact delivery.
 It measures one, five and 100 islands per placement, with two placements per
 fixture, 30 recorded samples and two excluded warmup contexts. `--smoke` limits
 this to three observations at one island per placement; its p95 is the maximum
-and is unsuitable for a latency budget. Chromium comes from the pinned Playwright
-installation in CI. Locally, `PUBLISLE_BROWSER_PATH` overrides the executable;
-otherwise the harness uses Google Chrome when available. The browser revision is
-recorded, so results from different browsers are not interchangeable.
+and is unsuitable for a latency budget. Chromium comes from the pinned Playwright installation. `PUBLISLE_BROWSER_PATH`
+overrides the executable; otherwise the harness uses Google Chrome when available.
+The browser revision is recorded, so results from different browsers are not
+interchangeable. GitHub Actions does not run this harness.
 
 Every sample retains requests, aggregate script/task duration, first and remaining
 activation wall time, document JS heap usage, long-task durations and CLS without
@@ -41,8 +41,12 @@ is no simulated phone or separate parse/eval attribution. Preparation, compilati
 and browser runs should execute sequentially on an idle host.
 
 `node tools/benchmarks/report.ts benchmarks/browser` writes a summary table with
-nearest-rank percentiles and sample variance. Partial runs cannot produce an
-accepted report. Production builds fail for reader tooling leaks, premature
-implementation requests and browser errors. CI uploads the raw observations. [Accepted budgets](../../docs/standards/performance-budgets.md) are enforced by `node tools/benchmarks/gate.ts`. A timing breach reruns the workload once. A p95 is over a whole-millisecond cap only when it reaches the next millisecond. The job fails when the rerun does that too. An unreproduced breach is logged as noisy and does not fail the job. Byte breaches fail immediately. Reader latency caps apply only to full calibrations.
+nearest-rank percentiles and sample variance. Partial runs cannot produce a
+summary. Production builds stop for reader tooling leaks, premature
+implementation requests and browser errors. Run the harness locally when
+comparing this implementation with another one or with an older commit. The
+[recorded snapshot](../../docs/standards/performance-budgets.md) can be compared
+with `node tools/benchmarks/gate.ts`. That comparison is optional and is not a
+pull-request check.
 
 `node tools/benchmarks/propose.ts <artifact-directory-1> <artifact-directory-2> <artifact-directory-3>` derives an unenforced review table from three complete full calibration artifacts. It rejects smoke runs, differing source/input hashes and differing software/sampling settings. The timing headroom is a review heuristic, not a confidence interval. The [current proposed caps](../../docs/standards/performance-budget-proposal.md) cite the immutable baseline run.
