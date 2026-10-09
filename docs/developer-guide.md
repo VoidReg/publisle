@@ -219,7 +219,7 @@ block types; upgrades preserve them with warnings. A config's explicit
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
 import { createRegistry } from "@publisle/core";
-import { researchPaperProfile } from "@publisle/profiles";
+import { researchPaperProfile } from "@publisle/research";
 import type { CliConfig } from "@publisle/cli";
 
 export default {
@@ -336,7 +336,8 @@ are opt-in and can be configured at a server/build boundary:
 
 ```ts
 import { prepare } from "@publisle/core";
-import { researchPaperProfile } from "@publisle/profiles";
+// Research profiles ship with the optional Research profile, not the Core set.
+import { researchPaperProfile } from "@publisle/research";
 
 const result = prepare(document, {
   registry,

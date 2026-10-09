@@ -3,6 +3,11 @@ export { parseBibtex, toBibtex, toCslJson } from "./bibtex.ts";
 export { parseCslStyle } from "./csl.ts";
 export { toJats, createJatsPackage, type JatsPackage } from "./jats.ts";
 export { toLatex } from "./latex.ts";
+export {
+  researchPaperProfile,
+  scholarlyProfile,
+  type ResearchPaperProfileOptions,
+} from "./profiles.ts";
 // eslint-disable-next-line @typescript-eslint/no-deprecated -- retained migration export
 export { toPdf } from "./pdf.ts";
 export { resolveDocument, type ResolvedDocument } from "./resolve.ts";

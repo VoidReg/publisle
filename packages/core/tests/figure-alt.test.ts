@@ -6,10 +6,7 @@ import {
 } from "@publisle/blocks-core";
 import { createBlock, document } from "@publisle/schema";
 import { createRegistry, prepare } from "../src/index.ts";
-import {
-  accessibilityProfile,
-  researchPaperProfile,
-} from "../../profiles/src/index.ts";
+import { accessibilityProfile } from "../../profiles/src/index.ts";
 import {
   fromMarkdown,
   formatMarkdown,
@@ -76,7 +73,7 @@ describe("figure alternative-text policy", () => {
       const imported = fromMarkdown(':::figure{src="figure.svg"}\n:::\n', {
         sourceName: "figure.md",
       });
-      for (const profile of [accessibilityProfile(), researchPaperProfile()]) {
+      for (const profile of [accessibilityProfile()]) {
         const result = prepare(imported.document!, {
           registry,
           sourceMap: imported.sourceMap!,
@@ -102,14 +99,14 @@ describe("figure alternative-text policy", () => {
     },
   );
 
-  it("does not flag explicit empty or descriptive alt in either profile", () => {
+  it("does not flag explicit empty or descriptive alt in either form", () => {
     const input = document({
       blocks: [
         figure({ src: "a.svg", alt: "" }),
         figure({ src: "b.svg", alt: "A wave" }),
       ],
     });
-    for (const profile of [accessibilityProfile(), researchPaperProfile()]) {
+    for (const profile of [accessibilityProfile()]) {
       expect(
         prepare(input, { registry, profiles: [profile] }).diagnostics.filter(
           ({ code }) => code === "missing-alternative-text",

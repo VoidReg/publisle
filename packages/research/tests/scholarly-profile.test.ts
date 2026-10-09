@@ -1,15 +1,12 @@
 import { parseInlineNodes, tableDefinition } from "@publisle/blocks-core";
+import { localizationProfile, printProfile } from "@publisle/profiles";
 import {
   createBlock,
   document,
   parsePublicationMetadata,
 } from "@publisle/schema";
 import { describe, expect, it } from "vitest";
-import {
-  localizationProfile,
-  printProfile,
-  scholarlyProfile,
-} from "../src/index.ts";
+import { scholarlyProfile } from "../src/index.ts";
 
 const arabic = "مرحبا";
 

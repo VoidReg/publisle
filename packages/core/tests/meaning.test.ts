@@ -19,7 +19,7 @@ import {
   definePortableBlock,
   defineInteractiveBlock,
 } from "../../block-sdk/src/index.ts";
-import { researchPaperProfile } from "../../profiles/src/index.ts";
+import { accessibilityProfile } from "../../profiles/src/index.ts";
 import {
   assertPrepared,
   createRegistry,
@@ -117,7 +117,7 @@ describe("bounded declared traversal", () => {
     const snapshot = structuredClone(input);
     const result = prepare(input, {
       registry: createRegistry([nested]),
-      profiles: [researchPaperProfile()],
+      profiles: [accessibilityProfile()],
     });
     const prepared = assertPrepared(result);
     expect(getDocumentOutline(prepared)).toEqual([

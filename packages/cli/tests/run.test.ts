@@ -207,10 +207,13 @@ describe("Node CLI safety and entrypoint", () => {
   });
 
   it("uses configured profile severity for document exit status", async () => {
-    await writeFile(file, '{"schemaVersion":1,"blocks":[]}');
+    await writeFile(
+      file,
+      '{"schemaVersion":1,"blocks":[{"id":"00000000-0000-4000-8000-00000000000f","type":"publisle:figure","schemaVersion":1,"data":{"src":"figure.svg"}}]}',
+    );
     const result = await invoke(["validate", file, "--config", policy]);
     expect(result.code).toBe(1);
-    expect(result.stderr).toContain("error [missing-title]");
+    expect(result.stderr).toContain("error [missing-alternative-text]");
     expect(result.stderr).toContain(file);
   });
 

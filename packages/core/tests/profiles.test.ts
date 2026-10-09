@@ -1,15 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { coreBlockDefinitions, paragraph } from "@publisle/blocks-core";
+import { coreBlockDefinitions, figure, paragraph } from "@publisle/blocks-core";
 import {
   createBlock,
   document,
   type PublicationProfile,
   type DiagnosticPolicy,
 } from "@publisle/schema";
-import {
-  researchPaperProfile,
-  scholarlyProfile,
-} from "../../profiles/src/index.ts";
+import { accessibilityProfile } from "../../profiles/src/index.ts";
 import { assertPrepared, createRegistry, prepare } from "../src/index.ts";
 
 const registry = createRegistry(coreBlockDefinitions);
@@ -98,29 +95,25 @@ describe("preparation profiles", () => {
   });
 
   it("keeps profiles opt-in and accepts conformance warnings without changing semantic output", () => {
-    const doc = input();
+    const doc = document({
+      metadata: { title: "A paper" },
+      blocks: [figure({ src: "plot.svg" })],
+    });
     const plain = prepare(doc, { registry });
     expect(plain.diagnostics).toEqual([]);
     const result = prepare(doc, {
       registry,
-      profiles: [researchPaperProfile()],
+      profiles: [accessibilityProfile()],
     });
     expect(result.document?.blocks).toEqual(plain.document?.blocks);
     expect(result.document?.metadata).toEqual(plain.document?.metadata);
-    expect(result.diagnostics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "missing-abstract",
-          level: "warning",
-          profile: "research-paper",
-        }),
-        expect.objectContaining({
-          code: "missing-authors",
-          level: "warning",
-          profile: "research-paper",
-        }),
-      ]),
-    );
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "missing-alternative-text",
+        level: "warning",
+        profile: "accessibility",
+      }),
+    ]);
     expect(() => assertPrepared(result)).not.toThrow();
   });
 
@@ -328,16 +321,8 @@ describe("preparation profiles", () => {
         }),
       ],
     });
-    const result = prepare(source, {
-      registry,
-      profiles: [scholarlyProfile()],
-    });
+    const result = prepare(source, { registry });
     expect(result.document?.blocks).toHaveLength(1);
-    expect(result.diagnostics).toContainEqual(
-      expect.objectContaining({
-        code: "unresolved-citation",
-        level: "warning",
-      }),
-    );
+    expect(result.diagnostics).toEqual([]);
   });
 });

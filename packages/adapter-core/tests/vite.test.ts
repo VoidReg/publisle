@@ -14,7 +14,7 @@ import {
   noticeCodec,
   noticeDefinition,
 } from "../../markdown/tests/fixtures/notice-codec.ts";
-import { researchPaperProfile } from "../../profiles/src/index.ts";
+import { accessibilityProfile } from "../../profiles/src/index.ts";
 
 const fence = "`".repeat(3);
 const source = `---
@@ -166,7 +166,10 @@ describe("publication Vite target", () => {
         path.join(tmpdir(), "publisle-profile-vite-"),
       );
       const filename = path.join(directory, "article.md");
-      await writeFile(filename, source);
+      await writeFile(
+        filename,
+        '# Title\n\n:::figure{src="plot.svg"}\n:::\n',
+      );
       const server = await createServer({
         configFile: false,
         root: directory,
@@ -178,8 +181,8 @@ describe("publication Vite target", () => {
               ...coreBlockDefinitions,
               interactiveSchematicDefinition,
             ]),
-            profiles: [researchPaperProfile()],
-            diagnosticPolicy: { "missing-abstract": level },
+            profiles: [accessibilityProfile()],
+            diagnosticPolicy: { "missing-alternative-text": level },
           }),
         ],
       });
@@ -188,7 +191,7 @@ describe("publication Vite target", () => {
         if (!resolved) throw new Error("Expected resolved article.");
         const load = server.pluginContainer.load(resolved.id);
         if (level === "error") {
-          await expect(load).rejects.toThrow("abstract");
+          await expect(load).rejects.toThrow("alternative");
         } else {
           const loaded = await load;
           const code = typeof loaded === "string" ? loaded : loaded?.code;
@@ -205,16 +208,16 @@ describe("publication Vite target", () => {
           };
           expect(imported.diagnostics).toContainEqual(
             expect.objectContaining({
-              code: "missing-abstract",
+              code: "missing-alternative-text",
               level,
-              profile: "research-paper",
+              profile: "accessibility",
             }),
           );
           expect(imported.publication.diagnostics).toEqual(
             imported.diagnostics,
           );
           expect(code).not.toContain("inspectProfiles");
-          expect(code).not.toContain("researchPaperProfile");
+          expect(code).not.toContain("accessibilityProfile");
         }
       } finally {
         await server.close();

@@ -11,6 +11,7 @@
     "./legacy-pdf": "./src/pdf.ts"
   },
   "dependencies": {
+    "@publisle/profiles": "workspace:*",
     "@publisle/schema": "workspace:*",
     "@publisle/template-article": "workspace:*",
     "@publisle/template-sdk": "workspace:*",
