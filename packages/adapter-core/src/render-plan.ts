@@ -111,8 +111,13 @@ function inline(
 ): RenderNode[] {
   return nodes.flatMap((node): RenderNode[] => {
     switch (node.type) {
-      case "text":
-        return [text(String(node["value"] ?? ""))];
+      case "text": {
+        const value = String(node["value"] ?? "");
+        const direction = node["direction"];
+        if (direction === "ltr" || direction === "rtl" || direction === "auto")
+          return [element("span", { dir: direction }, [text(value)])];
+        return [text(value)];
+      }
       case "emphasis":
         return [
           element(
@@ -801,7 +806,11 @@ function blockNodes(
                     {},
                     row.map((cell, cellIndex) =>
                       element(
-                        rowIndex === 0 ? "th" : "td",
+                        (typeof data["headerRows"] === "number"
+                          ? data["headerRows"]
+                          : 1) > rowIndex
+                          ? "th"
+                          : "td",
                         align[cellIndex]
                           ? { class: `publisle-align-${align[cellIndex]}` }
                           : {},
@@ -1043,6 +1052,36 @@ function blockNodes(
                 ]
               : []),
           ],
+        ),
+      ];
+    }
+    case "publisle:bibliography": {
+      const entries = Array.isArray(data["entries"]) ? data["entries"] : [];
+      return [
+        element(
+          "section",
+          { class: "publisle-bibliography" },
+          entries.flatMap((entry) => {
+            if (
+              typeof entry !== "object" ||
+              entry === null ||
+              Array.isArray(entry)
+            )
+              return [];
+            const record = entry as Record<string, unknown>;
+            const authors = Array.isArray(record["authors"])
+              ? record["authors"].filter(
+                  (author): author is string => typeof author === "string",
+                )
+              : [];
+            const parts = [
+              record["id"],
+              ...authors,
+              record["title"],
+              record["raw"],
+            ].filter((part): part is string => typeof part === "string");
+            return [element("p", {}, [text(parts.join(" "))])];
+          }),
         ),
       ];
     }

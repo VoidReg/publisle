@@ -5,8 +5,14 @@ export interface CitationItem {
   readonly suppressAuthor?: boolean;
 }
 
+export type WritingDirection = "ltr" | "rtl" | "auto";
+
 export type InlineNode =
-  | { readonly type: "text"; readonly value: string }
+  | {
+      readonly type: "text";
+      readonly value: string;
+      readonly direction?: WritingDirection;
+    }
   | {
       readonly type: "emphasis" | "strong" | "strikethrough";
       readonly children: readonly InlineNode[];
@@ -69,6 +75,8 @@ export interface HeadingData {
   readonly level: 1 | 2 | 3 | 4 | 5 | 6;
   readonly content: readonly InlineNode[];
   readonly label?: string;
+  /** Informational section role. It does not impose a paper template. */
+  readonly role?: "abstract" | "section";
 }
 export type ListItemData =
   | { readonly type: "listItem"; readonly children: readonly FlowNode[] }
@@ -115,6 +123,20 @@ export interface TableData {
   readonly rows: readonly (readonly (readonly InlineNode[])[])[];
   readonly label?: string;
   readonly caption?: readonly FlowNode[];
+  /** Leading rows that label the columns. Omitted leaves the host convention unchanged. */
+  readonly headerRows?: number;
+}
+
+export interface BibliographyEntry {
+  readonly id: string;
+  readonly title?: string;
+  readonly authors?: readonly string[];
+  /** Opaque source kept exactly when the entry is not otherwise modeled. */
+  readonly raw?: string;
+}
+
+export interface BibliographyData {
+  readonly entries: readonly BibliographyEntry[];
 }
 export interface EmbedData {
   readonly provider: string;

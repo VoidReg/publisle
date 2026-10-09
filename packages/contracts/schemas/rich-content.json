@@ -9,7 +9,23 @@
           "type": "object",
           "properties": {
             "type": {
-              "enum": ["text", "inlineCode", "inlineMath", "rawHtml"]
+              "const": "text"
+            },
+            "value": {
+              "type": "string"
+            },
+            "direction": {
+              "enum": ["ltr", "rtl", "auto"]
+            }
+          },
+          "required": ["type", "value"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": ["inlineCode", "inlineMath", "rawHtml"]
             },
             "value": {
               "type": "string"

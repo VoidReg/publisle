@@ -198,7 +198,14 @@ function phrasing(
   return nodes.map((node): PhrasingContent => {
     switch (node.type) {
       case "text":
-        return { type: "text", value: node.value };
+        return node.direction !== undefined && !standard
+          ? ({
+              type: "textDirective",
+              name: "dir",
+              attributes: { dir: node.direction },
+              children: [{ type: "text", value: node.value }],
+            } as PhrasingContent)
+          : { type: "text", value: node.value };
       case "emphasis":
       case "strong":
       case "strikethrough":
@@ -549,17 +556,21 @@ function knownBlock(
         level: number;
         content: readonly InlineNode[];
         label?: string;
+        role?: "abstract" | "section";
       }>(block);
       const headingNode: GenericNode = {
         type: "heading",
         depth: value.level as 1 | 2 | 3 | 4 | 5 | 6,
         children: phrasing(value.content, standard),
       };
-      return value.label && !standard
+      return (value.label || value.role) && !standard
         ? {
             type: "containerDirective",
             name: "heading",
-            attributes: { label: value.label },
+            attributes: {
+              ...(value.label === undefined ? {} : { label: value.label }),
+              ...(value.role === undefined ? {} : { role: value.role }),
+            },
             children: [headingNode],
           }
         : headingNode;
@@ -682,6 +693,7 @@ function knownBlock(
         rows: readonly (readonly (readonly InlineNode[])[])[];
         label?: string;
         caption?: readonly FlowNode[];
+        headerRows?: number;
       }>(block);
       const tableNode: GenericNode = {
         type: "table",
@@ -694,11 +706,17 @@ function knownBlock(
           })),
         })),
       };
-      return (value.label || value.caption) && !standard
+      return (value.label || value.caption || value.headerRows !== undefined) &&
+        !standard
         ? {
             type: "containerDirective",
             name: "table",
-            attributes: value.label ? { label: value.label } : {},
+            attributes: {
+              ...(value.label === undefined ? {} : { label: value.label }),
+              ...(value.headerRows === undefined
+                ? {}
+                : { headerRows: String(value.headerRows) }),
+            },
             children: [
               tableNode,
               ...(value.caption
@@ -707,6 +725,48 @@ function knownBlock(
             ],
           }
         : tableNode;
+    }
+    case "publisle:bibliography": {
+      const value = data<{
+        entries: readonly {
+          id: string;
+          title?: string;
+          authors?: readonly string[];
+          raw?: string;
+        }[];
+      }>(block);
+      if (standard)
+        return {
+          type: "list",
+          ordered: false,
+          children: value.entries.map((entry) => ({
+            type: "listItem",
+            children: [
+              {
+                type: "paragraph",
+                children: [
+                  {
+                    type: "text",
+                    value: [entry.id, entry.title, entry.raw]
+                      .filter((part) => part !== undefined)
+                      .join(" "),
+                  },
+                ],
+              },
+            ],
+          })),
+        };
+      return {
+        type: "containerDirective",
+        name: "bibliography",
+        children: [
+          {
+            type: "code",
+            lang: "json",
+            value: JSON.stringify(value.entries),
+          },
+        ],
+      };
     }
     case "publisle:callout": {
       const value = data<{

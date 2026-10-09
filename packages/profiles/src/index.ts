@@ -266,10 +266,12 @@ export function researchPaperProfile(
             previousLevel = level;
           }
           const abstractHeading =
-            options.abstractLabel === undefined
+            data["role"] === "abstract" ||
+            (options.abstractLabel === undefined
               ? data["label"] === "abstract" ||
                 plainText(data["content"]).trim().toLowerCase() === "abstract"
-              : data["label"] === options.abstractLabel;
+              : data["label"] === options.abstractLabel ||
+                data["role"] === "abstract");
           const next = blocks[index + 1];
           if (
             abstractHeading &&
@@ -288,6 +290,113 @@ export function researchPaperProfile(
             "A research paper should provide an abstract heading followed by a nonempty paragraph.",
         });
       return diagnostics;
+    },
+  };
+}
+
+function walkCitations(value: unknown, found: { id: string }[]): void {
+  if (Array.isArray(value)) {
+    for (const entry of value) walkCitations(entry, found);
+    return;
+  }
+  if (value === null || typeof value !== "object") return;
+  const node = value as Record<string, unknown>;
+  if (node["type"] === "citationReference" && Array.isArray(node["items"])) {
+    for (const item of node["items"]) {
+      const id = record(item)["id"];
+      if (typeof id === "string") found.push({ id });
+    }
+  }
+  for (const entry of Object.values(node)) walkCitations(entry, found);
+}
+
+/** Optional citation targets and section roles. Metadata stays informational. */
+export function scholarlyProfile(): PublicationProfile {
+  return {
+    name: "scholarly",
+    version: "1",
+    inspect(document) {
+      const diagnostics: Diagnostic[] = [];
+      const entries = new Set<string>();
+      for (const block of document.blocks) {
+        if (block.type !== "publisle:bibliography") continue;
+        const listed = record(block.data)["entries"];
+        if (!Array.isArray(listed)) continue;
+        for (const entry of listed) {
+          const id = record(entry)["id"];
+          if (typeof id !== "string") continue;
+          if (entries.has(id))
+            diagnostics.push({
+              level: "warning",
+              code: "duplicate-bibliography-entry",
+              message: `Bibliography id ${id} is repeated.`,
+              blockId: block.id,
+            });
+          entries.add(id);
+        }
+      }
+      for (const block of document.blocks) {
+        const citations: { id: string }[] = [];
+        walkCitations(block.data, citations);
+        for (const citation of citations) {
+          if (!entries.has(citation.id))
+            diagnostics.push({
+              level: "warning",
+              code: "unresolved-citation",
+              message: `Citation ${citation.id} has no bibliography entry. The reference stays in the source.`,
+              blockId: block.id,
+            });
+        }
+      }
+      return diagnostics;
+    },
+  };
+}
+
+/** Reports missing readable alternatives. It does not paginate or choose a renderer. */
+export function printProfile(): PublicationProfile {
+  return {
+    name: "print",
+    version: "1",
+    inspect(document) {
+      return document.blocks.flatMap((block): Diagnostic[] => {
+        const data = record(block.data);
+        const missing =
+          (block.type === "publisle:diagram" &&
+            data["fallback"] === undefined &&
+            data["printFallback"] === undefined) ||
+          (block.type === "publisle:embed" && data["fallback"] === undefined);
+        return missing
+          ? [
+              {
+                level: "warning",
+                code: "missing-print-alternative",
+                message:
+                  "This block has no authored print alternative. Hosts decide pagination and whether to omit it.",
+                blockId: block.id,
+              },
+            ]
+          : [];
+      });
+    },
+  };
+}
+
+/** Language and direction are source metadata, not a layout engine. */
+export function localizationProfile(): PublicationProfile {
+  return {
+    name: "localization",
+    version: "1",
+    inspect(document) {
+      if (document.metadata?.direction === undefined) return [];
+      return [
+        {
+          level: "info",
+          code: "host-direction-policy",
+          message:
+            "Direction and language are source metadata. This profile does not select a layout, font, or route.",
+        },
+      ];
     },
   };
 }

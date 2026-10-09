@@ -17,6 +17,7 @@ import type {
   DownloadableResource,
   EmbedData,
   FigureData,
+  BibliographyData,
   FootnoteData,
   HeadingData,
   ListData,
@@ -95,10 +96,17 @@ export const headingDefinition = definePortableBlock({
           "invalid-block-data",
           "heading.level must be between 1 and 6.",
         );
+      const role = data["role"];
+      if (role !== undefined && role !== "abstract" && role !== "section")
+        throw new SchemaParseError(
+          "invalid-block-data",
+          "heading.role must be abstract or section.",
+        );
       return {
         level: level as HeadingData["level"],
         content: inlineNodes(data["content"]),
         ...optionalLabel(data),
+        ...(role === undefined ? {} : { role }),
       };
     },
   },
@@ -246,6 +254,7 @@ export const tableDefinition = definePortableBlock({
         ...(data["caption"] === undefined
           ? {}
           : { caption: flowNodes(data["caption"], "table.caption") }),
+        ...headerRows(data, rows.length),
       };
     },
   },
@@ -364,6 +373,62 @@ export const footnoteDefinition = definePortableBlock({
     },
   },
 });
+function headerRows(data: Record<string, unknown>, rowCount: number) {
+  if (data["headerRows"] === undefined) return {};
+  const value = data["headerRows"];
+  if (
+    typeof value !== "number" ||
+    !Number.isSafeInteger(value) ||
+    value < 0 ||
+    value > rowCount
+  )
+    throw new SchemaParseError(
+      "invalid-block-data",
+      "table.headerRows must be an integer from 0 through the row count.",
+    );
+  return { headerRows: value };
+}
+
+export const bibliographyDefinition = definePortableBlock({
+  type: "publisle:bibliography",
+  contract: builtinContractSource("bibliography"),
+  traversal: coreTraversal("bibliography"),
+  schemaVersion: 1,
+  schema: {
+    parse(value): BibliographyData {
+      const data = record(value, "bibliography");
+      if (!Array.isArray(data["entries"]))
+        throw new SchemaParseError(
+          "invalid-block-data",
+          "bibliography.entries must be an array.",
+        );
+      return {
+        entries: data["entries"].map((entry, index) => {
+          const item = record(entry, `bibliography.entries[${index}]`);
+          const authors = item["authors"];
+          if (
+            authors !== undefined &&
+            (!Array.isArray(authors) ||
+              authors.some((author) => typeof author !== "string"))
+          )
+            throw new SchemaParseError(
+              "invalid-block-data",
+              `bibliography.entries[${index}].authors must be an array of strings.`,
+            );
+          return {
+            id: nonemptyString(item["id"], `bibliography.entries[${index}].id`),
+            ...(typeof item["title"] === "string"
+              ? { title: item["title"] }
+              : {}),
+            ...(authors === undefined ? {} : { authors: authors as string[] }),
+            ...(typeof item["raw"] === "string" ? { raw: item["raw"] } : {}),
+          };
+        }),
+      };
+    },
+  },
+});
+
 export const rawHtmlDefinition = definePortableBlock({
   type: "publisle:raw-html",
   contract: builtinContractSource("raw-html"),
@@ -392,6 +457,7 @@ export const coreBlockDefinitions = [
   calloutDefinition,
   dividerDefinition,
   footnoteDefinition,
+  bibliographyDefinition,
   rawHtmlDefinition,
   embedDefinition,
   diagramDefinition,

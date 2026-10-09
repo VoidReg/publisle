@@ -133,6 +133,22 @@ function inline(nodes: readonly Node[]): InlineNode[] {
       case "textDirective": {
         const name = String(data["name"] ?? "");
         const attributes = attrs(node);
+        if (name === "dir") {
+          const direction = attributes["dir"];
+          if (
+            direction !== "ltr" &&
+            direction !== "rtl" &&
+            direction !== "auto"
+          )
+            throw new SchemaParseError(
+              "invalid-block-data",
+              "Text direction must be ltr, rtl, or auto.",
+            );
+          const value = children(node)
+            .map((child) => String(object(child)["value"] ?? ""))
+            .join("");
+          return [{ type: "text", value, direction }];
+        }
         const body = children(node)
           .map((child) => String(object(child)["value"] ?? ""))
           .join("")
@@ -545,6 +561,10 @@ function blockFor(
               level: Number(object(heading)["depth"]),
               content: inline(children(heading)),
               ...(attributes["label"] ? { label: attributes["label"] } : {}),
+              ...(attributes["role"] === "abstract" ||
+              attributes["role"] === "section"
+                ? { role: attributes["role"] }
+                : {}),
             },
           } as Omit<Block, "id">;
       }
@@ -607,11 +627,32 @@ function blockFor(
                 children(row).map((cell) => inline(children(cell))),
               ),
               ...(attributes["label"] ? { label: attributes["label"] } : {}),
+              ...(attributes["headerRows"]
+                ? { headerRows: Number(attributes["headerRows"]) }
+                : {}),
               ...(slot("caption")
                 ? { caption: flow(children(slot("caption")!)) }
                 : {}),
             },
           } as unknown as Omit<Block, "id">;
+      }
+      if (name === "bibliography") {
+        const code = children(node).find((child) => child.type === "code");
+        const source = String(code ? (object(code)["value"] ?? "") : "[]");
+        let entries: unknown;
+        try {
+          entries = parseJson(source);
+        } catch {
+          throw new SchemaParseError(
+            "invalid-block-data",
+            "Bibliography entries must be strict JSON.",
+          );
+        }
+        return {
+          type: "publisle:bibliography",
+          schemaVersion: 1,
+          data: { entries },
+        } as Omit<Block, "id">;
       }
       if (name === "embed") {
         const ratio = (attributes["ratio"] ?? "16/9").split("/").map(Number);
@@ -722,6 +763,7 @@ const metadataKeys = new Set([
   "title",
   "description",
   "language",
+  "direction",
   "authors",
   "publishedAt",
   "modifiedAt",

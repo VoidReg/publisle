@@ -12,6 +12,7 @@ import table from "../schemas/table.json" with { type: "json" };
 import callout from "../schemas/callout.json" with { type: "json" };
 import divider from "../schemas/divider.json" with { type: "json" };
 import footnote from "../schemas/footnote.json" with { type: "json" };
+import bibliography from "../schemas/bibliography.json" with { type: "json" };
 import raw_html from "../schemas/raw-html.json" with { type: "json" };
 import embed from "../schemas/embed.json" with { type: "json" };
 import diagram from "../schemas/diagram.json" with { type: "json" };
@@ -48,6 +49,7 @@ export const BETA_SCHEMAS = {
   callout: callout,
   divider: divider,
   footnote: footnote,
+  bibliography: bibliography,
   "raw-html": raw_html,
   embed: embed,
   diagram: diagram,

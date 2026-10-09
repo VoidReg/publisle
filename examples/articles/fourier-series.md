@@ -668,6 +668,18 @@ The linked resources provide further study rather than replacing the calculation
 
 [3Blue1Brown's Fourier-series video](https://www.youtube.com/watch?v=r6sGWTCMz2k) is the source of the optional embed, not of the article's original SVG illustration.
 
+::::bibliography
+
+```json
+[
+  { "id": "mit-1803", "title": "Fourier series and periodic functions" },
+  { "id": "strang-fourier", "title": "Fourier series" },
+  { "id": "sanderson-fourier", "title": "A visual introduction" }
+]
+```
+
+::::
+
 [^normalization]: Some texts use $1/(2\pi)$ in the inner product, making the constant function have norm one while sine and cosine have squared norm one-half. The mathematics is equivalent once the coefficient and energy conventions are adjusted consistently.
 
 [^aliasing]: For a sample interval $\Delta t$, exponentials whose angular frequencies differ by an integer multiple of $2\pi/\Delta t$ have identical values at the sample times. An anti-aliasing argument therefore needs assumptions about the signal before sampling.
