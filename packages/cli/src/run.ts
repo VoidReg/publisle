@@ -16,7 +16,7 @@ import {
   parseJson,
   type Diagnostic,
 } from "@publisle/schema";
-import { toReadingMarkdown } from "@publisle/markdown";
+import { fromMarkdown, toReadingMarkdown } from "@publisle/markdown";
 import { processSource, lockSource, type CliConfig } from "./index.ts";
 import {
   exportSemanticDocument,
@@ -25,6 +25,15 @@ import {
 } from "@publisle/contracts";
 import { createRegistry } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
+import {
+  parseBibtex,
+  resolveDocument,
+  toBibtex,
+  toCslJson,
+  toJats,
+  toLatex,
+  toPdf,
+} from "@publisle/research";
 
 export interface CliIo {
   readonly stdout: (text: string) => void;
@@ -34,8 +43,11 @@ export interface CliIo {
 const help = `Usage: publisle validate|upgrade|lock <file.json|file.md> [--config <host.mjs|host.ts>] [--format json|markdown]
 JSON-only inspection: publisle inspect|semantic <source.json> [--bundle <contracts.json>] [--mode linked|standalone]
 Reading projection: publisle reading <source.json> (not a round trip).
+Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf [--style numeric|author-date|file.csl] [--output <new-file>]
+BibTeX import: publisle bibliography <file.bib>
 Upgrade: [--output <new-file> | --in-place]. Lock: [--output <new-file>] (never in-place).
-Validation never writes. Upgrade/lock default to stdout preview. --output refuses existing files.
+pdf requires --output. Validation never writes. Upgrade/lock/export default to stdout except pdf.
+--output refuses existing files.
 Config is trusted executable host code exporting a default CliConfig. Node >=24 required.
 Exit codes: 0 success (warnings allowed), 1 document errors, 2 usage/config/I/O errors.
 `;
@@ -184,8 +196,92 @@ export async function runCli(
       io.stdout(JSON.stringify(output, null, 2) + "\n");
       return 0;
     }
+    if (command === "bibliography") {
+      const file = args[1];
+      if (!file || file.startsWith("-") || args.length !== 2)
+        throw new Error("bibliography requires one BibTeX file.");
+      io.stdout(
+        `${JSON.stringify(parseBibtex(await readFile(resolve(file), "utf8")), null, 2)}\n`,
+      );
+      return 0;
+    }
+    if (command === "export") {
+      const file = args[1];
+      if (!file || file.startsWith("-"))
+        throw new Error("export requires a JSON or Markdown document.");
+      let target: "bibtex" | "csl-json" | "latex" | "jats" | "pdf" | undefined;
+      let style = "numeric";
+      let outputFile: string | undefined;
+      const seen = new Set<string>();
+      for (let index = 2; index < args.length; index += 1) {
+        const key = args[index];
+        if (key === undefined || seen.has(key))
+          throw new Error("Invalid or duplicate export option.");
+        seen.add(key);
+        const value = args[index + 1];
+        if (!value || value.startsWith("-"))
+          throw new Error(`Missing value for ${key}.`);
+        index += 1;
+        if (
+          key === "--to" &&
+          (value === "bibtex" ||
+            value === "csl-json" ||
+            value === "latex" ||
+            value === "jats" ||
+            value === "pdf")
+        )
+          target = value;
+        else if (key === "--style") style = value;
+        else if (key === "--output") outputFile = value;
+        else throw new Error("export accepts --to, --style, and --output.");
+      }
+      if (target === undefined)
+        throw new Error("--to must be bibtex, csl-json, latex, jats, or pdf.");
+      if (target === "pdf" && outputFile === undefined)
+        throw new Error("pdf export requires --output.");
+      const sourceName = resolve(file);
+      const source = await readFile(sourceName, "utf8");
+      const extension = extname(sourceName).toLowerCase();
+      const loaded =
+        extension === ".md" || extension === ".markdown"
+          ? fromMarkdown(source, { sourceName })
+          : { document: parseDocument(parseJson(source)), diagnostics: [] };
+      for (const item of loaded.diagnostics)
+        io.stderr(diagnosticText(item, sourceName));
+      if (loaded.document === undefined) return 1;
+      const styleSource =
+        style === "numeric" || style === "author-date"
+          ? style
+          : await readFile(resolve(style), "utf8");
+      const resolved = resolveDocument(loaded.document, styleSource);
+      for (const loss of resolved.losses)
+        io.stderr(`${sourceName}: warning [${loss.code}]: ${loss.message}\n`);
+      const text =
+        target === "bibtex"
+          ? toBibtex(resolved.article.entries)
+          : target === "csl-json"
+            ? toCslJson(resolved.article.entries)
+            : target === "latex"
+              ? toLatex(resolved)
+              : target === "jats"
+                ? toJats(resolved)
+                : undefined;
+      if (target === "pdf") {
+        await writeFile(resolve(outputFile ?? ""), toPdf(resolved).pdf, {
+          flag: "wx",
+        });
+        return 0;
+      }
+      if (text === undefined) throw new Error("Export produced no output.");
+      if (outputFile)
+        await writeFile(resolve(outputFile), text, { flag: "wx" });
+      else io.stdout(text.endsWith("\n") ? text : `${text}\n`);
+      return 0;
+    }
     if (command !== "validate" && command !== "upgrade" && command !== "lock")
-      throw new Error("Expected validate, upgrade or lock.");
+      throw new Error(
+        "Expected validate, upgrade, lock, export, or bibliography.",
+      );
     let file: string | undefined;
     let configFile: string | undefined;
     let outputFile: string | undefined;

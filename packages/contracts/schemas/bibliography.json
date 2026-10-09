@@ -13,6 +13,9 @@
             "type": "string",
             "minLength": 1
           },
+          "type": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -21,6 +24,30 @@
             "items": {
               "type": "string"
             }
+          },
+          "issued": {
+            "type": "string"
+          },
+          "containerTitle": {
+            "type": "string"
+          },
+          "volume": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "doi": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
           },
           "raw": {
             "type": "string"

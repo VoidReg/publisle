@@ -19,6 +19,7 @@
     "@publisle/blocks-core": "workspace:*",
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",
+    "@publisle/research": "workspace:*",
     "@publisle/schema": "workspace:*"
   }
 }

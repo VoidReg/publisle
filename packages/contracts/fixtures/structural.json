@@ -289,7 +289,17 @@
       "entries": [
         {
           "id": "doe2026",
+          "type": "article-journal",
           "title": "A note",
+          "authors": ["Doe, Jane"],
+          "issued": "2026",
+          "containerTitle": "Notes",
+          "volume": "1",
+          "issue": "2",
+          "page": "3-4",
+          "publisher": "Example Press",
+          "doi": "10.1000/note",
+          "url": "https://example.test/note",
           "raw": "Doe, A note, 2026."
         }
       ]

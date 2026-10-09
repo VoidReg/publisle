@@ -415,13 +415,42 @@ export const bibliographyDefinition = definePortableBlock({
               "invalid-block-data",
               `bibliography.entries[${index}].authors must be an array of strings.`,
             );
+          const label = `bibliography.entries[${index}]`;
+          const optional = (key: string) => {
+            if (!Object.hasOwn(item, key)) return undefined;
+            const field = item[key];
+            if (typeof field !== "string")
+              throw new SchemaParseError(
+                "invalid-block-data",
+                `${label}.${key} must be a string.`,
+              );
+            return field;
+          };
+          const type = optional("type");
+          const title = optional("title");
+          const issued = optional("issued");
+          const containerTitle = optional("containerTitle");
+          const volume = optional("volume");
+          const issue = optional("issue");
+          const page = optional("page");
+          const publisher = optional("publisher");
+          const doi = optional("doi");
+          const url = optional("url");
+          const raw = optional("raw");
           return {
-            id: nonemptyString(item["id"], `bibliography.entries[${index}].id`),
-            ...(typeof item["title"] === "string"
-              ? { title: item["title"] }
-              : {}),
+            id: nonemptyString(item["id"], `${label}.id`),
+            ...(type === undefined ? {} : { type }),
+            ...(title === undefined ? {} : { title }),
             ...(authors === undefined ? {} : { authors: authors as string[] }),
-            ...(typeof item["raw"] === "string" ? { raw: item["raw"] } : {}),
+            ...(issued === undefined ? {} : { issued }),
+            ...(containerTitle === undefined ? {} : { containerTitle }),
+            ...(volume === undefined ? {} : { volume }),
+            ...(issue === undefined ? {} : { issue }),
+            ...(page === undefined ? {} : { page }),
+            ...(publisher === undefined ? {} : { publisher }),
+            ...(doi === undefined ? {} : { doi }),
+            ...(url === undefined ? {} : { url }),
+            ...(raw === undefined ? {} : { raw }),
           };
         }),
       };

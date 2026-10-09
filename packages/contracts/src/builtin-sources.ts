@@ -15,7 +15,7 @@ const purposes = {
     "A publication figure with resource, optional caption, credit, label and original.",
   table: "Tabular rich content with alignment, caption and stable label.",
   bibliography:
-    "Optional citation targets. Entries are informational and do not select a citation style.",
+    "Optional citation targets. Structured fields stay on schema version 1 and do not select a citation style.",
   callout: "An editorial callout with variant, optional title and nested body.",
   divider: "A thematic break separating publication sections.",
   footnote:

@@ -1,0 +1,14 @@
+{
+  "name": "@publisle/research",
+  "version": "0.0.0",
+  "description": "Citation resolution and BibTeX, CSL, LaTeX, JATS, and PDF export. Tooling only; readers must not import it.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@publisle/schema": "workspace:*"
+  }
+}

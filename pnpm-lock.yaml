@@ -652,6 +652,9 @@ importers:
       '@publisle/markdown':
         specifier: workspace:*
         version: link:../markdown
+      '@publisle/research':
+        specifier: workspace:*
+        version: link:../research
       '@publisle/schema':
         specifier: workspace:*
         version: link:../schema
@@ -724,6 +727,12 @@ importers:
         version: 4.0.4
 
   packages/profiles:
+    dependencies:
+      '@publisle/schema':
+        specifier: workspace:*
+        version: link:../schema
+
+  packages/research:
     dependencies:
       '@publisle/schema':
         specifier: workspace:*

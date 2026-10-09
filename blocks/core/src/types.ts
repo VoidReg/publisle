@@ -129,9 +129,18 @@ export interface TableData {
 
 export interface BibliographyEntry {
   readonly id: string;
+  readonly type?: string;
   readonly title?: string;
   readonly authors?: readonly string[];
-  /** Opaque source kept exactly when the entry is not otherwise modeled. */
+  readonly issued?: string;
+  readonly containerTitle?: string;
+  readonly volume?: string;
+  readonly issue?: string;
+  readonly page?: string;
+  readonly publisher?: string;
+  readonly doi?: string;
+  readonly url?: string;
+  /** Opaque source kept exactly. Structured fields do not rewrite it. */
   readonly raw?: string;
 }
 
