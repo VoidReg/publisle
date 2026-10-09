@@ -1,0 +1,36 @@
+name: Research export
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  starter-profiles:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install local TeX and PDF tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y latexmk texlive-publishers texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-lang-arabic texlive-lang-chinese fonts-paktype fonts-texgyre fonts-texgyre-math fontconfig poppler-utils libxml2-utils
+          fc-cache /usr/share/texlive/texmf-dist/fonts/opentype/public/fandol
+      - run: pnpm cli setup compiler
+      - run: pnpm test:research
+        env:
+          PUBLISLE_CONTAINER_TEST: "1"
+          PUBLISLE_RESEARCH_ARTIFACTS: ${{ runner.temp }}/publisle-ieee
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ieee-journal-exports
+          path: ${{ runner.temp }}/publisle-ieee
+          if-no-files-found: warn

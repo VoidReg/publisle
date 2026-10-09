@@ -1,104 +1,24 @@
+import { parseBibtex } from "./bibtex.ts";
+import { resolveReadable } from "@publisle/schema";
 import type { Document } from "@publisle/schema";
-
-export interface ResearchLoss {
-  readonly code: string;
-  readonly message: string;
-}
-
-export interface CitationRef {
-  readonly id: string;
-  readonly locator?: string;
-  readonly label?: string;
-  readonly suppressAuthor?: boolean;
-}
-
-export interface CitationCluster {
-  readonly items: readonly CitationRef[];
-  readonly prefix?: string;
-  readonly suffix?: string;
-}
-
-export type ArticleInline =
-  | {
-      readonly type: "text";
-      readonly value: string;
-      readonly mark?: "emphasis" | "strong" | "code" | "strike";
-    }
-  | { readonly type: "math"; readonly value: string }
-  | { readonly type: "link"; readonly url: string; readonly value: string }
-  | { readonly type: "citation"; readonly cluster: CitationCluster }
-  | { readonly type: "break" };
-
-export interface CitationEntry {
-  readonly id: string;
-  readonly type?: string;
-  readonly title?: string;
-  readonly authors: readonly string[];
-  readonly issued?: string;
-  readonly containerTitle?: string;
-  readonly volume?: string;
-  readonly issue?: string;
-  readonly page?: string;
-  readonly publisher?: string;
-  readonly doi?: string;
-  readonly url?: string;
-  readonly raw?: string;
-}
-
-export type ArticleBlock =
-  | {
-      readonly kind: "heading";
-      readonly level: number;
-      readonly inlines: readonly ArticleInline[];
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "paragraph";
-      readonly inlines: readonly ArticleInline[];
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "list";
-      readonly ordered: boolean;
-      readonly items: readonly (readonly ArticleInline[])[];
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "quote";
-      readonly paragraphs: readonly (readonly ArticleInline[])[];
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "code";
-      readonly value: string;
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "math";
-      readonly value: string;
-      readonly display: boolean;
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "table";
-      readonly rows: readonly (readonly (readonly ArticleInline[])[])[];
-      readonly abstract: boolean;
-    }
-  | {
-      readonly kind: "footnote";
-      readonly id: string;
-      readonly paragraphs: readonly (readonly ArticleInline[])[];
-    }
-  | { readonly kind: "bibliography" };
-
-export interface Article {
-  readonly title?: string;
-  readonly authors: readonly string[];
-  readonly blocks: readonly ArticleBlock[];
-  readonly entries: readonly CitationEntry[];
-  readonly losses: readonly ResearchLoss[];
-}
-
+import type {
+  Article,
+  ArticleBlock,
+  ArticleInline,
+  CitationCluster,
+  CitationRef,
+  CitationEntry,
+  ResearchLoss,
+} from "@publisle/template-sdk";
+export type {
+  Article,
+  ArticleBlock,
+  ArticleInline,
+  CitationCluster,
+  CitationRef,
+  CitationEntry,
+  ResearchLoss,
+} from "@publisle/template-sdk";
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -124,7 +44,27 @@ export function readEntries(document: Document): {
       continue;
     const listed = block.data["entries"];
     if (!Array.isArray(listed)) continue;
-    for (const entry of listed) {
+    for (const original of listed) {
+      let entry: unknown = original;
+      if (
+        isRecord(entry) &&
+        typeof entry["raw"] === "string" &&
+        !entry["title"] &&
+        !entry["authors"] &&
+        !entry["issued"] &&
+        entry["raw"].trimStart().startsWith("@")
+      ) {
+        try {
+          const normalized = parseBibtex(entry["raw"])[0];
+          if (normalized) entry = { ...normalized, ...entry };
+        } catch {
+          pushLoss(
+            losses,
+            "opaque-reference-literal",
+            "Unparsed bibliography source is preserved literally.",
+          );
+        }
+      }
       if (
         !isRecord(entry) ||
         typeof entry["id"] !== "string" ||
@@ -219,7 +159,14 @@ function inlineList(value: unknown, losses: ResearchLoss[]): ArticleInline[] {
     if (!isRecord(node) || typeof node["type"] !== "string") continue;
     const type = node["type"];
     if (type === "text" && typeof node["value"] === "string") {
-      result.push({ type: "text", value: node["value"] });
+      const direction = node["direction"];
+      result.push({
+        type: "text",
+        value: node["value"],
+        ...(direction === "ltr" || direction === "rtl" || direction === "auto"
+          ? { direction }
+          : {}),
+      });
     } else if (
       (type === "emphasis" || type === "strong" || type === "strikethrough") &&
       Array.isArray(node["children"])
@@ -254,11 +201,17 @@ function inlineList(value: unknown, losses: ResearchLoss[]): ArticleInline[] {
       type === "footnoteReference" &&
       typeof node["identifier"] === "string"
     ) {
-      result.push({ type: "text", value: node["identifier"], mark: "code" });
+      result.push({
+        type: "text",
+        value: node["identifier"],
+        mark: "code",
+        reference: { kind: "footnote", target: node["identifier"] },
+      });
     } else if (type === "crossReference") {
       const label = plainText(inlineList(node["children"], losses));
       result.push({
         type: "text",
+        reference: { kind: "cross", target: textOf(node["target"]) ?? "" },
         value:
           label || (typeof node["target"] === "string" ? node["target"] : ""),
       });
@@ -315,12 +268,15 @@ export function projectArticle(document: Document): Article {
   );
   for (const block of document.blocks) {
     const data = isRecord(block.data) ? block.data : {};
+    const labeled =
+      typeof data["label"] === "string" ? { label: data["label"] } : {};
     if (block.type === "publisle:heading") {
       const role = data["role"];
       abstract = role === "abstract";
       const level = typeof data["level"] === "number" ? data["level"] : 1;
       blocks.push({
         kind: "heading",
+        ...labeled,
         level,
         inlines: inlineList(data["content"], losses),
         abstract,
@@ -362,6 +318,7 @@ export function projectArticle(document: Document): Article {
     if (block.type === "publisle:math" && typeof data["value"] === "string") {
       blocks.push({
         kind: "math",
+        ...labeled,
         value: data["value"],
         display: data["display"] === true,
         abstract,
@@ -369,13 +326,12 @@ export function projectArticle(document: Document): Article {
       continue;
     }
     if (block.type === "publisle:table" && Array.isArray(data["rows"])) {
-      pushLoss(
-        losses,
-        "table-rendered-as-text",
-        "Tables are written as text rows. Column alignment is not a journal layout.",
-      );
       blocks.push({
         kind: "table",
+        ...labeled,
+        caption: flowParagraphs(data["caption"], losses).flat(),
+        headerRows:
+          typeof data["headerRows"] === "number" ? data["headerRows"] : 1,
         rows: data["rows"].map((row) =>
           Array.isArray(row) ? row.map((cell) => inlineList(cell, losses)) : [],
         ),
@@ -399,15 +355,13 @@ export function projectArticle(document: Document): Article {
       continue;
     }
     if (block.type === "publisle:figure") {
-      const caption = flowParagraphs(data["caption"], losses).flat();
-      const alt = textOf(data["alt"]);
       blocks.push({
-        kind: "paragraph",
-        inlines: [
-          ...(alt ? [{ type: "text" as const, value: alt }] : []),
-          ...caption,
-        ],
+        kind: "figure",
+        src: textOf(data["src"]) ?? "",
+        alt: textOf(data["alt"]) ?? "",
+        caption: flowParagraphs(data["caption"], losses).flat(),
         abstract,
+        ...labeled,
       });
       continue;
     }
@@ -446,11 +400,37 @@ export function projectArticle(document: Document): Article {
         ],
         abstract,
       });
+    } else {
+      pushLoss(
+        losses,
+        "research-block-fallback",
+        `Unsupported research block ${block.type} uses readable fallback.`,
+      );
+      const readable = block.readable
+        ? resolveReadable(block.readable, block.data)
+        : undefined;
+      const content =
+        readable ?? (isRecord(data["content"]) ? data["content"] : {});
+      const paragraphs = flowParagraphs(
+        data["fallback"] ?? content.fallback,
+        losses,
+      );
+      if (content.title) paragraphs.unshift(inlineList(content.title, losses));
+      for (const paragraph of paragraphs)
+        blocks.push({ kind: "paragraph", inlines: paragraph, abstract });
     }
   }
   const title = document.metadata?.title;
   return {
     authors,
+    authorDetails: document.metadata?.authors ?? [],
+    subjects: document.metadata?.subjects ?? [],
+    ...(document.metadata?.language === undefined
+      ? {}
+      : { language: document.metadata.language }),
+    ...(document.metadata?.direction === undefined
+      ? {}
+      : { direction: document.metadata.direction }),
     blocks,
     entries: read.entries,
     losses,
@@ -460,19 +440,36 @@ export function projectArticle(document: Document): Article {
 
 export function citationClusters(article: Article): CitationCluster[] {
   const clusters: CitationCluster[] = [];
+  const notes = new Map(
+    article.blocks
+      .filter((block) => block.kind === "footnote")
+      .map((block) => [block.id, block.paragraphs]),
+  );
+  const visited = new Set<string>();
   const visit = (inlines: readonly ArticleInline[]) => {
     for (const inline of inlines) {
       if (inline.type === "citation") clusters.push(inline.cluster);
+      if (
+        inline.type === "text" &&
+        inline.reference?.kind === "footnote" &&
+        !visited.has(inline.reference.target)
+      ) {
+        visited.add(inline.reference.target);
+        for (const paragraph of notes.get(inline.reference.target) ?? [])
+          visit(paragraph);
+      }
     }
   };
   for (const block of article.blocks) {
     if (block.kind === "heading" || block.kind === "paragraph")
       visit(block.inlines);
     else if (block.kind === "list") for (const item of block.items) visit(item);
-    else if (block.kind === "quote" || block.kind === "footnote")
+    else if (block.kind === "quote")
       for (const paragraph of block.paragraphs) visit(paragraph);
-    else if (block.kind === "table")
+    else if (block.kind === "table") {
+      if (block.caption) visit(block.caption);
       for (const row of block.rows) for (const cell of row) visit(cell);
+    } else if (block.kind === "figure") visit(block.caption);
   }
   return clusters;
 }

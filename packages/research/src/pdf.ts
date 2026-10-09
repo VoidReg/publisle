@@ -99,8 +99,11 @@ function wrap(text: string, size: number): string[] {
   return lines.length === 0 ? [""] : lines;
 }
 
-/** A textual PDF in Helvetica. It is not a paginated journal layout. */
-export function toPdf(resolved: ResolvedDocument): {
+/** @deprecated Use exportPdf from @publisle/research/node for Unicode and page layout. */
+export function toPdf(
+  resolved: ResolvedDocument,
+  options: { readonly allowLossy?: boolean } = {},
+): {
   readonly pdf: Uint8Array;
   readonly losses: readonly ResearchLoss[];
 } {
@@ -135,7 +138,19 @@ export function toPdf(resolved: ResolvedDocument): {
         add(plain(paragraph, resolved, cursor), 11);
     } else if (block.kind === "code" || block.kind === "math")
       add(block.value, 10);
-    else if (block.kind === "table") {
+    else if (block.kind === "figure") {
+      losses.push({
+        code: "pdf-figure-as-text",
+        message: "Textual PDF renders figure descriptions only.",
+      });
+      add(`${block.alt} ${plain(block.caption, resolved, cursor)}`, 11);
+    } else if (block.kind === "table") {
+      if (!losses.some((loss) => loss.code === "table-rendered-as-text"))
+        losses.push({
+          code: "table-rendered-as-text",
+          message: "Textual PDF renders tables as text rows.",
+        });
+      if (block.caption) add(plain(block.caption, resolved, cursor), 11);
       for (const row of block.rows)
         add(row.map((cell) => plain(cell, resolved, cursor)).join(" | "), 10);
     } else if (block.kind === "footnote") {
@@ -199,5 +214,12 @@ export function toPdf(resolved: ResolvedDocument): {
   for (const offset of offsets.slice(1))
     pdf += `${offset.toString().padStart(10, "0")} 00000 n \n`;
   pdf += `trailer << /Size ${String(objects.length + 1)} /Root 1 0 R >>\nstartxref\n${String(xref)}\n%%EOF\n`;
+  if (
+    !options.allowLossy &&
+    losses.some((loss) => loss.code === "pdf-unencodable-character")
+  )
+    throw new Error(
+      "Legacy PDF cannot encode this text. Use exportPdf or explicitly allowLossy.",
+    );
   return { pdf: new TextEncoder().encode(pdf), losses };
 }

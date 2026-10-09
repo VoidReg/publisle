@@ -6,9 +6,15 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts",
+    "./legacy-pdf": "./src/pdf.ts"
   },
   "dependencies": {
-    "@publisle/schema": "workspace:*"
+    "@publisle/schema": "workspace:*",
+    "@publisle/template-article": "workspace:*",
+    "@publisle/template-sdk": "workspace:*",
+    "citeproc": "2.4.63",
+    "fflate": "0.8.3"
   }
 }

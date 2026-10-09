@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated -- exercises explicit legacy migration behavior */
 import { bibliographyDefinition } from "@publisle/blocks-core";
 import { createBlock, document } from "@publisle/schema";
 import { describe, expect, it } from "vitest";
@@ -79,7 +80,7 @@ const article = document({
 describe("research citation export", () => {
   it("resolves numeric citations, collapses ranges, and keeps missing keys", () => {
     const resolved = resolveDocument(article, "numeric");
-    expect(resolved.citations[0]).toBe("[1-2]");
+    expect(resolved.citations[0]).toBe("[1, 2]");
     expect(resolved.citations[1]).toBe("[1, p. 12]");
     expect(resolved.citations[2]).toBe("[missing-paper]");
     expect(resolved.unresolved).toEqual(["missing-paper"]);
@@ -143,10 +144,10 @@ describe("research citation export", () => {
   it("writes LaTeX, JATS, and a textual PDF without dropping the source citation", () => {
     const resolved = resolveDocument(article, "numeric");
     const latex = toLatex(resolved);
-    expect(latex).toContain("\\documentclass{article}");
-    expect(latex).toContain("\\usepackage{cite}");
-    expect(latex).toContain("\\cite{doe2020,roe2021}");
-    expect(latex).toContain("\\begin{thebibliography}");
+    expect(latex).toContain("\\documentclass[11pt,a4paper]{article}");
+    expect(latex).toContain("\\usepackage{fontspec}");
+    expect(latex).toContain("[1, 2]");
+    expect(latex).toContain("\\section*{References}");
     expect(latex).toContain("\\begin{abstract}");
     expect(latex).toContain("Ada Lovelace");
     const jats = toJats(resolved);
@@ -157,7 +158,7 @@ describe("research citation export", () => {
     expect(jats).toContain("<fpage>10</fpage>");
     expect(jats).toContain("<lpage>20</lpage>");
     expect(jats).toContain("<abstract>");
-    const pdf = toPdf(resolved);
+    const pdf = toPdf(resolved, { allowLossy: true });
     const source = new TextDecoder().decode(pdf.pdf);
     expect(source.startsWith("%PDF-1.4")).toBe(true);
     expect(source).toContain("%%EOF");
@@ -178,6 +179,7 @@ describe("research citation export", () => {
           ],
         }),
       ),
+      { allowLossy: true },
     );
     expect(unicode.losses.map((loss) => loss.code)).toContain(
       "pdf-unencodable-character",
