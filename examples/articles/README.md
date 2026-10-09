@@ -27,3 +27,10 @@ The SVG is an original plot of the square-wave partial sums with 1, 3, and 15 od
 harmonics, sampled at 1001 equally spaced points across one period. The article's
 license covers this original material; linked videos and course resources retain
 their own rights.
+
+## IEEE journal fixtures
+
+`ieee-journal.md` is an illustrative research manuscript with a local PDF figure,
+structured references, equations, a table and footnote. `ieee-unicode.md` exercises
+Arabic, Chinese and math through LuaLaTeX. See [local journal export](../../docs/guides/journal-export.md)
+for commands, dependencies, rebuild instructions and acceptance tests.

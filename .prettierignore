@@ -3,3 +3,9 @@ dist
 coverage
 pnpm-lock.yaml
 SPECS.md
+
+**/.next/**
+**/.astro/**
+**/next-env.d.ts
+packages/research/vendor/**
+packages/template-springer/vendor/**

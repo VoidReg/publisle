@@ -13,6 +13,9 @@ export default defineConfig(
   {
     ignores: [
       "**/dist/**",
+      "**/.next/**",
+      "**/.astro/**",
+      "**/next-env.d.ts",
       "**/.svelte-kit/**",
       "**/node_modules/**",
       "examples/svelte/svelte.config.js",

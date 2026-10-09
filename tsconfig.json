@@ -8,6 +8,7 @@
     "eslint.config.ts",
     "vitest.config.ts",
     "vitest.acceptance.config.ts",
+    "vitest.research.config.ts",
     "packages/**/*.ts",
     "packages/**/*.tsx",
     "blocks/**/*.ts",
@@ -16,5 +17,12 @@
     "examples/**/*.tsx",
     "tools/**/*.ts"
   ],
-  "exclude": ["**/dist/**", "**/node_modules/**"]
+  "exclude": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/.astro/**",
+    "examples/astro/**",
+    "examples/next/**"
+  ]
 }
