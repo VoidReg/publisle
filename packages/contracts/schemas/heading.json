@@ -18,6 +18,9 @@
     "label": {
       "type": "string",
       "pattern": "^[A-Za-z][A-Za-z0-9_:.-]*$(?![\\s\\S])"
+    },
+    "role": {
+      "enum": ["abstract", "section"]
     }
   },
   "required": ["level", "content"],

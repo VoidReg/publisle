@@ -41,11 +41,15 @@ export interface ImageReference {
   alt?: string;
 }
 
+export type WritingDirection = "ltr" | "rtl" | "auto";
+
 export interface PublicationMetadata {
   documentType?: string;
   title?: string;
   description?: string;
   language?: string;
+  /** Informational. Hosts choose whether to apply a layout direction. */
+  direction?: WritingDirection;
   authors?: Author[];
   publishedAt?: IsoDateTime;
   modifiedAt?: IsoDateTime;
@@ -62,6 +66,7 @@ export interface SerializedPublicationMetadata {
   title?: string;
   description?: string;
   language?: string;
+  direction?: WritingDirection;
   authors?: Author[];
   publishedAt?: string;
   modifiedAt?: string;
@@ -240,6 +245,7 @@ export function parsePublicationMetadata(value: unknown): PublicationMetadata {
   const title = readOptionalString(value, "title");
   const description = readOptionalString(value, "description");
   const language = readOptionalString(value, "language");
+  const direction = readOptionalString(value, "direction");
 
   if (documentType !== undefined) {
     metadata.documentType = documentType;
@@ -255,6 +261,16 @@ export function parsePublicationMetadata(value: unknown): PublicationMetadata {
 
   if (language !== undefined) {
     metadata.language = language;
+  }
+
+  if (direction !== undefined) {
+    if (direction !== "ltr" && direction !== "rtl" && direction !== "auto") {
+      throw new SchemaParseError(
+        "invalid-document",
+        "metadata.direction must be ltr, rtl, or auto.",
+      );
+    }
+    metadata.direction = direction;
   }
 
   const authors = readField(value, "authors");

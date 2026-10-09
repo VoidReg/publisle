@@ -6,7 +6,10 @@ import {
   type PublicationProfile,
   type DiagnosticPolicy,
 } from "@publisle/schema";
-import { researchPaperProfile } from "../../profiles/src/index.ts";
+import {
+  researchPaperProfile,
+  scholarlyProfile,
+} from "../../profiles/src/index.ts";
 import { assertPrepared, createRegistry, prepare } from "../src/index.ts";
 
 const registry = createRegistry(coreBlockDefinitions);
@@ -310,5 +313,31 @@ describe("preparation profiles", () => {
       }).document!.cacheIdentity,
     ).not.toBe(first);
     expect(prepare(doc, { registry }).document!.cacheIdentity).not.toBe(first);
+  });
+
+  it("keeps an unresolved citation in the prepared document", () => {
+    const source = document({
+      blocks: [
+        createBlock({
+          type: "publisle:paragraph",
+          data: {
+            content: [
+              { type: "citationReference", items: [{ id: "missing-paper" }] },
+            ],
+          },
+        }),
+      ],
+    });
+    const result = prepare(source, {
+      registry,
+      profiles: [scholarlyProfile()],
+    });
+    expect(result.document?.blocks).toHaveLength(1);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "unresolved-citation",
+        level: "warning",
+      }),
+    );
   });
 });

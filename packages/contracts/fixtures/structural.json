@@ -283,6 +283,26 @@
     "valid": false
   },
   {
+    "id": "valid-bibliography",
+    "schema": "bibliography",
+    "value": {
+      "entries": [
+        {
+          "id": "doe2026",
+          "title": "A note",
+          "raw": "Doe, A note, 2026."
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "id": "null-bibliography",
+    "schema": "bibliography",
+    "value": null,
+    "valid": false
+  },
+  {
     "id": "valid-raw-html",
     "schema": "raw-html",
     "value": {

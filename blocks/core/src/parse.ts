@@ -48,7 +48,22 @@ export function inlineNodes(
       type === "inlineMath" ||
       type === "rawHtml"
     ) {
-      return { type, value: string(node["value"], `${label}[${index}].value`) };
+      const value = string(node["value"], `${label}[${index}].value`);
+      if (node["direction"] !== undefined) {
+        if (type !== "text")
+          throw new SchemaParseError(
+            "invalid-block-data",
+            `${label}[${index}].direction is only valid on text.`,
+          );
+        const direction = node["direction"];
+        if (direction !== "ltr" && direction !== "rtl" && direction !== "auto")
+          throw new SchemaParseError(
+            "invalid-block-data",
+            `${label}[${index}].direction must be ltr, rtl, or auto.`,
+          );
+        return { type, value, direction };
+      }
+      return { type, value };
     }
     if (type === "emphasis" || type === "strong" || type === "strikethrough") {
       return {

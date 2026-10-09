@@ -16,6 +16,9 @@
     "language": {
       "type": "string"
     },
+    "direction": {
+      "enum": ["ltr", "rtl", "auto"]
+    },
     "authors": {
       "type": "array",
       "items": {

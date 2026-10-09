@@ -18,6 +18,13 @@ export {
 import { createRenderPlan } from "./render-plan.ts";
 import type { AdapterCompilerOptions, RenderPlan } from "./types.ts";
 
+function escapeAttribute(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;");
+}
+
 export const PUBLICATION_FORMAT = "publisle:publication" as const;
 export const PUBLICATION_FORMAT_VERSION = 1 as const;
 export const RENDERER_BUILD = "1";
@@ -235,7 +242,20 @@ function compilePlan(
     }
   };
   visit(nodes);
-  const html = `<div class="publisle-document" data-publisle-root>${serializeNodes(nodes)}</div>`;
+  const metadata = plan.metadata;
+  const language = metadata?.language;
+  const direction = metadata?.direction;
+  const root = [
+    'class="publisle-document"',
+    "data-publisle-root",
+    ...(typeof language === "string" && language
+      ? [`lang="${escapeAttribute(language)}"`]
+      : []),
+    ...(direction === "ltr" || direction === "rtl" || direction === "auto"
+      ? [`dir="${direction}"`]
+      : []),
+  ].join(" ");
+  const html = `<div ${root}>${serializeNodes(nodes)}</div>`;
   const hasMath = plan.document.blocks.some(
     (block) =>
       block.type === "publisle:math" ||
@@ -248,7 +268,6 @@ function compilePlan(
           { id: DOCUMENT_STYLESHEET_ID },
           ...(hasMath ? [{ id: KATEX_STYLESHEET_ID }] : []),
         ];
-  const metadata = plan.metadata;
   const unsigned = {
     format: PUBLICATION_FORMAT,
     formatVersion: PUBLICATION_FORMAT_VERSION,

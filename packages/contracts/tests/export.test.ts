@@ -46,8 +46,8 @@ async function reseal(input: ExportedContract): Promise<ExportedContract> {
 describe("portable definition bridge and offline contract exports", () => {
   it("exports every built-in/reference definition with checked canonical examples", async () => {
     const bundle = await exportRegistryContracts(registry());
-    expect(bundle.contracts).toHaveLength(15);
-    expect(bundle.roots).toHaveLength(15);
+    expect(bundle.contracts).toHaveLength(16);
+    expect(bundle.roots).toHaveLength(16);
     expect(
       await validateContractBundle(JSON.parse(canonicalizeJson(bundle))),
     ).toEqual(bundle);
