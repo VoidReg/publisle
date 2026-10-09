@@ -1,0 +1,23 @@
+{
+  "format": "publisle:rendering-codes",
+  "formatVersion": 1,
+  "comment": "Shared static-rendering diagnostic codes. Both independent renderers emit only these codes for the same conditions; messages stay implementation-specific. Capability limits (plugins, migrations, full CSL) are declared per renderer in its capability record, not as diagnostic codes.",
+  "codes": {
+    "invalid-math": "Math input was rejected or failed to render; the source TeX stays visible with the shared publisle-math-error class.",
+    "unsafe-url": "An unsafe URL was removed from output.",
+    "unresolved-reference": "A cross-reference names no known label; the reference text stays in place.",
+    "unresolved-footnote": "A footnote reference names no known note.",
+    "unresolved-citation": "A citation names no bibliography entry.",
+    "fallback-inline": "Unsupported inline content is preserved as readable text.",
+    "fallback-readable": "A block without a portable static representation is rendered through its authored or readable fallback.",
+    "unsupported-block-version": "The renderer does not implement this block schema version; no migration ran and the readable association is used.",
+    "unresolved-readable-binding": "A readable association binding could not be resolved against the block data.",
+    "missing-renderer": "No renderer is registered for a block type.",
+    "missing-static-representation": "A registered renderer exposes no static representation.",
+    "missing-diagram-renderer": "No renderer supplies the referenced diagram engine.",
+    "diagram-render-failed": "The diagram engine failed; source and authored fallback are used.",
+    "missing-embed-provider": "The embed provider is not registered; fallback content is used.",
+    "missing-island-renderer": "No interactive implementation is registered for the block type.",
+    "raw-html-placement-unscoped": "Raw HTML placement is only valid inside a scoped placement."
+  }
+}

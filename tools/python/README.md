@@ -103,7 +103,14 @@ Publisle package, schema, document and artifact versions remain frozen.
 portable JSON and returns HTML, diagnostics and explicit capability limits. It
 requires no Node process, renderer artifact or generated TypeScript HTML. The
 v1 subset covers prose/rich text/direction, lists, quotes, code, figures, tables,
-labels, authored footnotes and numeric references. Math and custom/interactive
-behavior use readable fallback; full CSL, migrations and plugins remain outside
-this subset. Tests share `packages/contracts/fixtures/static-rendering.json` with
-the TypeScript renderer. This is separate from the precompiled host demo above.
+labels, authored footnotes, numeric references and presentation MathML for a
+shared TeX subset (`^`, `_`, `\frac`, `\sqrt`, Greek letters, common operators);
+math outside the subset keeps the visible source text with the shared
+`invalid-math` diagnostic. Pass `--codes packages/contracts/rendering-codes.json`
+to verify that every emitted diagnostic code is in the shared renderer registry
+that the TypeScript renderer also validates against. Interactive and custom
+blocks, migrations and full CSL remain outside this subset. Shared fixtures:
+`packages/contracts/fixtures/static-rendering.json` (document),
+`static-rendering-mathml.json` (normalized MathML expectations matched by both
+renderers), and `rendering-codes.json` (diagnostic codes). This is separate from
+the precompiled host demo above.

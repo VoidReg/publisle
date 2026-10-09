@@ -1,11 +1,135 @@
 """Independent Publisle v1 static HTML subset. Requires Python only, never Node.
 
 Supported: core prose, rich text, direction, figures, tables, labels, authored
-notes and numeric references. Math, interactive and custom blocks use readable
-fallback with diagnostics. Does not execute plugins, migrations or full CSL.
+notes, numeric references and presentation MathML for the shared TeX subset.
+Out-of-subset math, interactive and custom blocks use readable fallback with
+shared diagnostics. Does not execute plugins, migrations or full CSL.
 """
 from html import escape
 import re
+
+MATHML_NS = " xmlns=\"http://www.w3.org/1998/Math/MathML\""
+
+GREEK = {
+    "alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ",
+    "epsilon": "ϵ", "zeta": "ζ", "eta": "η", "theta": "θ",
+    "iota": "ι", "kappa": "κ", "lambda": "λ", "mu": "μ",
+    "nu": "ν", "xi": "ξ", "pi": "π", "rho": "ρ",
+    "sigma": "σ", "tau": "τ", "upsilon": "υ", "phi": "ϕ",
+    "chi": "χ", "psi": "ψ", "omega": "ω",
+}
+OPERATORS = {
+    "+": "+", "-": "−", "=": "=",
+    "times": "×", "div": "÷", "cdot": "⋅", "pm": "±",
+    "leq": "≤", "geq": "≥", "approx": "≈", "to": "→",
+}
+CHARACTER_OPERATORS = {"+": "+", "-": "−", "=": "=", "(": "(", ")": ")", ",": ","}
+
+
+class MathError(ValueError):
+    pass
+
+
+def tokenize_math(tex):
+    tokens = []
+    i = 0
+    while i < len(tex):
+        ch = tex[i]
+        if ch.isspace():
+            i += 1
+        elif ch == "\\":
+            j = i + 1
+            while j < len(tex) and tex[j].isalpha():
+                j += 1
+            if j == i + 1:
+                raise MathError("lone backslash")
+            tokens.append("\\" + tex[i + 1:j])
+            i = j
+        elif ch in "{}^_":
+            tokens.append(ch)
+            i += 1
+        else:
+            tokens.append(ch)
+            i += 1
+    return tokens
+
+
+def wrap_math(children):
+    if len(children) == 1:
+        return children[0]
+    return "<mrow>" + "".join(children) + "</mrow>"
+
+
+def parse_math_atom(tokens, i):
+    if i >= len(tokens):
+        raise MathError("unexpected end of input")
+    token = tokens[i]
+    if token == "{":
+        children, i = parse_math_sequence(tokens, i + 1, True)
+        return i + 1, wrap_math(children)
+    if token == "}":
+        raise MathError("unmatched }")
+    if token in ("^", "_"):
+        raise MathError("script marker without a base")
+    if token.startswith("\\"):
+        name = token[1:]
+        if name == "frac":
+            i, numerator = parse_math_atom(tokens, i + 1)
+            i, denominator = parse_math_atom(tokens, i)
+            return i, "<mfrac>" + numerator + denominator + "</mfrac>"
+        if name == "sqrt":
+            i, body = parse_math_atom(tokens, i + 1)
+            return i, "<msqrt>" + body + "</msqrt>"
+        if name in GREEK:
+            return i + 1, "<mi>" + GREEK[name] + "</mi>"
+        if name in OPERATORS:
+            return i + 1, "<mo>" + OPERATORS[name] + "</mo>"
+        raise MathError("unsupported command \\" + name)
+    if token in CHARACTER_OPERATORS:
+        return i + 1, "<mo>" + CHARACTER_OPERATORS[token] + "</mo>"
+    if token.isdigit():
+        j = i
+        while j < len(tokens) and tokens[j].isdigit():
+            j += 1
+        return j, "<mn>" + "".join(tokens[i:j]) + "</mn>"
+    if token.isalpha():
+        return i + 1, "<mi>" + escape(token) + "</mi>"
+    raise MathError("unsupported character " + repr(token))
+
+
+def parse_math_sequence(tokens, i, in_group):
+    children = []
+    while i < len(tokens):
+        token = tokens[i]
+        if token == "}":
+            if in_group:
+                return children, i
+            raise MathError("unmatched }")
+        i, atom = parse_math_atom(tokens, i)
+        while i < len(tokens) and tokens[i] in ("^", "_"):
+            kind = tokens[i]
+            i, script = parse_math_atom(tokens, i + 1)
+            tag = "msup" if kind == "^" else "msub"
+            atom = "<" + tag + ">" + atom + script + "</" + tag + ">"
+        children.append(atom)
+    if in_group:
+        raise MathError("unclosed {")
+    return children, i
+
+
+def mathml(tex, display):
+    children, _ = parse_math_sequence(tokenize_math(tex), 0, False)
+    attr = MATHML_NS + (' display="block"' if display else "")
+    return "<math" + attr + "><mrow>" + "".join(children) + "</mrow></math>"
+
+
+def load_rendering_codes(path):
+    import json
+    with open(path, "r", encoding="utf-8") as handle:
+        document = json.load(handle)
+    if document.get("format") != "publisle:rendering-codes":
+        raise ValueError("Expected publisle:rendering-codes")
+    return set(document["codes"])
 
 
 def render_document(document, instance_id="article"):
@@ -41,6 +165,14 @@ def render_document(document, instance_id="article"):
     def diagnostic(block, code, message):
         diagnostics.append({"code": code, "message": message, "blockId": block["id"]})
 
+    def math_node(value, display, block):
+        try:
+            return mathml(str(value), display)
+        except MathError as error:
+            diagnostic(block, "invalid-math", "Math could not be rendered: " + str(error))
+            tag = "pre" if display else "code"
+            return f'<{tag} class="publisle-math-error">{escape(str(value))}</{tag}>'
+
     def attr(value):
         return escape(str(value), quote=True)
 
@@ -67,8 +199,7 @@ def render_document(document, instance_id="article"):
             elif kind in ("hardBreak", "softBreak"):
                 result.append("<br>" if kind == "hardBreak" else " ")
             elif kind == "inlineMath":
-                diagnostic(block, "python-math-fallback", "Math is preserved as source text.")
-                result.append("<code>" + escape(node["value"]) + "</code>")
+                result.append(math_node(node.get("value", ""), False, block))
             elif kind == "crossReference":
                 target = labels.get(node["target"])
                 text = inline(node.get("children", []), block) or escape(node["target"])
@@ -95,7 +226,7 @@ def render_document(document, instance_id="article"):
                         numbers.append(f'<a href="#{attr(identifier(key, "ref"))}">{cited[key]}{locator}</a>')
                 result.append(escape(node.get("prefix", "")) + "[" + ", ".join(numbers) + "]" + escape(node.get("suffix", "")))
             else:
-                diagnostic(block, "python-inline-fallback", "Unsupported inline content uses readable text.")
+                diagnostic(block, "fallback-inline", "Unsupported inline content uses readable text.")
                 result.append(escape(node.get("value", "")))
         return "".join(result)
 
@@ -121,7 +252,7 @@ def render_document(document, instance_id="article"):
                     key = part.replace("~1", "/").replace("~0", "~")
                     content = content[int(key)] if isinstance(content, list) else content[key]
             except (KeyError, IndexError, ValueError, TypeError):
-                diagnostic(block, "python-readable-binding", "Readable binding cannot be resolved.")
+                diagnostic(block, "unresolved-readable-binding", "Readable binding cannot be resolved.")
                 return ""
         result = inline(content.get("title", []), block)
         for key in ("description", "instructions", "purpose", "observations", "assumptions", "fallback"):
@@ -134,7 +265,7 @@ def render_document(document, instance_id="article"):
         kind, data = block["type"], block.get("data", {})
         label = f' id="{attr(labels[data["label"]])}"' if data.get("label") else ""
         if block.get("schemaVersion") != 1:
-            diagnostic(block, "python-unsupported-version", "No migrations execute in Python.")
+            diagnostic(block, "unsupported-block-version", "No migrations execute in Python.")
             body.append(readable_flow(block))
             continue
         if kind == "publisle:heading":
@@ -156,12 +287,14 @@ def render_document(document, instance_id="article"):
                 tag = "th" if i < data.get("headerRows", 1) else "td"
                 rows.append("<tr>" + "".join(f'<{tag}>' + inline(cell, block) + f'</{tag}>' for cell in row) + "</tr>")
             body.append(f'<table{label}><caption>' + flow(data.get("caption", []), block) + "</caption><tbody>" + "".join(rows) + "</tbody></table>")
+        elif kind == "publisle:math":
+            body.append(math_node(data.get("value", ""), bool(data.get("display")), block))
         elif kind == "publisle:footnote":
             body.append(f'<aside id="{attr(identifier(data["identifier"], "note"))}">' + flow(data.get("children", []), block) + "</aside>")
         elif kind == "publisle:bibliography":
             bibliography_present = True
         else:
-            diagnostic(block, "python-block-fallback", "Unsupported math, interactive or custom behavior uses readable fallback.")
+            diagnostic(block, "fallback-readable", "Unsupported interactive or custom behavior uses readable fallback.")
             readable = block.get("readable", {})
             body.append(flow(data.get("fallback", []), block) or readable_flow(block) or "<p>" + escape(data.get("alt", data.get("value", readable.get("text", "")))) + "</p>")
     if bibliography_present or cited:
@@ -187,8 +320,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("--instance-id", default="article")
+    parser.add_argument("--codes", type=Path, default=None,
+                        help="publisle:rendering-codes registry to validate emitted codes against")
     args = parser.parse_args()
-    print(json.dumps(render_document(parse_json(args.source.read_bytes()), args.instance_id), ensure_ascii=False))
+    result = render_document(parse_json(args.source.read_bytes()), args.instance_id)
+    if args.codes:
+        allowed = load_rendering_codes(args.codes)
+        unknown = sorted({item["code"] for item in result["diagnostics"]} - allowed)
+        if unknown:
+            raise SystemExit("Diagnostic codes outside the shared registry: " + ", ".join(unknown))
+    print(json.dumps(result, ensure_ascii=False))
 
 
 if __name__ == "__main__":

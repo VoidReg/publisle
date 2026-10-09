@@ -82,10 +82,45 @@
             "value": " "
           },
           {
+            "type": "inlineMath",
+            "value": "x^2"
+          },
+          {
+            "type": "text",
+            "value": " grows, and "
+          },
+          {
+            "type": "inlineMath",
+            "value": "\\alpha + \\beta"
+          },
+          {
+            "type": "text",
+            "value": " bounds it. "
+          },
+          {
             "type": "footnoteReference",
             "identifier": "1"
           }
         ]
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "type": "publisle:math",
+      "schemaVersion": 1,
+      "data": {
+        "value": "\\frac{a}{b}",
+        "display": true,
+        "label": "ratio"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000000a",
+      "type": "publisle:math",
+      "schemaVersion": 1,
+      "data": {
+        "value": "x_i + \\sqrt{2}",
+        "display": true
       }
     },
     {

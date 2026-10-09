@@ -7,18 +7,56 @@ import { parseDocument, parseJson } from "@publisle/schema";
 import { createRegistry } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { preparePublication } from "../src/node.ts";
-it("Python independently preserves the shared static rendering semantics", async () => {
-  const fixture = fileURLToPath(
-    new URL("../../contracts/fixtures/static-rendering.json", import.meta.url),
+
+const fixtures = (relative: string) =>
+  fileURLToPath(new URL(relative, import.meta.url));
+
+/** KaTeX and the independent converter both produce these trees after normalization. */
+function normalizeMathml(mathml: string): string {
+  return mathml
+    .replace(/<annotation[\s\S]*?<\/annotation>/gu, "")
+    .replace(/<\/?semantics>/gu, "")
+    .replace(/>\s+</gu, "><")
+    .trim();
+}
+
+it("registers every TypeScript rendering diagnostic code in the shared registry", async () => {
+  const registry = JSON.parse(
+    await readFile(fixtures("../../contracts/rendering-codes.json"), "utf8"),
+  ) as { codes: Record<string, string> };
+  const sources = await Promise.all(
+    ["render-plan.ts", "publication.ts", "html.ts"].map((name) =>
+      readFile(fixtures(`../src/${name}`), "utf8"),
+    ),
   );
+  const emitted = new Set<string>();
+  for (const source of sources)
+    for (const match of source.matchAll(/code: "([a-z][a-z-]+)"/gu))
+      emitted.add(match[1]!);
+  const unknown = [...emitted].filter((code) => !(code in registry.codes));
+  expect(unknown, "unregistered rendering codes").toEqual([]);
+});
+
+it("Python independently preserves the shared static rendering semantics", async () => {
+  const fixture = fixtures("../../contracts/fixtures/static-rendering.json");
+  const expectations = JSON.parse(
+    await readFile(
+      fixtures("../../contracts/fixtures/static-rendering-mathml.json"),
+      "utf8",
+    ),
+  ) as {
+    expectations: { tex: string; display: boolean; mathml: string }[];
+  };
   const source = parseDocument(parseJson(await readFile(fixture, "utf8")));
   const publication = preparePublication(source, {
     registry: createRegistry(coreBlockDefinitions),
   });
   const { stdout } = await promisify(execFile)("python3", [
     "-B",
-    fileURLToPath(new URL("../../../tools/python/render.py", import.meta.url)),
+    fixtures("../../../tools/python/render.py"),
     fixture,
+    "--codes",
+    fixtures("../../contracts/rendering-codes.json"),
   ]);
   const python = JSON.parse(stdout) as { html: string; diagnostics: unknown[] };
   expect(python.diagnostics).toEqual([]);
@@ -44,6 +82,7 @@ it("Python independently preserves the shared static rendering semantics", async
     "table",
     "th",
     "td",
+    "math",
   ])
     expect(
       python.html.match(new RegExp(`<${tag}(?: |>)`, "gu"))?.length,
@@ -51,4 +90,17 @@ it("Python independently preserves the shared static rendering semantics", async
     ).toBe(publication.html.match(new RegExp(`<${tag}(?: |>)`, "gu"))?.length);
   expect(python.html).toContain('dir="rtl"');
   expect(publication.html).toContain('dir="rtl"');
+
+  // Both renderers must produce the shared normalized MathML trees, in order.
+  const collect = (html: string) => {
+    const trees: string[] = [];
+    for (const match of html.matchAll(/<math[\s\S]*?<\/math>/gu))
+      trees.push(normalizeMathml(match[0]!));
+    return trees;
+  };
+  const expected = expectations.expectations.map((entry) =>
+    normalizeMathml(entry.mathml),
+  );
+  expect(collect(publication.html)).toEqual(expected);
+  expect(collect(python.html)).toEqual(expected);
 });
