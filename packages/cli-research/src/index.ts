@@ -70,9 +70,7 @@ These commands require the optional @publisle/cli-research plugin.
 `;
 
 function isResearchConfig(value: unknown): ResearchCliConfig {
-  return typeof value === "object" && value !== null
-    ? (value)
-    : {};
+  return typeof value === "object" && value !== null ? value : {};
 }
 
 /** Research-profile commands, loaded dynamically by the Core CLI when installed. */
@@ -225,9 +223,7 @@ async function exportCommand(
     target !== "submission" &&
     target !== "latex"
   )
-    throw new Error(
-      "Templates apply to PDF, LaTeX and submission exports.",
-    );
+    throw new Error("Templates apply to PDF, LaTeX and submission exports.");
   if (archive && target !== "submission" && target !== "jats-submission")
     throw new Error("--archive requires submission export.");
   if (
@@ -260,8 +256,7 @@ async function exportCommand(
       ),
       dirname(sourceName),
     );
-    if (archive)
-      await writePackageArchive(result, resolve(outputFile ?? ""));
+    if (archive) await writePackageArchive(result, resolve(outputFile ?? ""));
     else await writeLatexPackage(result, resolve(outputFile ?? ""));
     return 0;
   }
@@ -345,8 +340,7 @@ async function exportCommand(
         : target === "latex"
           ? toLatex(resolved)
           : toJats(resolved);
-  if (outputFile)
-    await writeFile(resolve(outputFile), text, { flag: "wx" });
+  if (outputFile) await writeFile(resolve(outputFile), text, { flag: "wx" });
   else io.stdout(text.endsWith("\n") ? text : `${text}\n`);
   return 0;
 }

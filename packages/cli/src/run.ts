@@ -34,22 +34,19 @@ import { coreBlockDefinitions } from "@publisle/blocks-core";
  */
 type ResearchPlugin = typeof import("@publisle/cli-research");
 
-const researchCommands = [
-  "export",
-  "bibliography",
-  "doctor",
-  "setup",
-] as const;
+const researchCommands = ["export", "bibliography", "doctor", "setup"] as const;
 
 type ResearchCommandName = (typeof researchCommands)[number];
 
-function isResearchCommand(value: string | undefined): value is ResearchCommandName {
+function isResearchCommand(
+  value: string | undefined,
+): value is ResearchCommandName {
   return (researchCommands as readonly string[]).includes(value ?? "");
 }
 
 async function loadResearchPlugin(): Promise<ResearchPlugin | undefined> {
   try {
-    return (await import("@publisle/cli-research"));
+    return await import("@publisle/cli-research");
   } catch (cause) {
     if (
       cause instanceof Error &&

@@ -11,6 +11,13 @@ The tool is in beta: existing version numbers remain frozen while contracts evol
 See the [beta standards](docs/standards/README.md) and [preparation-only contract tooling](docs/guides/contracts.md)
 for the implemented portable subset and its limitations.
 
+Publisle separates a lean **Core** (this document model, validation, and static
+publication — no TeX, citeproc, or template dependency) from the optional
+**Research profile** for scholarly publishing: citation resolution, journal
+templates, LaTeX/JATS/PDF export, and a pinned compiler toolchain
+([publishing standard](docs/standards/publishing.md),
+[export guide](docs/guides/journal-export.md)). Core adopters never install it.
+
 ## What it solves
 
 Rich articles often become tied to a framework, hide their interactive data
@@ -79,7 +86,9 @@ and native static/interactive renderers.
 
 The optional [Node CLI](docs/developer-guide.md#optional-node-validation-and-source-upgrades)
 validates without writing and previews upgrades by default; replacing source
-requires explicit authorization. Pure metadata, outline, and reference helpers
+requires explicit authorization. Research commands (journal export, bibliography,
+compiler setup) live in the separate `@publisle/cli-research` plugin, which the
+CLI loads when installed. Pure metadata, outline, and reference helpers
 return data without changing the host page.
 
 For immutable contract pins, archival Markdown and offline asset packages, see the

@@ -1,10 +1,16 @@
-# Optional scholarly and publishing profiles
+# Publisle Research profile — scholarly and publishing contracts
 
-These profiles are informational. They are not required for every document, and they do not select a citation style, page layout, font, or route.
+**Status:** Normative for the Publisle Research profile (beta). The profile layers on [Publisle Core](README.md); Core adopters need none of this document's packages.
+
+The Research profile collects the optional scholarly machinery: bibliography entries and citation checks, citation resolution and journal export, publisher template packages, the pinned compiler toolchain, and the research-paper/scholarly conformance profiles. Everything here is optional. These profiles are informational: they are not required for every document, and they do not select a citation style, page layout, font, or route.
+
+Adopting the profile means installing `@publisle/research`, the `@publisle/template-*` packages, and — for PDF — a TeX toolchain tier (see the [engine tiers](../guides/journal-export.md)); none of it enters reader bundles. The [Core CLI](../../README.md) loads these commands through the optional `@publisle/cli-research` plugin and reports install guidance when it is absent.
 
 ## Citations and sections
 
 `publisle:bibliography` stores optional entries (`id`, `title`, `authors`, `raw`). `raw` is opaque source and is kept exactly. The document envelope schema does not give this type its own alternative. The portable applicator refuses more than 16 `oneOf` branches, which is a validator limit rather than the interoperability rule, so envelope validation preserves the block as an unknown type. Entry shape is checked by the bibliography schema and the authoring parser. The `scholarly` profile warns by default on duplicate entry ids and on citation ids that have no entry. A host may promote those codes through `diagnosticPolicy`. Unresolved citations remain in the source and in rendered text. The profile does not format citations.
+
+The `scholarly` and `research-paper` profiles ship with `@publisle/research`, not with the Core `@publisle/profiles` package. The research-paper profile composes the Core accessibility profile's figure check.
 
 ## Citation resolution and research export
 
@@ -26,4 +32,4 @@ Captions, credits, licenses, and figures stay the existing fields. This profile 
 
 `metadata.language` is an exact string. `metadata.direction` and text `direction` are `ltr`, `rtl`, or `auto`. Unicode is not normalized. The `localization` profile reports that a host still chooses layout. A host that ignores `dir` is an explicit limitation, not a successful universal renderer.
 
-The `print` profile warns by default when a diagram lacks `fallback` and `printFallback`, or an embed lacks `fallback`. It does not paginate. The localization profile reports `host-direction-policy` at `info` when direction is present. `diagnosticPolicy` can map any of these codes to `info`, `warning`, or `error`. Island explanations remain the interactive publication profile's job.
+The `print` profile warns by default when a diagram lacks `fallback` and `printFallback`, or an embed lacks `fallback`. It does not paginate. The localization profile reports `host-direction-policy` at `info` when direction is present. `diagnosticPolicy` can map any of these codes to `info`, `warning`, or `error`. Island explanations remain the interactive publication profile's job. The `localization` and `print` profiles ship with Core `@publisle/profiles`; this document records their publishing relevance, not their implementation home.

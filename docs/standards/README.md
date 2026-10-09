@@ -2,21 +2,30 @@
 
 These documents define the implemented portable subset independently of SDK types. They are not a claim that the entire standardization roadmap is complete.
 
-| Contract                        | Normative definition                    | Machine-readable source                                                                                                     |
-| ------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Roles, trust and beta changes   | [Conformance](conformance.md)           | [Foundation diagnostics](../../packages/contracts/schemas/foundation-diagnostic.json)                                       |
-| JSON boundaries and digests     | [JSON wire profile](json-wire.md)       | Shared canonical fixtures                                                                                                   |
-| Structural validation           | [Schema profile](schema-profile.md)     | [Beta schemas](../../packages/contracts/schemas/)                                                                           |
-| Preparation                     | [Preparation order](preparation.md)     | Existing preparation APIs and regression fixtures                                                                           |
-| Semantic meaning and traversal  | [Meaning and preservation](meaning.md)  | Shared declaration, explanation and readable schemas/fixtures                                                               |
-| Portable contracts and bundles  | [Contract export](contracts.md)         | Complete definition sources, sealed exports and offline lock/bundle APIs                                                    |
-| Locked source and packages      | [Exchange](exchange.md)                 | Immutable manifest, archival grammar and bounded directory I/O                                                              |
-| Native/artifact parity          | [Delivery](delivery.md)                 | Common island input, placement and fidelity regression fixtures                                                             |
-| Semantic exports and inspection | [Projections](projections.md)           | Linked/standalone JSON and authored reading Markdown                                                                        |
-| State and bounded composition   | [Composition](composition.md)           | Closed profile, direct lowering, compatible snapshots and typed ports                                                       |
-| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; recorded caps are not a merge gate                                               |
-| Scholarly and publishing        | [Publishing profiles](publishing.md)    | Bibliography entries, citation resolution, BibTeX, CSL subset, LaTeX, JATS, PDF, direction, header rows, and print warnings |
-| MyST                            | [MyST mapping](myst.md)                 | Loss table exported as `MYST_LOSS_TABLE`                                                                                    |
+## Core and profiles
+
+The standard is split into a lean **Publisle Core** and optional named profiles. Core covers the portable document model, preparation, contracts/exchange, delivery, projections, composition, and the Markdown/JSON boundary — an adopter can validate, publish, and self-host with no TeX, citeproc, template, or container dependency. The **Research profile** ([publishing](publishing.md)) layers scholarly machinery on top and is never a Core dependency (see [core-packages.json](../../packages/core-packages.json) and the lint boundary).
+
+| Set              | Contents                                                                                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core             | Schema, core, block SDK, blocks, markdown, contracts, profiles, adapters, Core CLI (validate/upgrade/lock/inspect/semantic/reading)                         |
+| Research profile | `@publisle/research`, template packages, `@publisle/cli-research` plugin (export/bibliography/doctor/setup compiler), scholarly and research-paper profiles |
+
+| Contract                        | Normative definition                    | Machine-readable source                                                                                                        |
+| ------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Roles, trust and beta changes   | [Conformance](conformance.md)           | [Foundation diagnostics](../../packages/contracts/schemas/foundation-diagnostic.json)                                          |
+| JSON boundaries and digests     | [JSON wire profile](json-wire.md)       | Shared canonical fixtures                                                                                                      |
+| Structural validation           | [Schema profile](schema-profile.md)     | [Beta schemas](../../packages/contracts/schemas/)                                                                              |
+| Preparation                     | [Preparation order](preparation.md)     | Existing preparation APIs and regression fixtures                                                                              |
+| Semantic meaning and traversal  | [Meaning and preservation](meaning.md)  | Shared declaration, explanation and readable schemas/fixtures                                                                  |
+| Portable contracts and bundles  | [Contract export](contracts.md)         | Complete definition sources, sealed exports and offline lock/bundle APIs                                                       |
+| Locked source and packages      | [Exchange](exchange.md)                 | Immutable manifest, archival grammar and bounded directory I/O                                                                 |
+| Native/artifact parity          | [Delivery](delivery.md)                 | Common island input, placement and fidelity regression fixtures                                                                |
+| Semantic exports and inspection | [Projections](projections.md)           | Linked/standalone JSON and authored reading Markdown                                                                           |
+| State and bounded composition   | [Composition](composition.md)           | Closed profile, direct lowering, compatible snapshots and typed ports                                                          |
+| Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; recorded caps are not a merge gate                                                  |
+| Research profile                | [Publishing profiles](publishing.md)    | Bibliography entries, citation resolution, BibTeX, CSL via citeproc, LaTeX/JATS/PDF export, template packages, pinned compiler |
+| MyST                            | [MyST mapping](myst.md)                 | Loss table exported as `MYST_LOSS_TABLE`                                                                                       |
 
 ## Status and frozen versions
 
@@ -40,7 +49,7 @@ SDK usage belongs in the [contract](../guides/contracts.md), [meaning](../guides
 - Added optional bounded state, compatible snapshots, typed relationships/ports and direct JavaScript lowering without adding reader schema/compiler tooling.
 - Added an opt-in interactive publication profile, shared keyboard/cancel/focus lifecycle, print and no-JavaScript explanations, and a host-owned Fourier partial-sum example.
 - Recorded the reviewed preparation and reader budgets as a local comparison snapshot. GitHub Actions does not enforce them. Host compilation caching reuses unchanged documents without entering reader bundles.
-- Added optional bibliography entries, heading roles, table header rows, language direction, and print warnings. Citation resolution, BibTeX, a supported CSL subset, and LaTeX, JATS, and PDF article export live in `@publisle/research`. None of the publishing profiles are mandatory, and they do not select a citation style.
+- Added optional bibliography entries, heading roles, table header rows, language direction, and print warnings. Citation resolution, BibTeX, citeproc-backed CSL formatting, and LaTeX, JATS, and PDF article export live in `@publisle/research` behind the Research profile; scholarly and research-paper profiles ship there too. The Core CLI loads research commands through the optional `@publisle/cli-research` plugin, so a Core-only install carries none of it. None of the publishing profiles are mandatory, and they do not select a citation style.
 - Added an initial MyST mapping with an explicit loss table and opaque preservation for unsupported interactive blocks. A packed schema starter shows a clean-install import.
 
 Performance evidence: [preparation measurements](performance.md), [profiling analysis](performance-analysis.md), and the [recorded calibration snapshot](performance-budgets.md). Production reader and MDX harness commands and measurement boundaries are documented in [the benchmark instructions](../../tools/benchmarks/README.md).

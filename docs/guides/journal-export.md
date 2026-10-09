@@ -1,5 +1,7 @@
 # Local research export and template packages
 
+Part of the **Publisle Research profile** ([publishing](../standards/publishing.md)). These commands require the optional `@publisle/cli-research` plugin; the Core CLI prints install guidance when it is absent. Core adopters publish through [native adapters or publication artifacts](../../README.md) with no TeX dependency.
+
 PDF export defaults to the Unicode article template and LuaLaTeX. It never falls
 back to Helvetica. The deprecated synchronous `toPdf` API remains available for
 migration and rejects unencodable characters unless `{ allowLossy: true }` is

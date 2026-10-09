@@ -186,6 +186,11 @@ Observe the output on each clock edge.
 ### Optional Node validation and source upgrades
 
 The source workspace includes `@publisle/cli` and its `publisle` bin entrypoint.
+The Core CLI covers `validate`, `upgrade`, `lock`, `inspect`, `semantic`, and
+`reading`. Research commands (`export`, `bibliography`, `doctor`,
+`setup compiler`) belong to the optional `@publisle/cli-research` plugin: the
+Core CLI loads it when installed and otherwise explains how to add it, so a
+Core-only install never pulls the Research toolchain.
 Use Node >=24 (strip-only TypeScript, as with the workspace packages) and the root
 script; this is not a prebuilt standalone npm distribution:
 

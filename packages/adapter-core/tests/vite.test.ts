@@ -166,10 +166,7 @@ describe("publication Vite target", () => {
         path.join(tmpdir(), "publisle-profile-vite-"),
       );
       const filename = path.join(directory, "article.md");
-      await writeFile(
-        filename,
-        '# Title\n\n:::figure{src="plot.svg"}\n:::\n',
-      );
+      await writeFile(filename, '# Title\n\n:::figure{src="plot.svg"}\n:::\n');
       const server = await createServer({
         configFile: false,
         root: directory,

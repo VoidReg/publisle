@@ -4,10 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createBlock, document } from "@publisle/schema";
 import { runCli } from "@publisle/cli/run";
-import {
-  researchCommandNames,
-  runResearchCommand,
-} from "../src/index.ts";
+import { researchCommandNames, runResearchCommand } from "../src/index.ts";
 
 describe("Research CLI plugin", () => {
   let directory: string;
