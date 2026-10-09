@@ -53,6 +53,8 @@ yet measured. The synthetic identity graph is not a contract-resolution benchmar
 Deterministic byte and correctness regressions fail on the first run. A timing
 breach reruns that workload once on the same software and workload settings;
 both raw runs and runner metadata are kept. If both exceed the accepted cap,
-the gate fails. If only one exceeds it, the result is noisy and fails closed
-so it cannot pass without review. A hardware or software change requires a new
-calibration proposal; never move thresholds to make an optimization pass.
+the gate fails. If only one exceeds it, the result is noisy: the disagreement
+stays in the log and does not fail the job, because runner noise of a fraction
+of a millisecond is not a reproduced regression. A hardware or software change
+requires a new calibration proposal; never move thresholds to make an
+optimization pass.

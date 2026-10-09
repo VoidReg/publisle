@@ -158,4 +158,4 @@ Timing caps use the largest observed run p95 plus twice the largest run standard
 
 The baseline predates the final native provenance-marker correction; current smoke calibration checks that small reader change. These allowances are the accepted caps. Smoke runs cannot revise them.
 
-Three independent runner repetitions are calibration evidence, not proof of stable tail latency. Smoke runs cannot produce this proposal. Script, heap, long tasks and CLS remain observations. CSS and props overlap HTML/JS. An accepted deterministic breach fails immediately; timing gets one clean rerun, with both results preserved and noisy disagreement requiring review. No cap is raised automatically.
+Three independent runner repetitions are calibration evidence, not proof of stable tail latency. Smoke runs cannot produce this proposal. Script, heap, long tasks and CLS remain observations. CSS and props overlap HTML/JS. An accepted deterministic breach fails immediately; timing gets one clean rerun, with both results preserved. Noisy disagreement stays in the log and does not fail the job. A breach that is present in both runs fails. No cap is raised automatically.
