@@ -72,6 +72,24 @@ it("enforces accepted caps with an immediate byte failure and one timing rerun",
       },
     ).status,
   ).toBe("noisy");
+  expect(
+    judgeMetrics(
+      [{ name: "prep", kind: "timing", value: 40.9, samples: 30 }],
+      { bytes: {}, timingP95Ms: { prep: 40 } },
+      { enforceTiming: true, requireComplete: true },
+    ).status,
+  ).toBe("pass");
+  expect(
+    judgeMetrics(
+      [{ name: "prep", kind: "timing", value: 627.813, samples: 30 }],
+      { bytes: {}, timingP95Ms: { prep: 626 } },
+      {
+        enforceTiming: true,
+        requireComplete: true,
+        rerun: [{ name: "prep", kind: "timing", value: 626.457, samples: 30 }],
+      },
+    ).status,
+  ).toBe("noisy");
   expect(gateExitCode("noisy")).toBe(0);
   expect(gateExitCode("fail")).toBe(1);
   expect(gateExitCode("retry")).toBe(2);

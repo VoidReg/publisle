@@ -1,4 +1,11 @@
 export { fromMarkdown } from "./import.ts";
+export {
+  fromMyST,
+  toMyST,
+  MYST_LOSS_TABLE,
+  type MystLoss,
+  type MystImport,
+} from "./myst.ts";
 export { toMarkdown, toReadingMarkdown } from "./export.ts";
 export { deterministicBlockId } from "./id.ts";
 export type * from "./types.ts";

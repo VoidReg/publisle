@@ -16,6 +16,7 @@ These documents define the implemented portable subset independently of SDK type
 | State and bounded composition   | [Composition](composition.md)           | Closed profile, direct lowering, compatible snapshots and typed ports                 |
 | Matched baselines               | [Performance baselines](performance.md) | Review snapshot of prepare time and bytes; accepted caps are separate                 |
 | Scholarly and publishing        | [Publishing profiles](publishing.md)    | Optional bibliography, direction, header rows, and print warnings                     |
+| MyST                            | [MyST mapping](myst.md)                 | Loss table exported as `MYST_LOSS_TABLE`                                              |
 
 ## Status and frozen versions
 
@@ -40,5 +41,6 @@ SDK usage belongs in the [contract](../guides/contracts.md), [meaning](../guides
 - Added an opt-in interactive publication profile, shared keyboard/cancel/focus lifecycle, print and no-JavaScript explanations, and a host-owned Fourier partial-sum example.
 - Accepted the reviewed preparation and reader budgets and enforced them in CI. Host compilation caching reuses unchanged documents without entering reader bundles.
 - Added optional bibliography resolution, heading roles, table header rows, language direction, and print warnings. None of these profiles are mandatory.
+- Added an initial MyST mapping with an explicit loss table and opaque preservation for unsupported interactive blocks. A packed schema starter shows a clean-install import.
 
 Performance evidence: [preparation measurements](performance.md), [profiling analysis](performance-analysis.md), and [CI calibration and budget review](performance-budgets.md). Production reader and MDX harness commands and measurement boundaries are documented in [the benchmark instructions](../../tools/benchmarks/README.md).

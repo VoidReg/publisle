@@ -115,7 +115,7 @@ export function judgeMetrics(
       const second = options.rerun?.find(
         (entry) => entry.name === name && entry.kind === kind,
       );
-      const over = observed.value > cap;
+      const over = timingOver(observed.value, cap);
       if (!options.rerun) {
         findings.push({
           name,
@@ -141,7 +141,7 @@ export function judgeMetrics(
         });
         continue;
       }
-      const rerunOver = second.value > cap;
+      const rerunOver = timingOver(second.value, cap);
       findings.push({
         name,
         kind,
@@ -156,6 +156,11 @@ export function judgeMetrics(
   consider("bytes", caps.bytes);
   consider("timing", caps.timingP95Ms);
   return { status: overall(findings), findings };
+}
+
+/** Caps are whole milliseconds, so a p95 is over only once it reaches the next millisecond. */
+function timingOver(value: number, cap: number): boolean {
+  return value >= cap + 1;
 }
 
 function overall(findings: readonly BudgetFinding[]): BudgetReport["status"] {
