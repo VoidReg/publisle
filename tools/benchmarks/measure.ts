@@ -6,7 +6,12 @@ import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { gzipSync } from "node:zlib";
 import { compilePublication } from "../../packages/adapter-core/src/index.ts";
-import { createRegistry, prepare } from "../../packages/core/src/index.ts";
+import {
+  compileCorpus,
+  createCompilationCache,
+  createRegistry,
+  prepare,
+} from "../../packages/core/src/index.ts";
 import type {
   Block,
   BlockType,
@@ -275,6 +280,33 @@ if (worker) {
       warmups: 0,
       note: "Parent elapsed time including process startup, imports, registry, fixture and first preparation.",
     });
+    const incrementalCache = createCompilationCache();
+    const corpusSources = documents.map((document, index) => ({
+      key: `corpus-${String(index)}`,
+      document,
+    }));
+    await compileCorpus({
+      registry,
+      cache: incrementalCache,
+      documents: corpusSources,
+      concurrency: 4,
+    });
+    const incrementalStarted = performance.now();
+    const incremental = await compileCorpus({
+      registry,
+      cache: incrementalCache,
+      documents: corpusSources,
+      concurrency: 4,
+    });
+    if (incremental.documents.some((entry) => entry.status !== "reused"))
+      throw new Error("Unchanged corpus document was rebuilt");
+    samples.push({
+      name: "corpus-10000 incremental prepare",
+      unit: "ms",
+      values: [performance.now() - incrementalStarted],
+      warmups: 0,
+      note: "Host compilation-cache hit for an unchanged corpus. Not a numerical budget.",
+    });
     await writeFile(
       resolve(output, "samples.json"),
       JSON.stringify({ environment, samples, complete: true }, null, 2),
@@ -293,7 +325,7 @@ if (worker) {
       .map(([key, value]) => `- ${key}: ${String(value)}`)
       .join(
         "\n",
-      )}\n- Warmups are excluded. Each workload records its own count; cold processes have no warmups.\n- p50/p95 use nearest rank; variance is sample variance in squared units. Byte rows are deterministic single observations.\n- Corpus throughput at median elapsed time: ${(10000 / (quantile(corpusSample.values, 0.5) / 1000)).toFixed(1)} documents/second.\n\n## Results\n\n| Workload | Samples | p50 | p95 | Variance | Boundary |\n| --- | --- | --- | --- | --- | --- |\n${samples.map((sample) => `| ${sample.name} | ${String(sample.values.length)} | ${quantile(sample.values, 0.5).toFixed(3)} ${sample.unit} | ${quantile(sample.values, 0.95).toFixed(3)} ${sample.unit} | ${variance(sample.values).toFixed(3)} | ${sample.note} |`).join("\n")}\n\n## Profiling findings\n\nThe [preparation analysis](performance-analysis.md) records the optimization and its before/after evidence. Canonical JSON byte accounting now avoids buffer allocations for small emitted fragments and retains native encoding for large strings. Declaration validation, JSON bounds and identity semantics remain unchanged.\n\n## Limits\n\n- Repeated prepare is uncached. Host-cache hits and incremental preparation are not implemented or measured.\n- HTML sizes exclude CSS, JavaScript, island props delivered separately, requests, activation latency and reader memory.\n- Repeated paragraphs compress unusually well; mixed-content size comparisons remain follow-up work.\n- Inline code text is not fetched dataset delivery. Island preparation does not measure browser mounting or selective bundle loading.\n- MDX compilation, other publishing toolchains and browser delivery measurements remain unsupported.\n- Timing variability reflects this machine and execution order; cold processes are reported separately from warmed workloads.\n`;
+      )}\n- Warmups are excluded. Each workload records its own count; cold processes have no warmups.\n- p50/p95 use nearest rank; variance is sample variance in squared units. Byte rows are deterministic single observations.\n- Corpus throughput at median elapsed time: ${(10000 / (quantile(corpusSample.values, 0.5) / 1000)).toFixed(1)} documents/second.\n\n## Results\n\n| Workload | Samples | p50 | p95 | Variance | Boundary |\n| --- | --- | --- | --- | --- | --- |\n${samples.map((sample) => `| ${sample.name} | ${String(sample.values.length)} | ${quantile(sample.values, 0.5).toFixed(3)} ${sample.unit} | ${quantile(sample.values, 0.95).toFixed(3)} ${sample.unit} | ${variance(sample.values).toFixed(3)} | ${sample.note} |`).join("\n")}\n\n## Profiling findings\n\nThe [preparation analysis](performance-analysis.md) records the optimization and its before/after evidence. Canonical JSON byte accounting now avoids buffer allocations for small emitted fragments and retains native encoding for large strings. Declaration validation, JSON bounds and identity semantics remain unchanged.\n\n## Limits\n\n- Budgeted prepare rows stay uncached. A separate host compilation cache reuses unchanged corpus documents and is not a numerical cap.\n- HTML sizes exclude CSS, JavaScript, island props delivered separately, requests, activation latency and reader memory.\n- Repeated paragraphs compress unusually well; mixed-content size comparisons remain follow-up work.\n- Inline code text is not fetched dataset delivery. Island preparation does not measure browser mounting or selective bundle loading.\n- MDX compilation, other publishing toolchains and browser delivery measurements remain unsupported.\n- Timing variability reflects this machine and execution order; cold processes are reported separately from warmed workloads.\n`;
     const { format } = await import("prettier");
     await writeFile(
       resolve(output, "report.md"),

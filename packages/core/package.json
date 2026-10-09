@@ -9,6 +9,9 @@
     ".": "./src/index.ts",
     "./hash": "./src/hash.ts"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "@publisle/schema": "workspace:*"
   },

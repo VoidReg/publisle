@@ -44,7 +44,7 @@ const metadata = {
     "MDX compiler and structured-publishing comparators not installed or measured",
     "Separate parse versus evaluation attribution (ScriptDuration aggregates script work)",
     "Whole browser/process memory; recorded heap is Chromium document JS heap only",
-    "Host cache hit and incremental rebuilds (uncached baseline only)",
+    "Host compilation-cache hits are measured in preparation, not in this uncached reader baseline",
     "Twenty distinct production island implementations; preparation fixture is synthetic",
     "External dataset delivery; sized preparation fixture is inline code",
   ],
