@@ -1,0 +1,341 @@
+import type { Article, ArticleInline, CitationEntry } from "./article.ts";
+import type { LatexEngine, SourcePackage, TemplateContext } from "./index.ts";
+import { toBibtex } from "./bibtex.ts";
+import { latexKey, latexText } from "./escape.ts";
+type WritingDirection = "ltr" | "rtl" | "auto";
+export interface LatexProfile {
+  readonly id: string;
+  readonly version: string;
+  readonly className: string;
+  readonly classOptions?: string;
+  readonly bibliographyStyle?: string;
+  readonly direction?: "ltr" | "rtl";
+  readonly defaultEngine?: LatexEngine;
+  readonly preamble?: string;
+  readonly automaticBibliographyStyle?: boolean;
+  readonly numericCitationPackage?: boolean;
+  readonly pdfSymbols?: boolean;
+  readonly keywords?: (
+    subjects: readonly string[],
+    text: (value: string) => string,
+  ) => string;
+  readonly citationCommand?: "cite" | "citep";
+  readonly author?: (
+    article: Article,
+    text: (value: string) => string,
+  ) => string;
+  readonly frontmatter?: (
+    abstract: string,
+    article: Article,
+    text: (value: string) => string,
+  ) => string;
+}
+export function renderLatexArticle(
+  article: Article,
+  context: TemplateContext,
+  profile: LatexProfile,
+): SourcePackage {
+  const engine = context.engine ?? profile.defaultEngine ?? "pdflatex";
+  const fonts = {
+    latin: context.fonts?.["latin"] ?? "TeX Gyre Termes",
+    arabic: context.fonts?.["arabic"] ?? "PakType Naskh Basic",
+    cjk: context.fonts?.["cjk"] ?? "FandolSong",
+    math: context.fonts?.["math"] ?? "TeX Gyre Termes Math",
+  };
+  for (const font of Object.values(fonts))
+    if (!/^[\p{L}\p{N} .-]+$/u.test(font))
+      throw new Error(
+        "Font names must contain letters, digits, spaces, dots or hyphens.",
+      );
+  const text = (value: string, direction?: WritingDirection): string => {
+    if (engine === "pdflatex" && /[^\u0020-\u007e\t\n\r]/u.test(value))
+      throw new Error(
+        "Non-ASCII journal text requires --engine lualatex (no glyph substitution is performed).",
+      );
+    // Script runs select shaping fonts while the surrounding article stays LTR.
+    const escaped = value
+      .split(
+        /([\p{Script=Arabic}\p{M}\u060c\u061b\u061f]+(?:[ \t]+[\p{Script=Arabic}\p{M}\u060c\u061b\u061f]+)*|[\p{Script=Han}\u3000-\u303f\uff00-\uffef]+)/u,
+      )
+      .map((run) => {
+        const safe = latexText(run);
+        if (
+          engine === "lualatex" &&
+          /[\p{Script=Arabic}\u060c\u061b\u061f]/u.test(run)
+        )
+          return `\\foreignlanguage{arabic}{${safe}}`;
+        if (
+          engine === "lualatex" &&
+          /[\p{Script=Han}\u3000-\u303f\uff00-\uffef]/u.test(run)
+        )
+          return `{\\cjkfont ${safe}}`;
+        const symbols: Readonly<Record<string, string>> = {
+          α: "\\alpha",
+          β: "\\beta",
+          γ: "\\gamma",
+          δ: "\\delta",
+          π: "\\pi",
+          "∑": "\\sum",
+          "∞": "\\infty",
+          "≤": "\\leq",
+          "≥": "\\geq",
+          "±": "\\pm",
+          "∈": "\\in",
+          "∫": "\\int",
+          "√": "\\surd",
+        };
+        return safe.replace(
+          /[\p{Sm}αβγδπ]/gu,
+          (symbol) => `\\(${symbols[symbol] ?? symbol}\\)`,
+        );
+      })
+      .join("");
+    return direction === "rtl" && engine === "lualatex"
+      ? `\\foreignlanguage{arabic}{${escaped}}`
+      : escaped;
+  };
+  const labels = new Set<string>();
+  const footnotes = new Map<string, readonly (readonly ArticleInline[])[]>();
+  const footnoteNumbers = new Map<string, number>();
+  const assets: { source: string; destination: string }[] = [];
+  for (const block of article.blocks) {
+    if (block.label) {
+      if (labels.has(block.label))
+        throw new Error(`Duplicate label: ${block.label}`);
+      labels.add(block.label);
+    }
+    if (block.kind === "footnote") {
+      if (footnotes.has(block.id))
+        throw new Error(`Duplicate footnote: ${block.id}`);
+      footnotes.set(block.id, block.paragraphs);
+    }
+  }
+  const activeNotes = new Set<string>();
+  let citationIndex = 0;
+  let emittedNotes = 0;
+  const take = (inlines: readonly ArticleInline[]): string =>
+    inlines
+      .map((inline) => {
+        if (inline.type === "break") return " ";
+        if (inline.type === "math") return `\\(${inline.value}\\)`;
+        if (inline.type === "citation") {
+          const formatted =
+            context.citationText?.(inline.cluster) ??
+            context.citations[citationIndex++] ??
+            "";
+          if (!profile.bibliographyStyle) {
+            if (context.citationForm === "note" && activeNotes.size === 0) {
+              emittedNotes++;
+              return `\\footnote{${text(formatted)}}`;
+            }
+            return text(formatted);
+          }
+          const locators = inline.cluster.items.filter(
+            (item) => item.locator !== undefined,
+          );
+          if (locators.length > 1)
+            throw new Error(
+              "BibTeX citation clusters support one locator; split this cluster.",
+            );
+          if (inline.cluster.items.some((item) => item.suppressAuthor))
+            throw new Error(
+              "Author suppression is not supported by this numeric BibTeX profile.",
+            );
+          const locator = locators[0];
+          return `${text(inline.cluster.prefix ?? "")}\\${profile.citationCommand ?? "cite"}${locator ? `[${text(`${locator.label ?? "p."} ${locator.locator ?? ""}`)}]` : ""}{${inline.cluster.items.map((item) => latexKey(item.id)).join(",")}}${text(inline.cluster.suffix ?? "")}`;
+        }
+        if (inline.type === "link")
+          return `\\href{${latexText(inline.url)}}{${text(inline.value)}}`;
+        if (inline.reference?.kind === "cross") {
+          if (!labels.has(inline.reference.target))
+            throw new Error(
+              `Unresolved cross-reference: ${inline.reference.target}`,
+            );
+          return inline.value === inline.reference.target
+            ? `\\ref{${latexKey(inline.reference.target)}}`
+            : `\\hyperref[${latexKey(inline.reference.target)}]{${text(inline.value)}}`;
+        }
+        if (inline.reference?.kind === "footnote") {
+          const id = inline.reference.target;
+          const paragraphs = footnotes.get(id);
+          if (!paragraphs) throw new Error(`Unresolved footnote: ${id}`);
+          if (activeNotes.has(id)) throw new Error(`Recursive footnote: ${id}`);
+          const number = footnoteNumbers.get(id);
+          if (number !== undefined) return `\\footnotemark[${String(number)}]`;
+          footnoteNumbers.set(id, ++emittedNotes);
+          activeNotes.add(id);
+          const value = paragraphs.map(take).join(" ");
+          activeNotes.delete(id);
+          return `\\footnote{${value}}`;
+        }
+        const value = text(inline.value, inline.direction);
+        const command =
+          inline.mark === "strong"
+            ? "textbf"
+            : inline.mark === "emphasis"
+              ? "emph"
+              : inline.mark === "code"
+                ? "texttt"
+                : inline.mark === "strike"
+                  ? "sout"
+                  : undefined;
+        return command ? `\\${command}{${value}}` : value;
+      })
+      .join("");
+  const abstract: string[] = [];
+  const body: string[] = [];
+  for (const block of article.blocks) {
+    const target = "abstract" in block && block.abstract ? abstract : body;
+    const label = block.label ? `\\label{${latexKey(block.label)}}` : "";
+    if (block.kind === "heading") {
+      if (!block.abstract)
+        target.push(
+          `\\${block.level <= 1 ? "section" : block.level === 2 ? "subsection" : "subsubsection"}{${take(block.inlines)}}${label}`,
+        );
+    } else if (block.kind === "paragraph") target.push(take(block.inlines));
+    else if (block.kind === "math")
+      target.push(
+        block.display
+          ? `\\begin{equation}${block.value}${label}\\end{equation}`
+          : `\\(${block.value}\\)`,
+      );
+    else if (block.kind === "figure") {
+      if (/^(?:[a-z]+:|\/\/)/iu.test(block.src))
+        throw new Error(`Remote figure assets are unsupported: ${block.src}`);
+      const extension = /\.(pdf|png|jpe?g)$/iu
+        .exec(block.src)?.[1]
+        ?.toLowerCase();
+      if (!extension)
+        throw new Error(
+          `Unsupported figure asset (use PDF, PNG or JPEG): ${block.src}`,
+        );
+      const destination = `assets/figure-${String(assets.length + 1)}.${extension}`;
+      assets.push({ source: block.src, destination });
+      target.push(
+        `\\begin{figure}[!t]\n\\centering\n\\includegraphics[width=\\columnwidth]{${destination}}\n\\caption{${take(block.caption)}}${label}\n\\end{figure}`,
+      );
+    } else if (block.kind === "table") {
+      const width = block.rows[0]?.length ?? 0;
+      if (width === 0 || block.rows.some((row) => row.length !== width))
+        throw new Error("Journal tables must be nonempty and rectangular.");
+      const rows = block.rows
+        .map(
+          (row, index) =>
+            row
+              .map((cell) =>
+                index < (block.headerRows ?? 0)
+                  ? `\\textbf{${take(cell)}}`
+                  : take(cell),
+              )
+              .join(" & ") + " \\\\",
+        )
+        .join("\n");
+      target.push(
+        `\\begin{table}[!t]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
+      );
+    } else if (block.kind === "list")
+      target.push(
+        `\\begin{${block.ordered ? "enumerate" : "itemize"}}\n${block.items.map((item) => `\\item ${take(item)}`).join("\n")}\n\\end{${block.ordered ? "enumerate" : "itemize"}}`,
+      );
+    else if (block.kind === "quote")
+      target.push(
+        `\\begin{quote}${block.paragraphs.map(take).join("\n\n")}\\end{quote}`,
+      );
+    else if (block.kind === "code") {
+      if (block.value.includes("\\end{verbatim}"))
+        throw new Error("Code contains a verbatim terminator.");
+      if (engine === "pdflatex" && /[^\u0020-\u007e\t\n\r]/u.test(block.value))
+        throw new Error("Unicode code requires LuaLaTeX.");
+      target.push(`\\begin{verbatim}\n${block.value}\n\\end{verbatim}`);
+    }
+  }
+  const unicodePreamble =
+    engine === "lualatex"
+      ? `\\usepackage{fontspec}
+\\setmainfont{${fonts.latin}}
+\\usepackage{unicode-math}
+\\setmathfont{${fonts.math}}
+\\usepackage[bidi=basic]{babel}
+${profile.direction === "rtl" ? "\\babelprovide[import]{english}\n\\babelprovide[import,main]{arabic}" : "\\babelprovide[import,main]{english}\n\\babelprovide[import]{arabic}"}
+\\babelfont[arabic]{rm}{${fonts.arabic}}
+\\newfontfamily\\cjkfont{${fonts.cjk}}
+`
+      : "\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n";
+  const authors = article.authors.map((name) => text(name)).join(", ");
+  const affiliations = (article.authorDetails ?? [])
+    .filter((author) => author.affiliation)
+    .map(
+      (author) =>
+        `\\thanks{${text(author.name)} is with ${text(author.affiliation ?? "")}.}`,
+    )
+    .join("");
+  // BibTeX values are data, not authored TeX. Escape them before writing fields.
+  const entries = article.entries.map((entry) => {
+    const mapped: CitationEntry = {
+      id: latexKey(entry.id),
+      authors: entry.authors.map((author) => text(author)),
+    };
+    return {
+      ...mapped,
+      ...(entry.type === undefined ? {} : { type: entry.type }),
+      ...(entry.raw && !entry.title && !entry.authors.length && !entry.issued
+        ? { title: text(entry.raw) }
+        : {}),
+      ...Object.fromEntries(
+        Object.entries(entry)
+          .filter(
+            ([key, value]) =>
+              key !== "id" &&
+              key !== "authors" &&
+              key !== "type" &&
+              key !== "raw" &&
+              typeof value === "string",
+          )
+          .map(([key, value]) => [key, text(String(value))]),
+      ),
+    };
+  });
+  const manuscript = `\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
+${unicodePreamble}\\usepackage{amsmath,${engine === "pdflatex" && profile.pdfSymbols === true ? "amssymb," : ""}graphicx,tabularx${profile.numericCitationPackage ? ",cite" : ""}}
+\\usepackage[normalem]{ulem}
+\\usepackage{hyperref}
+\\hypersetup{hidelinks}
+\\hypersetup{pdftitle={${latexText(article.title ?? "Untitled")}},pdfauthor={${latexText(article.authors.join(", "))}}}
+${profile.author ? profile.author(article, text) : `\\title{${text(article.title ?? "Untitled")}}\n\\author{${authors}${affiliations}}`}
+${profile.preamble ?? ""}
+\\begin{document}
+${profile.frontmatter ? profile.frontmatter(abstract.join("\n\n"), article, text) : `\\maketitle\n\\begin{abstract}\n${abstract.join("\n\n")}\n\\end{abstract}`}
+${profile.keywords?.(article.subjects ?? [], text) ?? ""}
+${body.join("\n\n")}
+${profile.bibliographyStyle ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}`}
+\\end{document}
+`;
+  return {
+    template: profile.id,
+    templateVersion: profile.version,
+    format: "latex",
+    engine,
+    requirements: [
+      "amsmath.sty",
+      "graphicx.sty",
+      "tabularx.sty",
+      "ulem.sty",
+      "hyperref.sty",
+      ...(engine === "lualatex"
+        ? ["fontspec.sty", "unicode-math.sty", "babel.sty"]
+        : []),
+      `${profile.className}.cls`,
+      ...(profile.bibliographyStyle
+        ? [`${profile.bibliographyStyle}.bst`]
+        : []),
+    ],
+    fonts: engine === "lualatex" ? fonts : {},
+    files: {
+      "manuscript.tex": manuscript,
+      "references.bib": toBibtex(entries),
+      "BUILD.md": `# Rebuild\n\nRequires latexmk, ${engine}, and ${profile.className}.\n\nRun: latexmk -${engine === "pdflatex" ? "pdf" : "lualatex"} -norc -interaction=nonstopmode -halt-on-error -no-shell-escape manuscript.tex\n`,
+    },
+    assets,
+    diagnostics: article.losses,
+  };
+}
