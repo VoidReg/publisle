@@ -6,6 +6,10 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "license": "MIT",
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "@publisle/blocks-core": "workspace:*",
     "@publisle/blocks-technical": "workspace:*",
