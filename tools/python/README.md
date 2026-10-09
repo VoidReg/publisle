@@ -96,3 +96,14 @@ sha256sum tools/python/vendor/rfc8785-0.1.4-py3-none-any.whl
 
 Downloading is a maintainer operation, never an offline-consumption step. Existing
 Publisle package, schema, document and artifact versions remain frozen.
+
+## Independent static renderer
+
+`python3 -B tools/python/render.py source.json --instance-id article` consumes
+portable JSON and returns HTML, diagnostics and explicit capability limits. It
+requires no Node process, renderer artifact or generated TypeScript HTML. The
+v1 subset covers prose/rich text/direction, lists, quotes, code, figures, tables,
+labels, authored footnotes and numeric references. Math and custom/interactive
+behavior use readable fallback; full CSL, migrations and plugins remain outside
+this subset. Tests share `packages/contracts/fixtures/static-rendering.json` with
+the TypeScript renderer. This is separate from the precompiled host demo above.
