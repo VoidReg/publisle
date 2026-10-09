@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { summarize } from "../../../tools/benchmarks/report.ts";
 import {
+  gateExitCode,
   judgeMetrics,
   parseBudgetCaps,
   preparationCaps,
@@ -71,6 +72,9 @@ it("enforces accepted caps with an immediate byte failure and one timing rerun",
       },
     ).status,
   ).toBe("noisy");
+  expect(gateExitCode("noisy")).toBe(0);
+  expect(gateExitCode("fail")).toBe(1);
+  expect(gateExitCode("retry")).toBe(2);
   expect(
     judgeMetrics(
       [{ name: "prep", kind: "timing", value: 50, samples: 30 }],
