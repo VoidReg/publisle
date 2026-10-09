@@ -9,7 +9,8 @@
     "./katex.css": "./src/katex.css",
     "./island-runtime": "./src/island-runtime.ts",
     "./publication-runtime": "./src/publication-runtime.ts",
-    "./vite": "./src/vite.ts"
+    "./vite": "./src/vite.ts",
+    "./node": "./src/node.ts"
   },
   "dependencies": {
     "@publisle/core": "workspace:*",
