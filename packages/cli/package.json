@@ -19,13 +19,9 @@
     "@publisle/blocks-core": "workspace:*",
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",
-    "@publisle/research": "workspace:*",
-    "@publisle/schema": "workspace:*",
-    "@publisle/template-sdk": "workspace:*",
-    "@publisle/template-article": "workspace:*",
-    "@publisle/template-ieee": "workspace:*",
-    "@publisle/template-acm": "workspace:*",
-    "@publisle/template-elsevier": "workspace:*",
-    "@publisle/template-springer": "workspace:*"
+    "@publisle/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@publisle/cli-research": "workspace:*"
   }
 }

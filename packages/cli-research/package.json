@@ -1,0 +1,30 @@
+{
+  "name": "@publisle/cli-research",
+  "version": "0.0.0",
+  "description": "Optional Publisle Research profile CLI plugin: journal export, bibliography acquisition, and compiler tooling.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "@publisle/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@publisle/blocks-core": "workspace:*"
+  },
+  "dependencies": {
+    "@publisle/markdown": "workspace:*",
+    "@publisle/research": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "@publisle/template-acm": "workspace:*",
+    "@publisle/template-article": "workspace:*",
+    "@publisle/template-elsevier": "workspace:*",
+    "@publisle/template-ieee": "workspace:*",
+    "@publisle/template-sdk": "workspace:*",
+    "@publisle/template-springer": "workspace:*"
+  }
+}

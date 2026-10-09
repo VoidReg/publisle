@@ -18,13 +18,16 @@ import {
   type DocumentSourceMap,
 } from "@publisle/schema";
 
-import type { TemplateRegistry } from "@publisle/template-sdk";
 export interface CliConfig {
-  readonly templates?: TemplateRegistry;
   readonly contractBundle?: ContractBundle;
   /** Trusted host configuration, not reader-side code. Core blocks are the default registry. */
   readonly prepare?: PrepareOptions;
   readonly markdown?: { readonly codecs?: readonly MarkdownBlockCodec[] };
+  /**
+   * Research template registries are read by the optional @publisle/cli-research
+   * plugin; this Core config type stays free of Research imports.
+   */
+  readonly templates?: unknown;
 }
 
 export interface SourceOperation {

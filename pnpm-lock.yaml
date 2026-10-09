@@ -787,6 +787,22 @@ importers:
       '@publisle/markdown':
         specifier: workspace:*
         version: link:../markdown
+      '@publisle/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      '@publisle/cli-research':
+        specifier: workspace:*
+        version: link:../cli-research
+
+  packages/cli-research:
+    dependencies:
+      '@publisle/cli':
+        specifier: workspace:*
+        version: link:../cli
+      '@publisle/markdown':
+        specifier: workspace:*
+        version: link:../markdown
       '@publisle/research':
         specifier: workspace:*
         version: link:../research
@@ -811,6 +827,10 @@ importers:
       '@publisle/template-springer':
         specifier: workspace:*
         version: link:../template-springer
+    devDependencies:
+      '@publisle/blocks-core':
+        specifier: workspace:*
+        version: link:../../blocks/core
 
   packages/contracts:
     dependencies:
@@ -887,6 +907,9 @@ importers:
 
   packages/research:
     dependencies:
+      '@publisle/profiles':
+        specifier: workspace:*
+        version: link:../profiles
       '@publisle/schema':
         specifier: workspace:*
         version: link:../schema
