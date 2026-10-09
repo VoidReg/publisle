@@ -104,8 +104,17 @@ export function verifyP0Evidence(
       ...require("adapter-core/tests/python.acceptance.test.ts", "working host-owned islands"),
     ],
     "TEST-11": [
+      ...require("playground-core/tests/fourier.test.ts", "pinned samples"),
+      ...require("adapter-core/tests/fourier.acceptance.test.ts", "supports keyboard presets", 4),
       ...require("contracts/tests/inspection.test.ts", "extracts unfamiliar instance values"),
       ...require("markdown/tests/reading.test.ts", "reading"),
+    ],
+    "TEST-12": [
+      ...require("adapter-core/tests/lifecycle.acceptance.test.ts", "keyboard"),
+      ...require("adapter-core/tests/lifecycle.acceptance.test.ts", "pending load"),
+      ...require("adapter-core/tests/lifecycle.acceptance.test.ts", "without JavaScript"),
+      ...require("adapter-core/tests/lifecycle.acceptance.test.ts", "reduced motion"),
+      ...require("profiles/tests/interactive-publication.test.ts", "generic script notice"),
     ],
     "TEST-13": [
       ...require("contracts/tests/composition.test.ts", "seals the behavior profile"),

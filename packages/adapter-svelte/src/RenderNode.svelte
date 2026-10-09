@@ -4,6 +4,7 @@
   import RenderNode from "./RenderNode.svelte";
 
   let { node, islands = {} } = $props();
+  let scope = $state();
   let root = $state();
   let fallback = $state();
   let componentRoot = $state();
@@ -46,12 +47,13 @@
     const activation = islandActivation;
     const moduleId = islandModule;
     const exportName = islandExport;
-    if (!activation || !moduleId || !root || !fallback) return;
+    if (!activation || !moduleId || !scope || !root || !fallback) return;
     const load = untrack(() => islands[moduleId]);
     if (!load) return;
     const controller = createIslandController({
       root,
       fallback,
+      scope,
       activation,
       get props() {
         return untrack(() => (node.kind === "island" ? node.props : {}));
@@ -103,12 +105,12 @@
     {/each}
   </svelte:element>
 {:else}
-  <div class="publisle-island" aria-label={node.label}>
-    <div bind:this={fallback}>
+  <div class="publisle-island" aria-label={node.label} data-publisle-contract={node.provenance} bind:this={scope}>
+    <div bind:this={fallback} data-publisle-fallback>
       {#each node.fallback as child}
         <RenderNode node={child} {islands} />
       {/each}
     </div>
-    <div bind:this={root} hidden></div>
+    <div bind:this={root} data-publisle-mount hidden></div>
   </div>
 {/if}

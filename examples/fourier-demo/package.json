@@ -1,0 +1,22 @@
+{
+  "name": "@publisle/example-fourier",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/definition.ts",
+    "./model": "./src/model.ts",
+    "./react": "./src/PartialSum.tsx",
+    "./svelte": "./src/PartialSum.svelte"
+  },
+  "dependencies": {
+    "@publisle/block-sdk": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "react": "^19.0.0",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0"
+  }
+}

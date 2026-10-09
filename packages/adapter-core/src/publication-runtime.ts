@@ -131,13 +131,19 @@ export function attachPublication(
       section.setAttribute("data-publisle-missing", island.implementation);
       continue;
     }
-    let pending = loads.get(island.implementation);
-    if (!pending) {
-      pending = Promise.resolve().then(loader);
-      void pending.catch(() => undefined); // Preserve rejection for activation without an eager unhandled rejection.
-      loads.set(island.implementation, pending);
-    }
-    const shared = pending;
+    const load = (): Promise<unknown> => {
+      let pending = loads.get(island.implementation);
+      if (!pending) {
+        pending = Promise.resolve().then(loader);
+        loads.set(island.implementation, pending);
+        const current = pending;
+        void pending.catch(() => {
+          if (loads.get(island.implementation) === current)
+            loads.delete(island.implementation);
+        });
+      }
+      return pending;
+    };
     controllers.push(
       createIslandController({
         root: mountTarget,
@@ -145,7 +151,7 @@ export function attachPublication(
         scope: section,
         activation: island.activation,
         props: island.props,
-        load: () => shared,
+        load,
         mount: (module, target, props) =>
           environment.mount?.(module, target, props, environment.services),
         unmount: (instance) => environment.unmount?.(instance),

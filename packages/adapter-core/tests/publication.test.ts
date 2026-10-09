@@ -165,6 +165,10 @@ describe("publication artifact", () => {
     expect(publication.html).toContain("data-publisle-mount");
     expect(publication.html).toContain("data-publisle-activate");
     expect(publication.html).toContain("The counter starts at zero.");
+    expect(publication.html).toContain(
+      "Observe the output on each clock edge.",
+    );
+    expect(publication.html).not.toContain("Enable JavaScript");
     expect(publication.html).not.toContain("<!doctype");
     expect(publication.html).not.toContain("<html");
     expect(publication.html).not.toContain("<head");
@@ -235,7 +239,7 @@ describe("publication artifact", () => {
     );
     expect(again).toBe(handle);
     await Promise.resolve();
-    expect(loader).toHaveBeenCalledOnce();
+    expect(loader).not.toHaveBeenCalled();
     const section = root.children[0];
     const fallback = section?.children[0];
     const button = section?.children[2];
@@ -244,9 +248,8 @@ describe("publication artifact", () => {
     await Promise.resolve();
     expect(mount).not.toHaveBeenCalled();
     click?.({ target: button } as unknown as Event);
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(mount).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(mount).toHaveBeenCalledOnce());
+    expect(loader).toHaveBeenCalledOnce();
     expect(fallback?.hidden).toBe(false);
     handle.dispose();
     handle.dispose();
@@ -268,6 +271,12 @@ describe("publication artifact", () => {
       unmount: vi.fn(),
     });
     await Promise.resolve();
+    expect(loader).not.toHaveBeenCalled();
+    for (const section of root.children)
+      section.listeners.get("click")?.({
+        target: section.children[2],
+      } as unknown as Event);
+    await vi.waitFor(() => expect(mount).toHaveBeenCalledTimes(2));
     expect(loader).toHaveBeenCalledOnce();
 
     const missing = new ElementStub();
@@ -297,6 +306,43 @@ describe("publication artifact", () => {
     expect(
       hydrated.children[0]?.getAttribute("data-publisle-unsupported-mode"),
     ).toBe("hydrate");
+  });
+
+  it("retries a rejected shared implementation only on a new activation", async () => {
+    const publication = compilePublication(preparedArticle());
+    const island = publication.islands[0];
+    if (!island) throw new Error("Expected an island");
+    const root = new ElementStub();
+    const section = islandTree(island.key);
+    root.append(section);
+    const loader = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue({ default: "component" });
+    const mount = vi.fn();
+    const handle = attachPublication(
+      root as unknown as HTMLElement,
+      publication,
+      {
+        implementations: { "publisle:interactive-schematic": loader },
+        mount,
+        unmount: vi.fn(),
+      },
+    );
+    expect(loader).not.toHaveBeenCalled();
+    section.listeners.get("click")?.({
+      target: section.children[2],
+    } as unknown as Event);
+    await vi.waitFor(() =>
+      expect(section.getAttribute("data-publisle-status")).toBe("failed"),
+    );
+    expect(mount).not.toHaveBeenCalled();
+    section.listeners.get("click")?.({
+      target: section.children[2],
+    } as unknown as Event);
+    await vi.waitFor(() => expect(mount).toHaveBeenCalledOnce());
+    expect(loader).toHaveBeenCalledTimes(2);
+    handle.dispose();
   });
 
   it("keeps stylesheet selectors under the publication root", () => {

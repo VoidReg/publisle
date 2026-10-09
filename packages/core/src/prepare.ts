@@ -1,3 +1,4 @@
+import { preparationPhase } from "./performance.ts";
 import { sha256Hex } from "./hash.ts";
 import { inspectProfiles } from "./profiles.ts";
 import { migrateDocument } from "./document-migrations.ts";
@@ -99,7 +100,9 @@ export function prepare(
   document: Document<Block<BlockType, unknown>>,
   options: PrepareOptions,
 ): PrepareResult {
-  const result = prepareDocument(document, options);
+  const result = preparationPhase("prepare document", () =>
+    prepareDocument(document, options),
+  );
   const diagnostics = result.diagnostics.map((diagnostic) =>
     locateDiagnostic(diagnostic, options.sourceMap),
   );
@@ -110,11 +113,13 @@ export function prepare(
       : {
           document: {
             ...result.document,
-            diagnosticIdentity: sha256Hex(
-              canonicalizeJson({
-                sourceMap: options.sourceMap ?? null,
-                diagnostics,
-              }),
+            diagnosticIdentity: preparationPhase("diagnostic identity", () =>
+              sha256Hex(
+                canonicalizeJson({
+                  sourceMap: options.sourceMap ?? null,
+                  diagnostics,
+                }),
+              ),
             ),
           },
         }),
@@ -149,7 +154,13 @@ function prepareDocument(
   }
   let sourceIdentity: string;
   try {
-    sourceIdentity = sha256Hex(canonicalizeJson(document));
+    sourceIdentity = preparationPhase("source validation and identity", () =>
+      sha256Hex(
+        preparationPhase("source canonicalization", () =>
+          canonicalizeJson(document),
+        ),
+      ),
+    );
     if (
       document.dependencies !== undefined &&
       document.schemaVersion !== DOCUMENT_SCHEMA_VERSION
@@ -158,10 +169,12 @@ function prepareDocument(
         "locked-source-conversion-required",
         "Locked document envelope requires explicit conversion, never render-time migration.",
       );
-    document = migrateDocument(
-      document,
-      options.documentMigrations ?? [],
-      DOCUMENT_SCHEMA_VERSION,
+    document = preparationPhase("document migrations", () =>
+      migrateDocument(
+        document,
+        options.documentMigrations ?? [],
+        DOCUMENT_SCHEMA_VERSION,
+      ),
     );
   } catch (error) {
     diagnostics.push({
@@ -248,7 +261,7 @@ function prepareDocument(
   const ordinals = new Map<ReferenceKind, number>();
   const traversal: NonNullable<PreparedDocument["traversal"]>[number][] = [];
   const visited = new Set<string>();
-  const collect = (
+  const collectVisits = (
     block: Block<BlockType, unknown>,
     visits: readonly import("@publisle/schema").TraversalVisit[],
     referenceLevel: "warning" | "error" = "error",
@@ -340,6 +353,13 @@ function prepareDocument(
     }
   };
 
+  const collect: typeof collectVisits = (...args) =>
+    preparationPhase("reference/resource collection", () =>
+      collectVisits(...args),
+    );
+  const traverse: typeof traverseDeclared = (...args) =>
+    preparationPhase("declared traversal", () => traverseDeclared(...args));
+
   for (const block of document.blocks) {
     if (ids.has(block.id)) {
       diagnostics.push({
@@ -355,12 +375,14 @@ function prepareDocument(
     let readableContent:
       import("@publisle/schema").InteractiveContent | undefined;
     try {
-      const content = inspectReadable(block);
+      const content = preparationPhase("readable inspection", () =>
+        inspectReadable(block),
+      );
       readableContent = content;
       if (content && !definition)
         collect(
           block,
-          traverseDeclared(content, {
+          traverse(content, {
             root: EXPLANATION_TRAVERSAL,
             rules: RICH_TRAVERSAL_RULES,
           }).map((visit) => ({
@@ -395,9 +417,15 @@ function prepareDocument(
       if (options.unknownBlocks !== "error")
         blocks.push({
           ...block,
-          data: structuredClone(block.data),
+          data: preparationPhase("unknown payload cloning", () =>
+            structuredClone(block.data),
+          ),
           ...(readableContent
-            ? { readableContent: structuredClone(readableContent) }
+            ? {
+                readableContent: preparationPhase("readable cloning", () =>
+                  structuredClone(readableContent),
+                ),
+              }
             : {}),
           prepared: true,
         });
@@ -405,11 +433,18 @@ function prepareDocument(
     }
 
     try {
-      const migrated = migrate(block, definition);
-      const parsed = definition.schema.parse(
+      const migrated = preparationPhase("block migrations", () =>
+        migrate(block, definition),
+      );
+      const input = preparationPhase("payload cloning and defaults", () =>
         mergeDefaults(definition.defaults, structuredClone(migrated.data)),
       );
-      const data = definition.normalize ? definition.normalize(parsed) : parsed;
+      const parsed = preparationPhase("payload parsing", () =>
+        definition.schema.parse(input),
+      );
+      const data = preparationPhase("normalization", () =>
+        definition.normalize ? definition.normalize(parsed) : parsed,
+      );
       if (
         document.dependencies !== undefined &&
         canonicalizeJson(data) !== canonicalizeJson(block.data)
@@ -423,27 +458,33 @@ function prepareDocument(
         schemaVersion: definition.schemaVersion,
         data,
         ...(readableContent
-          ? { readableContent: structuredClone(readableContent) }
+          ? {
+              readableContent: preparationPhase("readable cloning", () =>
+                structuredClone(readableContent),
+              ),
+            }
           : {}),
         prepared: true,
       } as PreparedBlock;
       blocks.push(prepared);
       if (definition.semantics)
         diagnostics.push(
-          ...validateSemantics(definition.semantics, data).map(
-            (diagnostic) => ({
-              ...diagnostic,
-              level: "error" as const,
-              blockId: block.id,
-            }),
-          ),
+          ...preparationPhase("semantic validation", () =>
+            validateSemantics(definition.semantics, data),
+          ).map((diagnostic) => ({
+            ...diagnostic,
+            level: "error" as const,
+            blockId: block.id,
+          })),
         );
       if (definition.traversal)
-        collect(prepared, traverseDeclared(data, definition.traversal));
+        preparationPhase("traversal and reference/resource collection", () =>
+          collect(prepared, traverse(data, definition.traversal!)),
+        );
       if (readableContent)
         collect(
           prepared,
-          traverseDeclared(readableContent, {
+          traverse(readableContent, {
             root: EXPLANATION_TRAVERSAL,
             rules: RICH_TRAVERSAL_RULES,
           }).map((visit) => ({
@@ -454,7 +495,9 @@ function prepareDocument(
       let declaredResources: unknown;
       try {
         declaredResources = definition.resources
-          ? definition.resources(data)
+          ? preparationPhase("resource declarations", () =>
+              definition.resources!(data),
+            )
           : [];
       } catch (error) {
         throw new ResourcePlanningError(
@@ -470,7 +513,9 @@ function prepareDocument(
       for (const resource of declaredResources as readonly unknown[]) {
         resourcePlanner.add(resource);
       }
-      const island = definition.island?.(data);
+      const island = preparationPhase("island planning", () =>
+        definition.island?.(data),
+      );
       if (island)
         islands.push({
           blockId: block.id,
@@ -503,17 +548,18 @@ function prepareDocument(
     }
   }
 
-  for (const reference of pendingReferences) {
-    if (!targetLabels.has(reference.label))
-      diagnostics.push({
-        level: reference.level,
-        code: "unresolved-cross-reference",
-        message: `Cross-reference target ${reference.label} does not exist.`,
-        blockId: reference.blockId,
-        pointer: reference.pointer,
-      });
-  }
-
+  preparationPhase("reference resolution", () => {
+    for (const reference of pendingReferences) {
+      if (!targetLabels.has(reference.label))
+        diagnostics.push({
+          level: reference.level,
+          code: "unresolved-cross-reference",
+          message: `Cross-reference target ${reference.label} does not exist.`,
+          blockId: reference.blockId,
+          pointer: reference.pointer,
+        });
+    }
+  });
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
   if (options.profiles?.length || options.diagnosticPolicy) {
@@ -529,11 +575,17 @@ function prepareDocument(
         ? {}
         : { metadata: document.metadata }),
     };
-    diagnostics.push(...inspectProfiles(semanticDocument, options, traversal));
+    diagnostics.push(
+      ...preparationPhase("profiles", () =>
+        inspectProfiles(semanticDocument, options, traversal),
+      ),
+    );
   }
   if (diagnostics.some(({ level }) => level === "error"))
     return { diagnostics };
-  const resources = resourcePlanner.plan();
+  const resources = preparationPhase("resource plan finalization", () =>
+    resourcePlanner.plan(),
+  );
   const preparationIdentity = {
     // Bump when built-in preparation semantics or plan format changes.
     coreVersion: "2",
@@ -567,18 +619,22 @@ function prepareDocument(
     resources,
     references: { targets },
     islands,
-    cacheIdentity: sha256Hex(
-      stable({
-        document: {
-          schemaVersion: document.schemaVersion,
-          metadata: document.metadata ?? null,
-          blocks,
-          dependencies: document.dependencies ?? null,
-          extensions: document.extensions ?? null,
-        },
-        registry: options.registry.version,
-        preparation: preparationIdentity,
-      }),
+    cacheIdentity: preparationPhase("prepared identity", () =>
+      sha256Hex(
+        preparationPhase("prepared canonical serialization", () =>
+          stable({
+            document: {
+              schemaVersion: document.schemaVersion,
+              metadata: document.metadata ?? null,
+              blocks,
+              dependencies: document.dependencies ?? null,
+              extensions: document.extensions ?? null,
+            },
+            registry: options.registry.version,
+            preparation: preparationIdentity,
+          }),
+        ),
+      ),
     ),
   };
   const prepared: PreparedDocument =

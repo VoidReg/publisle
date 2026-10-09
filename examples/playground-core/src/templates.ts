@@ -1,3 +1,4 @@
+import { defaultFourier } from "@publisle/example-fourier";
 import { defaultScene } from "@publisle/example-scene";
 import type { FlowNode, InlineNode } from "@publisle/blocks-core";
 
@@ -15,7 +16,8 @@ export type BlockType =
   | "publisle:embed"
   | "publisle:diagram"
   | "publisle:interactive-schematic"
-  | "demo:interactive-scene";
+  | "demo:interactive-scene"
+  | "demo:fourier-partial-sum";
 
 export const BLOCK_TYPES: BlockType[] = [
   "publisle:paragraph",
@@ -32,6 +34,7 @@ export const BLOCK_TYPES: BlockType[] = [
   "publisle:diagram",
   "publisle:interactive-schematic",
   "demo:interactive-scene",
+  "demo:fourier-partial-sum",
 ];
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -49,6 +52,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   "publisle:diagram": "Diagram",
   "publisle:interactive-schematic": "Interactive Schematic",
   "demo:interactive-scene": "3D Scene",
+  "demo:fourier-partial-sum": "Fourier partial sums",
 };
 
 function text(value: string): InlineNode {
@@ -67,6 +71,8 @@ export function defaultData(type: BlockType): unknown {
   switch (type) {
     case "demo:interactive-scene":
       return defaultScene();
+    case "demo:fourier-partial-sum":
+      return defaultFourier();
     case "publisle:paragraph":
       return { content: [text("New paragraph")] };
     case "publisle:heading":

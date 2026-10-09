@@ -14,6 +14,7 @@ import {
   BLOCK_LABELS,
   DocumentEditor,
   FOURIER_ARTICLE,
+  FOURIER_PARTIAL_SUMS,
 } from "@publisle/playground-core";
 import { BlockEditor } from "./BlockEditor.tsx";
 import {
@@ -24,6 +25,7 @@ import {
 const editor = new DocumentEditor();
 const implementations = {
   "demo:interactive-scene": () => import("@publisle/example-scene/react"),
+  "demo:fourier-partial-sum": () => import("@publisle/example-fourier/react"),
   "publisle:interactive-schematic": () => import("./Schematic.tsx"),
 };
 
@@ -128,6 +130,16 @@ export default function App() {
             }
           >
             Load Fourier article
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setDiagnostics(
+                editor.importMarkdown(FOURIER_PARTIAL_SUMS).diagnostics,
+              )
+            }
+          >
+            Load Fourier model
           </button>
           <button
             type="button"

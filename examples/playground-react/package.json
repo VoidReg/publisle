@@ -17,7 +17,8 @@
     "@publisle/schema": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@publisle/example-scene": "workspace:*"
+    "@publisle/example-scene": "workspace:*",
+    "@publisle/example-fourier": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

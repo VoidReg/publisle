@@ -1,0 +1,66 @@
+name: Performance calibration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run 30 browser samples and all island scales
+        type: boolean
+        default: true
+  schedule:
+    - cron: "17 3 * * 1"
+
+concurrency:
+  group: performance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  calibration:
+    strategy:
+      fail-fast: false
+      matrix:
+        repetition: ${{ fromJSON((github.event_name == 'schedule' || inputs.full || contains(github.event.pull_request.labels.*.name, 'performance:full')) && '[1,2,3]' || '[1]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright-core install --with-deps chromium
+      - name: Record runner and immutable inputs
+        run: |
+          mkdir -p benchmarks/calibration
+          git rev-parse HEAD > benchmarks/calibration/commit.txt
+          sha256sum pnpm-lock.yaml tools/benchmarks/*.ts > benchmarks/calibration/inputs.sha256
+          uname -a > benchmarks/calibration/runner.txt
+          lscpu >> benchmarks/calibration/runner.txt
+      - name: Preparation calibration
+        run: node tools/benchmarks/measure.ts --output benchmarks/calibration/preparation
+      - name: Matched static compilation calibration
+        run: node tools/benchmarks/matched.ts --output benchmarks/calibration/matched
+      - name: Reader smoke calibration
+        if: (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'performance:full')) || (github.event_name == 'workflow_dispatch' && !inputs.full)
+        run: node tools/benchmarks/browser.ts --smoke --output benchmarks/calibration/reader
+      - name: Full reader calibration
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'performance:full'))
+        run: node tools/benchmarks/browser.ts --output benchmarks/calibration/reader
+      - name: Summarize observations for budget review
+        run: node tools/benchmarks/report.ts benchmarks/calibration/reader
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-calibration-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.repetition }}
+          path: benchmarks/calibration
+          retention-days: 30
+          if-no-files-found: error

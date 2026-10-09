@@ -33,7 +33,29 @@
   display: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .publisle-document .publisle-interactive,
+  .publisle-document [data-publisle-island],
+  .publisle-document .publisle-island {
+    scroll-behavior: auto;
+    transition: none;
+    animation: none;
+  }
+}
+
 @media print {
+  .publisle-document [data-publisle-activate] {
+    display: none;
+  }
+
+  .publisle-document [data-publisle-mount] {
+    display: none !important;
+  }
+
+  .publisle-document [data-publisle-fallback] {
+    display: block !important;
+  }
+
   .publisle-document .publisle-diagram-print {
     display: block;
   }

@@ -13,6 +13,7 @@ export interface NativeFixtureResult {
   modules: string[];
   emitted: string;
   chunks: readonly { fileName: string; modules: readonly string[] }[];
+  assets: readonly { fileName: string; bytes: number; gzipBytes: number }[];
   accounting: {
     bundledBytes: number;
     gzipBytes: number;
@@ -68,6 +69,7 @@ export async function nativeRenderingFixture(options: {
 
     const common = {
       configFile: false as const,
+      oxc: { jsx: { development: false } },
       root: directory,
       logLevel: "silent" as const,
       // Vitest sets NODE_ENV=test; browser fixtures must exercise production framework branches.
@@ -97,6 +99,7 @@ export async function nativeRenderingFixture(options: {
     await writeFile(serverFile, entry.code);
     const rendered = (await import(pathToFileURL(serverFile).href)) as {
       markup: string;
+      css?: string;
     };
 
     const client = await build({
@@ -150,6 +153,14 @@ export async function nativeRenderingFixture(options: {
         fileName: chunk.fileName,
         modules: Object.keys(chunk.modules),
       })),
+      assets: client.output.map((item) => {
+        const source = item.type === "chunk" ? item.code : item.source;
+        return {
+          fileName: item.fileName,
+          bytes: Buffer.byteLength(source),
+          gzipBytes: gzipSync(source, { level: 6 }).byteLength,
+        };
+      }),
       accounting,
     };
     if (options.browser) {
@@ -167,7 +178,7 @@ export async function nativeRenderingFixture(options: {
         if (pathname === "/") {
           response.setHeader("content-type", "text/html; charset=utf-8");
           response.end(
-            `<!doctype html><html><head><title>Host Title</title><meta name="host-owned" content="unchanged"></head><body><div id="app">${result.markup}</div><script type="module" src="/${clientEntry.fileName}"></script></body></html>`,
+            `<!doctype html><html><head><title>Host Title</title><meta name="host-owned" content="unchanged">${rendered.css ?? ""}</head><body><div id="app">${result.markup}</div><script type="module" src="/${clientEntry.fileName}"></script></body></html>`,
           );
         } else if (assets.has(pathname)) {
           response.setHeader(

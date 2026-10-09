@@ -1,0 +1,51 @@
+{
+  "tolerance": 1e-12,
+  "provenance": "Python 3 math.sin and math.fsum, finite square-wave sine series; absolute binary64 tolerance. Mathematical oracle for this example, not a semantic interchange guarantee.",
+  "cases": [
+    {
+      "terms": 1,
+      "x": 1.5707963267948966,
+      "expected": 1.2732395447351628
+    },
+    {
+      "terms": 3,
+      "x": 1.5707963267948966,
+      "expected": 1.1034742721038078
+    },
+    {
+      "terms": 15,
+      "x": 1.5707963267948966,
+      "expected": 1.0211972098279691
+    },
+    {
+      "terms": 3,
+      "x": -1.5707963267948966,
+      "expected": -1.1034742721038078
+    },
+    {
+      "terms": 3,
+      "x": 0,
+      "expected": 0.0
+    },
+    {
+      "terms": 3,
+      "x": 3.141592653589793,
+      "expected": 4.677806199023251e-16
+    },
+    {
+      "terms": 64,
+      "x": 0.125,
+      "expected": 1.0386168103204194
+    },
+    {
+      "terms": 15,
+      "x": 3.141592643589793,
+      "expected": 1.9098593262008387e-7
+    },
+    {
+      "terms": 15,
+      "x": 3.141592663589793,
+      "expected": -1.909859276945822e-7
+    }
+  ]
+}

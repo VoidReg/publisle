@@ -12,6 +12,7 @@ import type { Activation, JsonValue } from "@publisle/schema";
 export interface PublisleIslandProps {
   readonly activation: Activation;
   readonly label: string;
+  readonly provenance?: string;
   readonly props: JsonValue;
   readonly load: () => Promise<unknown>;
   readonly exportName: string;
@@ -49,13 +50,15 @@ export function PublisleStatic(props: {
 }
 
 export function PublisleIsland(props: PublisleIslandProps): ReactNode {
+  const scopeRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const fallbackRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!rootRef.current || !fallbackRef.current) return;
+    if (!scopeRef.current || !rootRef.current || !fallbackRef.current) return;
     const controller = createIslandController({
       root: rootRef.current,
       fallback: fallbackRef.current,
+      scope: scopeRef.current,
       activation: props.activation,
       props: props.props,
       load: props.load,
@@ -79,8 +82,21 @@ export function PublisleIsland(props: PublisleIslandProps): ReactNode {
   }, [props.activation, props.exportName, props.load, props.props]);
   return createElement(
     "div",
-    { className: "publisle-island", "aria-label": props.label },
-    createElement("div", { ref: fallbackRef }, props.fallback),
-    createElement("div", { ref: rootRef, hidden: true }),
+    {
+      ref: scopeRef,
+      className: "publisle-island",
+      "aria-label": props.label,
+      "data-publisle-contract": props.provenance,
+    },
+    createElement(
+      "div",
+      { ref: fallbackRef, "data-publisle-fallback": true },
+      props.fallback,
+    ),
+    createElement("div", {
+      ref: rootRef,
+      hidden: true,
+      "data-publisle-mount": true,
+    }),
   );
 }
