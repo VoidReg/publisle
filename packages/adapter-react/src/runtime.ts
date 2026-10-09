@@ -12,6 +12,7 @@ import type { Activation, JsonValue } from "@publisle/schema";
 export interface PublisleIslandProps {
   readonly activation: Activation;
   readonly label: string;
+  readonly provenance?: string;
   readonly props: JsonValue;
   readonly load: () => Promise<unknown>;
   readonly exportName: string;
@@ -81,7 +82,12 @@ export function PublisleIsland(props: PublisleIslandProps): ReactNode {
   }, [props.activation, props.exportName, props.load, props.props]);
   return createElement(
     "div",
-    { ref: scopeRef, className: "publisle-island", "aria-label": props.label },
+    {
+      ref: scopeRef,
+      className: "publisle-island",
+      "aria-label": props.label,
+      "data-publisle-contract": props.provenance,
+    },
     createElement(
       "div",
       { ref: fallbackRef, "data-publisle-fallback": true },

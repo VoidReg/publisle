@@ -45,7 +45,10 @@ interface ReaderRun {
     htmlGzipBytes: number;
     cssBytes: number;
     propsBytes: number;
+    assets: { fileName: string; gzipBytes: number }[];
     samples: {
+      initialRequests: string[];
+      requests: string[];
       firstActivationMs: number;
       remainingActivationMs: number;
       initialJsBytes: number;
@@ -134,6 +137,32 @@ if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
     );
   }
   const byteRows: string[] = [];
+  const byteRow = (name: string, values: number[]) => {
+    if (
+      !values.length ||
+      values.some((value) => !Number.isFinite(value) || value < 0)
+    )
+      throw new Error(`Invalid byte measurements: ${name}`);
+    const maximum = Math.max(...values),
+      minimum = Math.min(...values);
+    const cap = Math.ceil(
+      maximum + Math.max(maximum - minimum, maximum * 0.01),
+    );
+    byteRows.push(
+      `| ${name} | ${String(minimum)} | ${String(maximum)} | ${String(cap)} |`,
+    );
+  };
+  for (const sample of preparation[0]?.samples ?? []) {
+    if (sample.unit !== "bytes" || sample.name.startsWith("matched")) continue;
+    const values = preparation.flatMap((run) => {
+      const entry = run.samples.find(
+        (candidate) => candidate.name === sample.name,
+      );
+      if (!entry) throw new Error(`Missing byte workload: ${sample.name}`);
+      return entry.values;
+    });
+    byteRow(sample.name, values);
+  }
   for (const fixture of reader[0]?.results ?? []) {
     const name = `${fixture.framework}/${fixture.mode}/${String(fixture.islandsPerPlacement)} × ${String(fixture.placements)}`;
     const matches = reader.map((run) => {
@@ -171,17 +200,27 @@ if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
           ? entry.samples.map((sample) => sample[metric])
           : [entry[metric]],
       );
-      const maximum = Math.max(...values),
-        minimum = Math.min(...values);
-      const cap = Math.ceil(
-        maximum + Math.max(maximum - minimum, maximum * 0.01),
+      byteRow(`${name} ${metric}`, values);
+    }
+    for (const [metric, pathsKey] of [
+      ["initialJsGzipBytes", "initialRequests"],
+      ["activatedJsGzipBytes", "requests"],
+    ] as const) {
+      const values = matches.flatMap((entry) =>
+        entry.samples.map((sample) =>
+          entry.assets
+            .filter(
+              (asset) =>
+                asset.fileName.endsWith(".js") &&
+                sample[pathsKey].includes(`/${asset.fileName}`),
+            )
+            .reduce((total, asset) => total + asset.gzipBytes, 0),
+        ),
       );
-      byteRows.push(
-        `| ${name} ${metric} | ${String(minimum)} | ${String(maximum)} | ${String(cap)} |`,
-      );
+      byteRow(`${name} ${metric}`, values);
     }
   }
-  const markdown = `# Proposed CI performance budgets — awaiting review\n\nInputs: ${directories.map((directory) => `\`${directory}\``).join(", ")}. CPU models: ${preparation.map((run) => run.environment.cpu).join("; ")}. Node ${preparation[0]?.environment.node ?? "unknown"}; Chromium ${reader[0]?.metadata.browser ?? "unknown"}. These values are proposals only, with no enforcement.\n\nTiming caps use the largest observed run p95 plus twice the largest run standard deviation, rounded upward to whole milliseconds. This is conservative headroom for review, not a confidence interval. Byte caps use the largest observation plus the larger of observed spread or 1% to accommodate identifier/compression variation. Review each allowance before acceptance.\n\n| Workload | Largest run p50 ms | Largest run p95 ms | Largest run sample variance ms² | Proposed p95 cap ms |\n| --- | --- | --- | --- | --- |\n${timingRows.join("\n")}\n\n| Reader fixture/metric | Observed min bytes | Observed max bytes | Proposed cap bytes |\n| --- | --- | --- | --- |\n${byteRows.join("\n")}\n\nThree independent runner repetitions are calibration evidence, not proof of stable tail latency. Smoke runs cannot produce this proposal. Script, heap, long tasks and CLS remain observations. CSS and props overlap HTML/JS. An accepted deterministic breach fails immediately; timing gets one clean rerun, with both results preserved and noisy disagreement requiring review. No cap is raised automatically.\n`;
+  const markdown = `# Proposed CI performance budgets — awaiting review\n\nInputs: ${directories.map((directory) => `\`${directory}\``).join(", ")}. CPU models: ${preparation.map((run) => run.environment.cpu).join("; ")}. Node ${preparation[0]?.environment.node ?? "unknown"}; Chromium ${reader[0]?.metadata.browser ?? "unknown"}. These values are proposals only, with no enforcement.\n\nTiming caps use the largest observed run p95 plus twice the largest run standard deviation, rounded upward to whole milliseconds. This is conservative headroom for review, not a confidence interval. Byte caps use the largest observation plus the larger of observed spread or 1% as an explicit small review allowance beyond observed identifier/compression variation. Review each allowance before acceptance.\n\n| Workload | Largest run p50 ms | Largest run p95 ms | Largest run sample variance ms² | Proposed p95 cap ms |\n| --- | --- | --- | --- | --- |\n${timingRows.join("\n")}\n\n| Reader fixture/metric | Observed min bytes | Observed max bytes | Proposed cap bytes |\n| --- | --- | --- | --- |\n${byteRows.join("\n")}\n\nThree independent runner repetitions are calibration evidence, not proof of stable tail latency. Smoke runs cannot produce this proposal. Script, heap, long tasks and CLS remain observations. CSS and props overlap HTML/JS. An accepted deterministic breach fails immediately; timing gets one clean rerun, with both results preserved and noisy disagreement requiring review. No cap is raised automatically.\n`;
   const destination = resolve(
     directories[0] ?? "benchmarks/calibration",
     "budget-proposal.md",

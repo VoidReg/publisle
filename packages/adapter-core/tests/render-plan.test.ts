@@ -18,7 +18,7 @@ import {
   createIslandInput,
   isInteractiveEnvelope,
 } from "@publisle/schema";
-import { createRenderPlan } from "../src/index.ts";
+import { createRenderPlan, compilePublication } from "../src/index.ts";
 
 describe("createRenderPlan", () => {
   const registry = createRegistry([
@@ -67,6 +67,40 @@ describe("createRenderPlan", () => {
         ),
       ).toBe(false);
     }
+  });
+
+  it("retains pinned provenance and authored prose when an interactive renderer is missing", () => {
+    const input = document({
+      blocks: [
+        interactiveSchematic({
+          activation: "interaction",
+          payload: { source: "./counter.json" },
+          fallback: [
+            {
+              type: "paragraph",
+              content: [
+                { type: "text", value: "The clock advances the counter." },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    const prepared = prepare(input, { registry }).document;
+    if (!prepared) throw new Error("Expected prepared fixture");
+    const pin = {
+      type: "publisle:interactive-schematic" as const,
+      schemaVersion: 1,
+      id: `urn:publisle:contract:sha256:${"a".repeat(64)}`,
+      digest: `sha256:${"a".repeat(64)}` as const,
+    };
+    const plan = createRenderPlan({ ...prepared, dependencies: [pin] });
+    const html = compilePublication(plan).html;
+    expect(html).toContain(`data-publisle-contract="${pin.id} ${pin.digest}"`);
+    expect(html).toContain("The clock advances the counter.");
+    expect(
+      plan.diagnostics.some((item) => item.code === "missing-island-renderer"),
+    ).toBe(true);
   });
 
   it("keeps the explanation outside the island and activates from a button", () => {

@@ -40,6 +40,7 @@ describe("React target", () => {
       createElement(PublisleIsland, {
         activation: "visible",
         label: "Counter explanation",
+        provenance: "urn:fixture:contract sha256:aa",
         props: { source: "./counter.json" },
         load: () => Promise.resolve({ default: () => null }),
         exportName: "default",
@@ -48,6 +49,9 @@ describe("React target", () => {
     );
     expect(markup).toContain("Counter explanation");
     expect(markup).toContain("hidden");
+    expect(markup).toContain(
+      'data-publisle-contract="urn:fixture:contract sha256:aa"',
+    );
   });
 
   it("renders a prepared platform-neutral plan", () => {

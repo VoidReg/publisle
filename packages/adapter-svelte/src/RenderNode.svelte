@@ -105,7 +105,7 @@
     {/each}
   </svelte:element>
 {:else}
-  <div class="publisle-island" aria-label={node.label} bind:this={scope}>
+  <div class="publisle-island" aria-label={node.label} data-publisle-contract={node.provenance} bind:this={scope}>
     <div bind:this={fallback} data-publisle-fallback>
       {#each node.fallback as child}
         <RenderNode node={child} {islands} />

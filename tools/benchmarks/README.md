@@ -46,3 +46,5 @@ accepted report. Production builds fail for reader tooling leaks, premature
 implementation requests and browser errors. CI uploads the raw observations;
 [numerical budget review](../../docs/standards/performance-budgets.md) remains a
 checkpoint before incremental host compilation and threshold enforcement.
+
+`node tools/benchmarks/propose.ts <artifact-directory-1> <artifact-directory-2> <artifact-directory-3>` derives an unenforced review table from three complete full calibration artifacts. It rejects smoke runs, differing source/input hashes and differing software/sampling settings. The timing headroom is a review heuristic, not a confidence interval. The [current proposed caps](../../docs/standards/performance-budget-proposal.md) cite the immutable baseline run.

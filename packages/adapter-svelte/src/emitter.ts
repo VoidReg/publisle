@@ -27,7 +27,7 @@ function emitNode(
   if (node.kind === "raw") return `{@html ${js(node.value)}}`;
   if (node.kind === "island") {
     const index = islands.push(node) - 1;
-    return `<div class="publisle-island" aria-label="${html(node.label)}" bind:this={scope${index}}><div bind:this={fallback${index}} data-publisle-fallback>${node.fallback.map((child) => emitNode(child, islands, components, placed)).join("")}</div><div bind:this={root${index}} data-publisle-mount hidden></div></div>`;
+    return `<div class="publisle-island" aria-label="${html(node.label)}"${node.provenance === undefined ? "" : ` data-publisle-contract="${html(node.provenance)}"`} bind:this={scope${index}}><div bind:this={fallback${index}} data-publisle-fallback>${node.fallback.map((child) => emitNode(child, islands, components, placed)).join("")}</div><div bind:this={root${index}} data-publisle-mount hidden></div></div>`;
   }
   if (node.kind === "component") {
     let index = components.findIndex(

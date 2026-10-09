@@ -47,6 +47,7 @@ function renderNode(
       key,
       activation: node.activation,
       label: node.label,
+      ...(node.provenance === undefined ? {} : { provenance: node.provenance }),
       props: node.props,
       load,
       exportName: node.exportName,

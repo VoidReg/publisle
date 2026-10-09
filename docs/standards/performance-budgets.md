@@ -42,9 +42,9 @@ preparation, corpus throughput and first/all-island activation. No single
 whole-system score can substitute for these boundaries.
 
 The review table must record observed p50/p95/variance, the proposed numeric cap,
-its headroom and rationale for every chosen gate. Exact caps remain blank until
-calibration results are available and reviewed; this document does not invent
-latency targets. JS heap, long tasks and CLS remain observations until stable,
+its headroom and rationale for every chosen gate. The [concrete proposal](performance-budget-proposal.md) records three full CI
+repetitions and the explicit headroom heuristic. Its numeric caps are awaiting
+review and are not enforced. JS heap, long tasks and CLS remain observations until stable,
 meaningful scopes support their own budgets. Separate parse and evaluation costs,
 other publishing compilers, external dataset delivery and mobile devices are not
 yet measured. The synthetic identity graph is not a contract-resolution benchmark.

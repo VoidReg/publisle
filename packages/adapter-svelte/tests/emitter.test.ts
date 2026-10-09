@@ -43,6 +43,7 @@ describe("Svelte target", () => {
             blockId: "block",
             activation: "visible",
             label: "Counter explanation",
+            provenance: "urn:fixture:contract sha256:aa",
             module: "./Schematic.svelte",
             exportName: "default",
             props: { source: "./counter.json" },
@@ -71,6 +72,9 @@ describe("Svelte target", () => {
     );
     expect(() => compile(code, { generate: "server" })).not.toThrow();
     expect(code).toContain("Counter explanation");
+    expect(code).toContain(
+      'data-publisle-contract="urn:fixture:contract sha256:aa"',
+    );
   });
 
   it("compiles the runtime content components", () => {

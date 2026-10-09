@@ -21,7 +21,7 @@ function emitNode(
     return `jsx("span", { dangerouslySetInnerHTML: { __html: ${js(node.value)} } })`;
   if (node.kind === "island") {
     const index = islands.push(node) - 1;
-    return `jsx(PublisleIsland, { activation: ${js(node.activation)}, label: ${js(node.label)}, props: publisleIslandProps${index}, load: publisleIslandLoad${index}, exportName: ${js(node.exportName)}, fallback: ${node.fallback.length > 1 ? "jsxs" : "jsx"}(Fragment, { children: ${emitChildren(node.fallback, islands, components, placed)} }) })`;
+    return `jsx(PublisleIsland, { activation: ${js(node.activation)}, label: ${js(node.label)}${node.provenance === undefined ? "" : `, provenance: ${js(node.provenance)}`}, props: publisleIslandProps${index}, load: publisleIslandLoad${index}, exportName: ${js(node.exportName)}, fallback: ${node.fallback.length > 1 ? "jsxs" : "jsx"}(Fragment, { children: ${emitChildren(node.fallback, islands, components, placed)} }) })`;
   }
   if (node.kind === "component") {
     let index = components.findIndex(

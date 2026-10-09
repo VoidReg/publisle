@@ -545,8 +545,16 @@ function interactiveNodes(
           references,
         )
       : [];
+  const provenance = contractProvenance(block.type, pins);
   const region = (children: readonly RenderNode[]): RenderNode[] => [
-    element("section", { class: "publisle-interactive" }, children),
+    element(
+      "section",
+      {
+        class: "publisle-interactive",
+        ...(provenance ? { "data-publisle-contract": provenance } : {}),
+      },
+      children,
+    ),
   ];
   if (!interactive) {
     diagnostics.push({
@@ -565,7 +573,6 @@ function interactiveNodes(
       ]),
     );
   }
-  const provenance = contractProvenance(block.type, pins);
   return region([
     ...explanation,
     {
