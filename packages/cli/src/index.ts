@@ -18,7 +18,9 @@ import {
   type DocumentSourceMap,
 } from "@publisle/schema";
 
+import type { TemplateRegistry } from "@publisle/template-sdk";
 export interface CliConfig {
+  readonly templates?: TemplateRegistry;
   readonly contractBundle?: ContractBundle;
   /** Trusted host configuration, not reader-side code. Core blocks are the default registry. */
   readonly prepare?: PrepareOptions;

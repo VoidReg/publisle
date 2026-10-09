@@ -1,3 +1,10 @@
+import { template as ieee } from "@publisle/template-ieee";
+import { template as acm } from "@publisle/template-acm";
+import {
+  template as elsevier,
+  authorDateTemplate,
+} from "@publisle/template-elsevier";
+import { template as springer } from "@publisle/template-springer";
 import {
   chmod,
   lstat,
@@ -26,14 +33,27 @@ import {
 import { createRegistry } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import {
+  createLatexPackage,
   parseBibtex,
   resolveDocument,
   toBibtex,
   toCslJson,
   toJats,
+  createJatsPackage,
   toLatex,
-  toPdf,
 } from "@publisle/research";
+
+import {
+  compileLatexPackage,
+  collectJatsPackage,
+  lookupDoi,
+  fetchBibliography,
+  importCslJson,
+  writeLatexPackage,
+  doctorCompilers,
+  setupCompiler,
+  writePackageArchive,
+} from "@publisle/research/node";
 
 export interface CliIo {
   readonly stdout: (text: string) => void;
@@ -44,9 +64,12 @@ const help = `Usage: publisle validate|upgrade|lock <file.json|file.md> [--confi
 JSON-only inspection: publisle inspect|semantic <source.json> [--bundle <contracts.json>] [--mode linked|standalone]
 Reading projection: publisle reading <source.json> (not a round trip).
 Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf [--style numeric|author-date|file.csl] [--output <new-file>]
+Journal templates: publisle export <file.json|file.md> --to pdf|submission --template ieee-journal [--engine pdflatex|lualatex] --output <new-file|new-directory>
 BibTeX import: publisle bibliography <file.bib>
 Upgrade: [--output <new-file> | --in-place]. Lock: [--output <new-file>] (never in-place).
-pdf requires --output. Validation never writes. Upgrade/lock/export default to stdout except pdf.
+Compiler: publisle doctor | publisle setup compiler
+Submission: --config host.ts --template-data data.json --compiler auto|native|container [--archive]
+pdf and submission require --output. Validation never writes. Upgrade/lock/export default to stdout except pdf.
 --output refuses existing files.
 Config is trusted executable host code exporting a default CliConfig. Node >=24 required.
 Exit codes: 0 success (warnings allowed), 1 document errors, 2 usage/config/I/O errors.
@@ -147,6 +170,25 @@ export async function runCli(
   }
   try {
     const command = args[0];
+    if (command === "setup") {
+      if (args.length !== 2 || args[1] !== "compiler")
+        throw new Error("Use publisle setup compiler");
+      io.stdout(`Installed compiler ${await setupCompiler()}\n`);
+      return 0;
+    }
+    if (command === "doctor") {
+      const { document } = await import("@publisle/schema");
+      const status = await doctorCompilers(
+        createLatexPackage(
+          document({
+            metadata: { title: "Doctor", authors: [{ name: "Publisle" }] },
+            blocks: [],
+          }),
+        ),
+      );
+      io.stdout(JSON.stringify(status, null, 2) + "\n");
+      return status.native.available || status.container.available ? 0 : 1;
+    }
     if (command === "reading") {
       if (args.length !== 2 || !args[1] || args[1].startsWith("-"))
         throw new Error("reading requires only canonical source.json");
@@ -197,20 +239,65 @@ export async function runCli(
       return 0;
     }
     if (command === "bibliography") {
-      const file = args[1];
-      if (!file || file.startsWith("-") || args.length !== 2)
-        throw new Error("bibliography requires one BibTeX file.");
-      io.stdout(
-        `${JSON.stringify(parseBibtex(await readFile(resolve(file), "utf8")), null, 2)}\n`,
-      );
+      const source = args[1];
+      if (!source)
+        throw new Error(
+          "bibliography requires a file, --doi DOI or --url HTTPS URL.",
+        );
+      if (!source.startsWith("-")) {
+        if (args.length !== 2)
+          throw new Error("Local bibliography import accepts one file.");
+        const text = await readFile(resolve(source), "utf8");
+        io.stdout(
+          JSON.stringify(
+            text.trimStart().startsWith("@")
+              ? parseBibtex(text)
+              : importCslJson(text),
+            null,
+            2,
+          ) + "\n",
+        );
+        return 0;
+      }
+      if (source !== "--doi" && source !== "--url")
+        throw new Error("Use --doi or --url.");
+      const value = args[2];
+      if (!value) throw new Error("Missing bibliography location.");
+      let cacheDirectory = resolve(".publisle-cache/bibliography");
+      let refresh = false;
+      for (let index = 3; index < args.length; index++) {
+        if (args[index] === "--refresh") refresh = true;
+        else if (args[index] === "--cache" && args[index + 1])
+          cacheDirectory = resolve(args[++index] ?? "");
+        else
+          throw new Error("Remote bibliography accepts --cache and --refresh.");
+      }
+      const result = await (source === "--doi"
+        ? lookupDoi(value, { cacheDirectory, refresh })
+        : fetchBibliography(value, { cacheDirectory, refresh }));
+      io.stdout(JSON.stringify(result, null, 2) + "\n");
       return 0;
     }
     if (command === "export") {
       const file = args[1];
       if (!file || file.startsWith("-"))
         throw new Error("export requires a JSON or Markdown document.");
-      let target: "bibtex" | "csl-json" | "latex" | "jats" | "pdf" | undefined;
+      let target:
+        | "bibtex"
+        | "csl-json"
+        | "latex"
+        | "jats"
+        | "pdf"
+        | "submission"
+        | "jats-submission"
+        | undefined;
       let style = "numeric";
+      let template: string | undefined;
+      let engine: "pdflatex" | "lualatex" | undefined;
+      let configFile: string | undefined;
+      let templateDataFile: string | undefined;
+      let compiler: "auto" | "native" | "container" = "auto";
+      let archive = false;
       let outputFile: string | undefined;
       const seen = new Set<string>();
       for (let index = 2; index < args.length; index += 1) {
@@ -218,6 +305,10 @@ export async function runCli(
         if (key === undefined || seen.has(key))
           throw new Error("Invalid or duplicate export option.");
         seen.add(key);
+        if (key === "--archive") {
+          archive = true;
+          continue;
+        }
         const value = args[index + 1];
         if (!value || value.startsWith("-"))
           throw new Error(`Missing value for ${key}.`);
@@ -228,27 +319,146 @@ export async function runCli(
             value === "csl-json" ||
             value === "latex" ||
             value === "jats" ||
-            value === "pdf")
+            value === "pdf" ||
+            value === "submission" ||
+            value === "jats-submission")
         )
           target = value;
+        else if (key === "--template") template = value;
+        else if (key === "--config") configFile = value;
+        else if (key === "--template-data") templateDataFile = value;
+        else if (
+          key === "--compiler" &&
+          (value === "auto" || value === "native" || value === "container")
+        )
+          compiler = value;
+        else if (
+          key === "--engine" &&
+          (value === "pdflatex" || value === "lualatex")
+        )
+          engine = value;
         else if (key === "--style") style = value;
         else if (key === "--output") outputFile = value;
-        else throw new Error("export accepts --to, --style, and --output.");
+        else
+          throw new Error(
+            "export accepts --to, --style, --template, --engine, and --output.",
+          );
       }
       if (target === undefined)
-        throw new Error("--to must be bibtex, csl-json, latex, jats, or pdf.");
-      if (target === "pdf" && outputFile === undefined)
-        throw new Error("pdf export requires --output.");
+        throw new Error(
+          "--to must be bibtex, csl-json, latex, jats, pdf, or submission.",
+        );
+      if (
+        template &&
+        target !== "pdf" &&
+        target !== "submission" &&
+        target !== "latex"
+      )
+        throw new Error(
+          "Templates apply to PDF, LaTeX and submission exports.",
+        );
+      if (archive && target !== "submission" && target !== "jats-submission")
+        throw new Error("--archive requires submission export.");
+      if (
+        (target === "pdf" ||
+          target === "submission" ||
+          target === "jats-submission") &&
+        outputFile === undefined
+      )
+        throw new Error("pdf and submission export require --output.");
       const sourceName = resolve(file);
       const source = await readFile(sourceName, "utf8");
       const extension = extname(sourceName).toLowerCase();
+      const config = await loadConfig(configFile);
       const loaded =
         extension === ".md" || extension === ".markdown"
-          ? fromMarkdown(source, { sourceName })
+          ? fromMarkdown(source, { sourceName, ...config.markdown })
           : { document: parseDocument(parseJson(source)), diagnostics: [] };
       for (const item of loaded.diagnostics)
         io.stderr(diagnosticText(item, sourceName));
       if (loaded.document === undefined) return 1;
+      if (target === "jats-submission") {
+        const result = await collectJatsPackage(
+          createJatsPackage(
+            resolveDocument(
+              loaded.document,
+              style === "numeric" || style === "author-date"
+                ? style
+                : await readFile(resolve(style), "utf8"),
+            ),
+          ),
+          dirname(sourceName),
+        );
+        if (archive)
+          await writePackageArchive(result, resolve(outputFile ?? ""));
+        else await writeLatexPackage(result, resolve(outputFile ?? ""));
+        return 0;
+      }
+      if (
+        target === "pdf" ||
+        target === "submission" ||
+        (target === "latex" && template)
+      ) {
+        const destination = resolve(outputFile ?? "");
+        try {
+          if (!outputFile) {
+            const error = new Error("No output file");
+            Object.assign(error, { code: "ENOENT" });
+            throw error;
+          }
+          await lstat(destination);
+          throw new Error("Export output already exists.");
+        } catch (error) {
+          if (!(
+            error instanceof Error &&
+            "code" in error &&
+            error.code === "ENOENT"
+          ))
+            throw error;
+        }
+        const sourcePackage = createLatexPackage(loaded.document, {
+          ...(template ? { template } : {}),
+          ...(engine ? { engine } : {}),
+          style:
+            style === "numeric" || style === "author-date"
+              ? style
+              : await readFile(resolve(style), "utf8"),
+          templates: {
+            [ieee.id]: ieee,
+            [acm.id]: acm,
+            [elsevier.id]: elsevier,
+            [authorDateTemplate.id]: authorDateTemplate,
+            [springer.id]: springer,
+            ...config.templates,
+          },
+          ...(templateDataFile
+            ? {
+                data: parseJson(
+                  await readFile(resolve(templateDataFile)),
+                ) as Record<string, unknown>,
+              }
+            : {}),
+        });
+        if (target === "latex") {
+          const text = sourcePackage.files["manuscript.tex"] ?? "";
+          if (outputFile) await writeFile(destination, text, { flag: "wx" });
+          else io.stdout(text);
+          return 0;
+        }
+        const compiled = await compileLatexPackage(sourcePackage, {
+          sourceDirectory: dirname(sourceName),
+          compiler,
+        });
+        for (const diagnostic of compiled.diagnostics)
+          io.stderr(
+            `${sourceName}: warning [${diagnostic.code}]: ${diagnostic.message}\n`,
+          );
+        if (target === "submission") {
+          if (archive) await writePackageArchive(compiled, destination);
+          else await writeLatexPackage(compiled, destination);
+        } else await writeFile(destination, compiled.pdf, { flag: "wx" });
+        return 0;
+      }
       const styleSource =
         style === "numeric" || style === "author-date"
           ? style
@@ -263,16 +473,7 @@ export async function runCli(
             ? toCslJson(resolved.article.entries)
             : target === "latex"
               ? toLatex(resolved)
-              : target === "jats"
-                ? toJats(resolved)
-                : undefined;
-      if (target === "pdf") {
-        await writeFile(resolve(outputFile ?? ""), toPdf(resolved).pdf, {
-          flag: "wx",
-        });
-        return 0;
-      }
-      if (text === undefined) throw new Error("Export produced no output.");
+              : toJats(resolved);
       if (outputFile)
         await writeFile(resolve(outputFile), text, { flag: "wx" });
       else io.stdout(text.endsWith("\n") ? text : `${text}\n`);
