@@ -811,9 +811,16 @@ function blockNodes(
                           : 1) > rowIndex
                           ? "th"
                           : "td",
-                        align[cellIndex]
-                          ? { class: `publisle-align-${align[cellIndex]}` }
-                          : {},
+                        {
+                          ...((typeof data["headerRows"] === "number"
+                            ? data["headerRows"]
+                            : 1) > rowIndex
+                            ? { scope: "col" }
+                            : {}),
+                          ...(align[cellIndex]
+                            ? { class: `publisle-align-${align[cellIndex]}` }
+                            : {}),
+                        },
                         inline(cell, diagnostics, block, references),
                       ),
                     ),

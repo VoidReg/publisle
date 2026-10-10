@@ -90,6 +90,14 @@ it("Python independently preserves the shared static rendering semantics", async
     ).toBe(publication.html.match(new RegExp(`<${tag}(?: |>)`, "gu"))?.length);
   expect(python.html).toContain('dir="rtl"');
   expect(publication.html).toContain('dir="rtl"');
+  for (const html of [publication.html, python.html]) {
+    expect(html).toMatch(/^<(?:div|article)\b[^>]*lang="en"[^>]*dir="ltr"/u);
+    expect(html).toContain('alt="Diagram description"');
+    const headers = html.match(/<th\b[^>]*>/gu) ?? [];
+    expect(headers).toHaveLength(2);
+    expect(headers.every((tag) => tag.includes('scope="col"'))).toBe(true);
+    expect(html.match(/<td\b[^>]*scope=/gu)).toBeNull();
+  }
 
   // Both renderers must produce the shared normalized MathML trees, in order.
   const collect = (html: string) => {
