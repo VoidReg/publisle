@@ -53,7 +53,9 @@ references, mixed scripts, and mathematics. The job installs veraPDF 1.28.2 from
 a fixed URL with a checked SHA-256 digest. Reports and generated packages are
 retained in the Research export artifact. The gate requires exactly one matching
 compliant report for each PDF's requested profile, zero failed rules/checks, and zero parser/job
-failures. Missing tools, empty reports, or compiler failures fail the job.
+failures. Missing tools, empty reports, or compiler failures fail the job. A
+hosted run of revision `e95916c` (2026-10-10, run 38063436064) passed and
+retained the reports as `research-exports-and-pdf-ua-reports`.
 
 The three fixtures passed locally on 2026-10-10 with the frozen TL2025 compiler
 and veraPDF 1.28.2, on the pinned amd64 image natively and on the arm64 image
