@@ -11,6 +11,11 @@ export {
 // eslint-disable-next-line @typescript-eslint/no-deprecated -- retained migration export
 export { toPdf } from "./pdf.ts";
 export { resolveDocument, type ResolvedDocument } from "./resolve.ts";
+export {
+  resolvePortableCitations,
+  PORTABLE_CITATION_CAPABILITIES,
+  type PortableCitations,
+} from "./portable-citations.ts";
 
 export {
   createLatexPackage,

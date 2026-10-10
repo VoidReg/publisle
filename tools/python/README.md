@@ -108,9 +108,69 @@ shared TeX subset (`^`, `_`, `\frac`, `\sqrt`, Greek letters, common operators);
 math outside the subset keeps the visible source text with the shared
 `invalid-math` diagnostic. Pass `--codes packages/contracts/rendering-codes.json`
 to verify that every emitted diagnostic code is in the shared renderer registry
-that the TypeScript renderer also validates against. Interactive and custom
-blocks, migrations and full CSL remain outside this subset. Shared fixtures:
+that the TypeScript renderer also validates against. The renderer applies the
+small portable built-in migration set (`tools/python/migrations.py`, currently
+the schematic envelope v1→2 `alt` move) exactly like TypeScript preparation and
+refuses executable or unknown migrations with the shared classification;
+interactive and custom blocks, host document migrations and full CSL remain
+outside this subset. Shared fixtures:
 `packages/contracts/fixtures/static-rendering.json` (document),
 `static-rendering-mathml.json` (normalized MathML expectations matched by both
-renderers), and `rendering-codes.json` (diagnostic codes). This is separate from
+renderers), `migrations.json` (portable migration parity), and
+`rendering-codes.json` (diagnostic codes). This is separate from
 the precompiled host demo above.
+
+`pnpm test:conformance:renderer` runs the independent Python suite and requires
+passing cross-language rendering evidence. The shared `renderer-parity.json`
+corpus compares schematic migration results, fallback paragraph structure/text,
+diagnostic code sets, capability declarations and rejection of future block and
+document versions. Rejected results contain no HTML. `classification` is
+`rendered`, `fallback-with-diagnostic` or `rejected`. No host migration callback
+or plugin is loaded by this Python consumer; TypeScript host-approved executable
+migrations are outside the compared portable configuration. Full CSL parity
+remains unclaimed.
+
+## Independent Research citations
+
+The optional citation formatter uses no additional Python dependency or Node
+process. Keep `packages/contracts/citation-subset.json` alongside `tools/python`
+at their repository-relative paths when copying this tool to an offline host.
+The descriptor declares budgets, the admitted input subset and capabilities;
+generated expectations are not used at runtime.
+
+```sh
+python3 -B tools/python/citations.py article.json --style author-date --locale fr-FR
+python3 -B tools/python/render.py article.json \
+  --citation-style numeric --citation-locale en-US \
+  --codes packages/contracts/rendering-codes.json
+```
+
+Without `--citation-style`, the static renderer keeps its Core numeric-reference
+behavior. Opting in uses the Research formatter's markers and reference list in
+HTML, escaping text exactly once. The citation-only TypeScript equivalent is:
+
+```ts
+import { resolvePortableCitations } from "@publisle/research";
+const result = resolvePortableCitations(document, "author-date", "fr-FR");
+```
+
+The shared corpus covers numbering/range collapse, bibliography ordering, et-al
+names, same-author year suffixes (including revisions of earlier markers),
+English/French locators, missing/duplicate entries, opaque numeric literals and
+punctuation. The admitted document contains only v1 paragraphs/headings and
+bibliography blocks; nested emphasis/strong/strike marks are supported. Author
+names are restricted ASCII `Family` or `Family, Given`; dates are four-digit
+years and page/locator ranges are numeric. General CSL XML, structured names,
+particles, given-name/coauthor disambiguation, quotation processing, BibTeX
+acquisition, other locales and citation locations are outside this role. Both
+implementations reject these features with `unsupported-citation-feature`;
+missing references remain visible with `unresolved-citation`.
+
+`pnpm test:conformance:renderer` requires both implementations to match the
+entire `packages/contracts/fixtures/citations.json` corpus, including capability
+limits, classification, diagnostic code sets, normalized markers and ordered
+reference lists. Python also checks those markers/reference texts in HTML.
+`pnpm check:citations` verifies the reviewed expectations and engine pin;
+`pnpm generate:citations` explicitly regenerates them with citeproc-js 2.4.63.
+Review changed expectations before accepting corpus growth. The
+[processor decision and notices](NOTICE.md) explain the dependency choice.

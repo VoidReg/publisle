@@ -3,6 +3,10 @@
   "formatVersion": 1,
   "comment": "Shared static-rendering diagnostic codes. Both independent renderers emit only these codes for the same conditions; messages stay implementation-specific. Capability limits (plugins, migrations, full CSL) are declared per renderer in its capability record, not as diagnostic codes.",
   "codes": {
+    "unsupported-citation-feature": "The portable Research citation role does not support this style, locale, input shape or budget; no approximate formatting is returned.",
+    "duplicate-bibliography-entry": "A bibliography id is repeated; the first entry is used.",
+    "opaque-reference-literal": "An unstructured reference is preserved literally and cannot be restyled.",
+    "unsupported-document-version": "The source envelope requires an unsupported conversion; the document is rejected before rendering.",
     "invalid-math": "Math input was rejected or failed to render; the source TeX stays visible with the shared publisle-math-error class.",
     "unsafe-url": "An unsafe URL was removed from output.",
     "unresolved-reference": "A cross-reference names no known label; the reference text stays in place.",

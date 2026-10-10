@@ -3,10 +3,16 @@
 Supported: core prose, rich text, direction, figures, tables, labels, authored
 notes, numeric references and presentation MathML for the shared TeX subset.
 Out-of-subset math, interactive and custom blocks use readable fallback with
-shared diagnostics. Does not execute plugins, migrations or full CSL.
+shared diagnostics. Executes only the built-in portable migration, never plugins
+or host migrations; full CSL is outside this renderer's role.
 """
 from html import escape
 import re
+
+from migrations import (
+    CURRENT_BLOCK_VERSIONS,
+    migrate_block,
+)
 
 MATHML_NS = " xmlns=\"http://www.w3.org/1998/Math/MathML\""
 
@@ -132,13 +138,43 @@ def load_rendering_codes(path):
     return set(document["codes"])
 
 
-def render_document(document, instance_id="article"):
-    if document.get("schemaVersion") != 1 or not isinstance(document.get("blocks"), list):
+def render_document(document, instance_id="article", citation_style=None, citation_locale="en-US"):
+    citation_result = None
+    citation_index = 0
+    if citation_style is not None:
+        from citations import resolve_portable_citations
+        citation_result = resolve_portable_citations(document, citation_style, citation_locale)
+        if citation_result["classification"] == "rejected":
+            return {"html": "", "diagnostics": citation_result["diagnostics"],
+                    "capabilities": capabilities(citation_result), "classification": "rejected"}
+    if not isinstance(document.get("blocks"), list):
         raise ValueError("Expected a Publisle schemaVersion 1 document")
+    if document.get("schemaVersion") != 1:
+        return {"html": "", "diagnostics": [{
+            "code": "unsupported-document-version",
+            "message": "This document version requires an unsupported conversion.",
+        }], "capabilities": capabilities(), "classification": "rejected"}
     if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", instance_id):
         raise ValueError("instance_id must be a safe HTML identifier")
     diagnostics, labels, notes, references, cited = [], {}, {}, {}, {}
-    blocks = document["blocks"]
+    if citation_result is not None:
+        diagnostics.extend(citation_result["diagnostics"])
+    # Migrate before resolving readable bindings or collecting labels/references.
+    # Keep source data immutable, including nested objects.
+    from copy import deepcopy
+    blocks = deepcopy(document["blocks"])
+    for block in blocks:
+        version, data, migrated = migrate_block(
+            block["type"], block.get("schemaVersion"), block.get("data", {})
+        )
+        if migrated:
+            block["schemaVersion"], block["data"] = version, data
+        current = CURRENT_BLOCK_VERSIONS.get(block["type"], 1)
+        if block.get("schemaVersion") != current:
+            return {"html": "", "diagnostics": [{
+                "code": "unsupported-block-version", "blockId": block["id"],
+                "message": "This block version has no portable migration.",
+            }], "capabilities": capabilities(), "classification": "rejected"}
 
     def identifier(value, kind="label"):
         value = str(value)
@@ -180,6 +216,7 @@ def render_document(document, instance_id="article"):
         return "" if re.match(r"(javascript|vbscript|data):", re.sub(r"[\x00-\x20]", "", value), re.I) else value
 
     def inline(nodes, block):
+        nonlocal citation_index
         result = []
         for node in nodes:
             kind = node.get("type")
@@ -214,6 +251,11 @@ def render_document(document, instance_id="article"):
                     diagnostic(block, "unresolved-footnote", "Missing note " + key)
                 result.append(f'<sup><a href="#{attr(identifier(key, "note"))}">{escape(key)}</a></sup>')
             elif kind == "citationReference":
+                if citation_result is not None:
+                    marker = citation_result["citations"][citation_index]
+                    citation_index += 1
+                    result.append('<span class="publisle-citation">' + escape(marker) + '</span>')
+                    continue
                 numbers = []
                 for item in node["items"]:
                     key = item["id"]
@@ -264,10 +306,6 @@ def render_document(document, instance_id="article"):
     for block in blocks:
         kind, data = block["type"], block.get("data", {})
         label = f' id="{attr(labels[data["label"]])}"' if data.get("label") else ""
-        if block.get("schemaVersion") != 1:
-            diagnostic(block, "unsupported-block-version", "No migrations execute in Python.")
-            body.append(readable_flow(block))
-            continue
         if kind == "publisle:heading":
             level = int(min(6, max(1, data.get("level", 1))))
             body.append(f'<h{level}{label}>' + inline(data.get("content", []), block) + f'</h{level}>')
@@ -285,7 +323,8 @@ def render_document(document, instance_id="article"):
             rows = []
             for i, row in enumerate(data.get("rows", [])):
                 tag = "th" if i < data.get("headerRows", 1) else "td"
-                rows.append("<tr>" + "".join(f'<{tag}>' + inline(cell, block) + f'</{tag}>' for cell in row) + "</tr>")
+                scope = ' scope="col"' if tag == "th" else ""
+                rows.append("<tr>" + "".join(f'<{tag}{scope}>' + inline(cell, block) + f'</{tag}>' for cell in row) + "</tr>")
             body.append(f'<table{label}><caption>' + flow(data.get("caption", []), block) + "</caption><tbody>" + "".join(rows) + "</tbody></table>")
         elif kind == "publisle:math":
             body.append(math_node(data.get("value", ""), bool(data.get("display")), block))
@@ -294,10 +333,26 @@ def render_document(document, instance_id="article"):
         elif kind == "publisle:bibliography":
             bibliography_present = True
         else:
-            diagnostic(block, "fallback-readable", "Unsupported interactive or custom behavior uses readable fallback.")
+            # Interactive and unknown blocks: TypeScript renders authored
+            # fallback prose without a diagnostic and warns only when nothing
+            # readable exists; the Python renderer classifies identically.
             readable = block.get("readable", {})
-            body.append(flow(data.get("fallback", []), block) or readable_flow(block) or "<p>" + escape(data.get("alt", data.get("value", readable.get("text", "")))) + "</p>")
-    if bibliography_present or cited:
+            content = data.get("content") if isinstance(data.get("content"), dict) else {}
+            has_authored = bool(data.get("fallback"))
+            has_description = bool(content.get("description"))
+            rendered = (flow(data.get("fallback", []), block) if has_authored else "") or readable_flow(block)
+            if rendered or has_authored or has_description:
+                body.append(rendered)
+            else:
+                diagnostic(block, "missing-static-representation", "The block has no static representation or readable fallback.")
+                body.append(rendered)
+    if citation_result is not None:
+        items = [f'<li id="{attr(identifier(entry["id"], "ref"))}" value="{attr(entry["label"])}">{escape(entry["text"])}</li>'
+                 for entry in citation_result["bibliography"]]
+        if bibliography_present or items:
+            # CSL text already contains any style-prescribed numbering.
+            body.append('<ol class="publisle-references" style="list-style: none">' + "".join(items) + '</ol>')
+    elif bibliography_present or cited:
         items = []
         for key, number in cited.items():
             entry = references[key]
@@ -309,7 +364,15 @@ def render_document(document, instance_id="article"):
     direction = metadata.get("direction", "auto")
     if direction not in ("ltr", "rtl", "auto"):
         raise ValueError("Invalid document direction")
-    return {"html": f'<article{language} dir="{direction}">' + "".join(body) + "</article>", "diagnostics": diagnostics, "capabilities": {"role": "static-renderer", "schemaVersion": 1, "fullCSL": False, "plugins": False, "migrations": False}}
+    return {"html": f'<article{language} dir="{direction}">' + "".join(body) + "</article>", "diagnostics": diagnostics, "capabilities": capabilities(citation_result), "classification": "fallback-with-diagnostic" if diagnostics else "rendered"}
+
+
+def capabilities(citation_result=None):
+    result = {"role": "static-renderer", "schemaVersion": 1, "fullCSL": False,
+              "plugins": False, "migrations": "builtin-portable"}
+    if citation_result is not None:
+        result["citations"] = citation_result["capabilities"]
+    return result
 
 
 def main():
@@ -320,10 +383,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("--instance-id", default="article")
+    parser.add_argument("--citation-style", default=None,
+                        help="Opt into the shared Research numeric/author-date subset")
+    parser.add_argument("--citation-locale", default="en-US")
     parser.add_argument("--codes", type=Path, default=None,
                         help="publisle:rendering-codes registry to validate emitted codes against")
     args = parser.parse_args()
-    result = render_document(parse_json(args.source.read_bytes()), args.instance_id)
+    result = render_document(parse_json(args.source.read_bytes()), args.instance_id,
+                             args.citation_style, args.citation_locale)
     if args.codes:
         allowed = load_rendering_codes(args.codes)
         unknown = sorted({item["code"] for item in result["diagnostics"]} - allowed)

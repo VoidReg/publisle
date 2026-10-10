@@ -1,0 +1,53 @@
+{
+  "capabilities": {
+    "role": "research-citations",
+    "schemaVersion": 1,
+    "fullCSL": false,
+    "plugins": false,
+    "styles": ["numeric", "author-date"],
+    "locales": ["en-US", "fr-FR"]
+  },
+  "limits": {
+    "blocks": 256,
+    "entries": 256,
+    "clusters": 256,
+    "items": 32,
+    "authors": 8,
+    "text": 4096
+  },
+  "entryFields": [
+    "id",
+    "type",
+    "authors",
+    "title",
+    "issued",
+    "containerTitle",
+    "volume",
+    "issue",
+    "page",
+    "publisher",
+    "doi",
+    "url",
+    "raw"
+  ],
+  "inlineTypes": [
+    "text",
+    "citationReference",
+    "strong",
+    "emphasis",
+    "strikethrough",
+    "inlineCode",
+    "hardBreak",
+    "softBreak"
+  ],
+  "blockTypes": [
+    "publisle:paragraph",
+    "publisle:heading",
+    "publisle:bibliography"
+  ],
+  "namePattern": "^[A-Za-z]+(?:, [A-Za-z]+(?: [A-Za-z]+)*)?$",
+  "yearPattern": "^[12][0-9]{3}$",
+  "rangePattern": "^[0-9]+(?:-[0-9]+)?$",
+  "locatorLabels": ["page", "p.", "chapter", "section"],
+  "quotationPattern": "[\"“”‘’«»]|&(?:quot|apos);|(?:^|\\s)'[^']*'"
+}
