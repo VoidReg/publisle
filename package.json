@@ -34,6 +34,7 @@
     "test:research": "vitest run --config vitest.research.config.ts",
     "test:pdf-ua": "vitest run --config vitest.pdf-ua.config.ts",
     "build:packages": "node tools/build-packages.ts",
+    "demo:paper": "node tools/research-paper-demo.ts",
     "test:distribution": "node tools/distribution-gate.ts"
   },
   "keywords": [],

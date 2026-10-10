@@ -25,6 +25,47 @@ JATS packages collect article XML and figures and validate against the bundled
 Archiving 1.3 DTD using `xmllint --nonet`. `toJats` remains a single-article API.
 ZIP archives contain the same package files as directory exports.
 
+## From the playground to a journal PDF
+
+A research paper is ordinary Markdown, so the same document can be authored in
+either playground and exported to any journal theme. Open a playground, choose
+**Load research paper** (the [interactive export
+study](../../examples/articles/interactive-research-paper.md)), edit it, and use
+**Export Markdown**. The saved file feeds the CLI unchanged:
+
+```sh
+pnpm cli export paper.md --to html \
+  --config examples/articles/interactive-paper.host.ts \
+  --output paper-preview.html
+pnpm cli export paper.md --to pdf --template ieee-journal \
+  --output paper-ieee.pdf
+pnpm cli export paper.md --to pdf --template acm-journal \
+  --template-data country.json --output paper-acm.pdf
+```
+
+The same file exports through `elsevier-numeric` and `springer-journal` with no
+other changes; only the template flag moves. `pnpm demo:paper` runs the whole
+sweep on the bundled paper into `.local/demos/`.
+
+Three boundary facts to keep straight while reviewing:
+
+- The web preview renders the authored body blocks; a research paper's title
+  lives in the front matter and is typeset by the journal template, so the
+  preview begins at the abstract. Interactive islands are live in the web
+  edition.
+- Print and PDF exports never execute interactive behavior. Diagrams and embeds
+  contribute their accessible text, schematic islands contribute their authored
+  fallback prose, and each reduction is reported as
+  `research-block-reduced` or `research-block-fallback` in the export
+  diagnostics. An export that omits a fallback silently is broken, not terse.
+- The zero-TeX HTML preview prepares the document through the Core artifact
+  path, so it needs the demo's [host
+  config](../../examples/articles/interactive-paper.host.ts) to register the
+  schematic island. Journal exports do not need it. Publisher themes are the
+  untagged native tier (`pdf-ua-unavailable` diagnostic); PDF/UA-tagged output
+  remains the standard article template's LuaLaTeX path
+  ([accessibility](accessibility.md)).
+
 ## Public templates
 
 `@publisle/template-sdk` exports projected article types, escaping helpers,

@@ -11,6 +11,7 @@
     BLOCK_LABELS,
     DocumentEditor,
     FOURIER_ARTICLE,
+    RESEARCH_PAPER,
     FOURIER_PARTIAL_SUMS,
   } from "@publisle/playground-core";
   import BlockEditor from "$lib/BlockEditor.svelte";
@@ -120,6 +121,9 @@
         onclick={() => { diagnostics = editor.importMarkdown(FOURIER_ARTICLE).diagnostics; }}
       >
         Load Fourier article
+      </button>
+      <button type="button" onclick={() => { diagnostics = editor.importMarkdown(RESEARCH_PAPER).diagnostics; }}>
+        Load research paper
       </button>
       <button
         type="button"

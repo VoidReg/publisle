@@ -2,7 +2,11 @@
 
 Open either playground and choose **Load Fourier article** to load the complete
 article and resolve its local assets. This replaces the current editor document,
-just like importing Markdown. Use the normal export controls to save it.
+just like importing Markdown. Use the normal export controls to save it. A
+second example, **Load research paper**, loads an
+[interactive research paper](interactive-research-paper.md) whose export path to
+all four journal themes is documented in the
+[journal export guide](../../docs/guides/journal-export.md#from-the-playground-to-a-journal-pdf).
 
 `fourier-series.md` is also a standalone source document. Keep
 `fourier-square-wave.svg` and `fourier-clock.json` alongside it when publishing

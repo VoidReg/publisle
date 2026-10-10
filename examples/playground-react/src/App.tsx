@@ -15,6 +15,7 @@ import {
   DocumentEditor,
   FOURIER_ARTICLE,
   FOURIER_PARTIAL_SUMS,
+  RESEARCH_PAPER,
 } from "@publisle/playground-core";
 import { BlockEditor } from "./BlockEditor.tsx";
 import {
@@ -130,6 +131,14 @@ export default function App() {
             }
           >
             Load Fourier article
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setDiagnostics(editor.importMarkdown(RESEARCH_PAPER).diagnostics)
+            }
+          >
+            Load research paper
           </button>
           <button
             type="button"
