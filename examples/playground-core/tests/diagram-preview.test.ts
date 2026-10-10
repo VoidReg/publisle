@@ -81,8 +81,12 @@ describe("host-owned diagram previews", () => {
       expect(svg).not.toContain('width="100%"');
       expect(svg).toContain("@media(prefers-color-scheme:dark)");
       expect(svg).toContain("fill:var(--diagram-raised)");
-      expect(svg).toContain("--diagram-raised:#263244");
-      expect(svg).toContain("font-family:Inter,");
+      expect(svg).toContain(
+        `--diagram-raised:${MERMAID_SITE_THEME.dark.raised}`,
+      );
+      expect(svg.replace(/\s+/gu, "")).toContain(
+        `font-family:${MERMAID_SITE_THEME.fontFamily.replace(/\s+/gu, "")}`,
+      );
     }
   });
   it("preserves authored fallbacks, captions, numbering and cross references", () => {

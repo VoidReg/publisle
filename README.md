@@ -1,6 +1,16 @@
-# Publisle
-
-Portable semantic articles, compiled into static content with optional interactive islands.
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/lockup-dark.svg" />
+    <img src="docs/assets/brand/lockup-light.svg" alt="Publisle" width="420" />
+  </picture>
+  <p><strong>Portable semantic articles, compiled into static content with optional interactive islands.</strong></p>
+  <p>
+    <a href="https://github.com/VoidReg/publisle/actions/workflows/check.yml"><img src="https://github.com/VoidReg/publisle/actions/workflows/check.yml/badge.svg" alt="Check status" /></a>
+    <img src="https://img.shields.io/badge/status-beta-9B3214" alt="beta" />
+    <img src="https://img.shields.io/badge/node-24%2B-1A1513" alt="Node 24+" />
+    <img src="https://img.shields.io/badge/pnpm-11.x-1A1513" alt="pnpm 11.x" />
+  </p>
+</div>
 
 Publisle is a publishing toolkit for technical articles, research papers, and
 interactive explanations. Author content as Markdown or typed JSON, validate it
@@ -80,7 +90,10 @@ code does.
 
 ## How the system fits together
 
-![Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands.](docs/assets/publisle-system.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/publisle-system-dark.svg" />
+  <img src="docs/assets/publisle-system.svg" alt="Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands." width="820" />
+</picture>
 
 The portable schema knows the content, not the UI framework. Preparation produces
 diagnostics, reference/resource plans, and a cache identity. Adapters compile the

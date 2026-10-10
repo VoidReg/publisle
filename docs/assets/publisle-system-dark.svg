@@ -24,7 +24,7 @@
       markerHeight="7"
       orient="auto-start-reverse"
     >
-      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#9b3214" />
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#ec8a6d" />
     </marker>
   </defs>
   <style>
@@ -36,21 +36,21 @@
         -apple-system,
         "Segoe UI",
         sans-serif;
-      fill: #1a1513;
+      fill: #fffdfa;
     }
     .panel {
-      fill: #f6f2ed;
-      stroke: #e8e2dc;
+      fill: #26201e;
+      stroke: #574f4b;
       stroke-width: 1.5;
     }
     .card {
-      fill: #ffffff;
+      fill: #26201e;
       stroke: #8c847f;
       stroke-width: 1.5;
     }
     .core {
-      fill: #ffede8;
-      stroke: #9b3214;
+      fill: #3c0d02;
+      stroke: #ec8a6d;
       stroke-width: 1.5;
     }
     .heading {
@@ -64,7 +64,7 @@
     }
     .detail {
       font-size: 15px;
-      fill: #574f4b;
+      fill: #d3ccc6;
       text-anchor: middle;
     }
     .edge {
@@ -76,11 +76,11 @@
     }
     .edge-label {
       font-size: 14px;
-      fill: #574f4b;
+      fill: #d3ccc6;
       text-anchor: middle;
     }
   </style>
-  <rect width="1060" height="750" fill="#fffdfa" rx="16" />
+  <rect width="1060" height="750" fill="#1a1513" rx="16" />
   <rect class="panel" x="20" y="20" width="1020" height="490" rx="16" />
   <text class="heading" x="48" y="58">Authoring / server / build</text>
   <rect class="panel" x="20" y="550" width="1020" height="180" rx="16" />

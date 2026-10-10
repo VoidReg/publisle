@@ -103,9 +103,7 @@ export class DocumentEditor {
   }
 
   removeBlock(id: BlockId): void {
-    this.replaceBlocks(
-      this.current.blocks.filter((block) => block.id !== id),
-    );
+    this.replaceBlocks(this.current.blocks.filter((block) => block.id !== id));
   }
 
   moveBlock(id: BlockId, direction: "up" | "down"): void {
