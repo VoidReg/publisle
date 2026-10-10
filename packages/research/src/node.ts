@@ -16,7 +16,7 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 import type { ResearchLoss } from "./article.ts";
-import type { Document } from "@publisle/schema";
+import type { Block, BlockType, Document } from "@publisle/schema";
 import { createLatexPackage, type LatexPackageOptions } from "./package.ts";
 import type { LatexPackage } from "./package.ts";
 
@@ -185,7 +185,9 @@ export async function compileLatexPackage(
                 "--env",
                 "TEXMFVAR=/tmp/texmf-var",
                 "--env",
-                "openin_any=p",
+                // LuaTeX 2025 reads Unicode data via absolute paths. The
+                // container exposes only the compiler and the package mount.
+                "openin_any=r",
                 "--env",
                 "openout_any=p",
                 backend.image ?? "",
@@ -277,6 +279,8 @@ export async function compileLatexPackage(
       JSON.stringify(
         {
           template: source.template,
+          pdfStandard: source.pdfStandard,
+          pdfUaValidation: source.pdfStandard ? "not-run" : "unavailable",
           engine: source.engine,
           engineVersion,
           compiler: backend.kind,
@@ -326,11 +330,80 @@ const compilerLock = join(homedir(), ".cache", "publisle", "compiler.json");
 export interface CompilerStatus {
   readonly available: boolean;
   readonly missing: readonly string[];
+  readonly latexFormat?: string;
+}
+async function taggingFormat(image?: string): Promise<string | undefined> {
+  const directory = await mkdtemp(join(tmpdir(), "publisle-format-"));
+  const containerName = `publisle-format-${randomUUID()}`;
+  try {
+    const args = [
+      "-interaction=nonstopmode",
+      "-no-shell-escape",
+      "-draftmode",
+      "\\typeout{PUBLISLE-FORMAT:\\fmtversion}\\stop",
+    ];
+    const output = await execute(
+      image ? "docker" : "lualatex",
+      image
+        ? [
+            "run",
+            "--rm",
+            "--pull=never",
+            "--name",
+            containerName,
+            "--network=none",
+            "--cap-drop=ALL",
+            "--security-opt=no-new-privileges",
+            "--read-only",
+            "--tmpfs",
+            "/tmp:rw,nosuid,size=128m",
+            "--workdir",
+            "/tmp",
+            "--env",
+            "HOME=/tmp",
+            "--env",
+            "TEXMFVAR=/tmp/texmf-var",
+            "--env",
+            "openin_any=r",
+            image,
+            "lualatex",
+            ...args,
+          ]
+        : args,
+      {
+        cwd: directory,
+        env: {
+          ...process.env,
+          TEXMFVAR: directory,
+          TEXMFOUTPUT: directory,
+          openin_any: "p",
+          openout_any: "p",
+        },
+        timeout: 15_000,
+        maxBuffer: 1024 * 1024,
+      },
+    );
+    return /PUBLISLE-FORMAT:(\d{4}-\d{2}-\d{2})/u.exec(output.stdout)?.[1];
+  } finally {
+    if (image)
+      await execute("docker", ["rm", "--force", containerName], {
+        timeout: 10_000,
+      }).catch(() => undefined);
+    await rm(directory, { recursive: true, force: true });
+  }
 }
 export async function doctorCompiler(
   source: LatexPackage,
 ): Promise<CompilerStatus> {
   const missing: string[] = [];
+  let latexFormat: string | undefined;
+  if (source.engine === "lualatex") {
+    latexFormat = await taggingFormat().catch(() => undefined);
+    if (!latexFormat)
+      missing.push("LuaLaTeX initialization under restricted native input");
+    else if (source.pdfStandard && latexFormat < "2025-11-01")
+      missing.push("LaTeX format >= 2025-11-01 (PDF/UA tagging)");
+  }
   for (const command of ["latexmk", source.engine, "bibtex", "kpsewhich"])
     try {
       await execute(command, ["--version"], { timeout: 5000 });
@@ -364,7 +437,11 @@ export async function doctorCompiler(
     } catch {
       missing.push(`font:${font}`);
     }
-  return { available: missing.length === 0, missing };
+  return {
+    available: missing.length === 0,
+    missing,
+    ...(latexFormat ? { latexFormat } : {}),
+  };
 }
 async function selectCompiler(
   source: LatexPackage,
@@ -391,6 +468,13 @@ async function selectCompiler(
   if (image && /^sha256:[a-f0-9]{64}$/u.test(image))
     try {
       await execute("docker", ["image", "inspect", image], { timeout: 5000 });
+      if (source.pdfStandard) {
+        const format = await taggingFormat(image);
+        if (!format || format < "2025-11-01")
+          throw new Error(
+            "Installed compiler predates PDF/UA tagging; run publisle setup compiler.",
+          );
+      }
       const security = (
         await execute(
           "docker",
@@ -412,40 +496,101 @@ async function selectCompiler(
     `No complete compiler is installed${native ? ` (missing: ${native.missing.join(", ")})` : ""}. Run publisle setup compiler explicitly, or install the native dependencies.`,
   );
 }
-/** Explicitly installs the compiler image; exports never build or download it. */
-export async function setupCompiler(): Promise<string> {
-  const dockerfile = new URL("../compiler/Dockerfile", import.meta.url);
-  await execute(
-    "docker",
-    [
-      "build",
-      "--tag",
-      "publisle-compiler:1",
-      "--file",
-      dockerfile.pathname,
-      new URL("../compiler/", import.meta.url).pathname,
-    ],
-    { timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024 },
-  );
-  const image = (
+export interface SetupCompilerOptions {
+  /** Published immutable registry reference, including @sha256: digest. */
+  readonly image?: string;
+  /** Build the bundled frozen recipe instead of pulling a published image. */
+  readonly localBuild?: boolean;
+}
+
+/** Explicit setup is the only operation that downloads or builds a compiler. */
+export async function setupCompiler(
+  options: SetupCompilerOptions = {},
+): Promise<string> {
+  if (options.localBuild && options.image)
+    throw new Error("Choose a published compiler image or a local build.");
+  const release = JSON.parse(
+    await readFile(
+      new URL("../compiler/release.json", import.meta.url),
+      "utf8",
+    ),
+  ) as { recipeVersion: number; publishedImage: string | null };
+  const publishedImage = options.localBuild
+    ? undefined
+    : (options.image ?? release.publishedImage ?? undefined);
+  if (
+    publishedImage &&
+    !/^[a-z0-9][a-z0-9.:/-]*@sha256:[a-f0-9]{64}$/u.test(publishedImage)
+  )
+    throw new Error(
+      "Compiler image must be an immutable registry@sha256: reference.",
+    );
+  const tag = `publisle-compiler:${String(release.recipeVersion)}`;
+  if (publishedImage) {
+    try {
+      await execute("docker", ["pull", publishedImage], {
+        timeout: 1_800_000,
+        maxBuffer: 8 * 1024 * 1024,
+      });
+    } catch (error) {
+      throw new Error(
+        "Could not pull the pinned compiler. Retry setup, or use publisle setup compiler --build for the bundled local recipe.",
+        { cause: error },
+      );
+    }
+  } else {
     await execute(
       "docker",
-      ["image", "inspect", "--format", "{{.Id}}", "publisle-compiler:1"],
-      { timeout: 5000 },
-    )
-  ).stdout.trim();
-  if (!/^sha256:[a-f0-9]{64}$/u.test(image))
+      [
+        "build",
+        "--tag",
+        tag,
+        "--file",
+        new URL("../compiler/Dockerfile", import.meta.url).pathname,
+        new URL("../compiler/", import.meta.url).pathname,
+      ],
+      { timeout: 1_800_000, maxBuffer: 8 * 1024 * 1024 },
+    );
+  }
+  const inspected = JSON.parse(
+    (
+      await execute("docker", ["image", "inspect", publishedImage ?? tag], {
+        timeout: 5000,
+      })
+    ).stdout,
+  ) as {
+    Id: string;
+    RepoDigests?: string[];
+    Os: string;
+    Architecture: string;
+  }[];
+  const details = inspected[0];
+  if (!details || !/^sha256:[a-f0-9]{64}$/u.test(details.Id))
     throw new Error("Compiler did not return a pinned image digest.");
+  if (publishedImage && !details.RepoDigests?.includes(publishedImage))
+    throw new Error(
+      "Pulled compiler does not match the requested registry digest.",
+    );
+  if (
+    details.Os !== "linux" ||
+    !["amd64", "arm64"].includes(details.Architecture)
+  )
+    throw new Error("Compiler must be a linux/amd64 or linux/arm64 image.");
   await mkdir(dirname(compilerLock), { recursive: true });
   await writeFile(
     compilerLock,
-    JSON.stringify({ image, recipeVersion: 1 }) + "\n",
+    JSON.stringify({
+      image: details.Id,
+      recipeVersion: release.recipeVersion,
+      platform: `${details.Os}/${details.Architecture}`,
+      ...(publishedImage ? { publishedImage } : {}),
+    }) + "\n",
   );
-  return image;
+  return details.Id;
 }
 /** Unicode-safe default PDF API. Never falls back to the legacy text exporter. */
 export async function exportPdf(
-  document: Document,
+  document: Document<Block<BlockType, unknown>>,
   options: LatexPackageOptions & CompileLatexOptions,
 ): Promise<CompiledLatexPackage> {
   return compileLatexPackage(createLatexPackage(document, options), options);
@@ -531,11 +676,58 @@ export async function collectJatsPackage(
   }
 }
 
-export async function doctorCompilers(source: LatexPackage): Promise<{
+export async function doctorCompilers(
+  source: LatexPackage,
+  options: { readonly veraPdf?: boolean } = {},
+): Promise<{
   native: CompilerStatus;
-  container: { available: boolean; image?: string };
+  container: {
+    available: boolean;
+    runtimeAvailable: boolean;
+    image?: string;
+    publishedImage?: string;
+    platform?: string;
+  };
+  veraPdf?: { available: boolean; version?: string };
 }> {
   const native = await doctorCompiler(source);
+  const runtimeAvailable = await execute("docker", ["info"], { timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+  const installed = await readFile(compilerLock, "utf8")
+    .then(
+      (value) =>
+        JSON.parse(value) as {
+          image?: string;
+          publishedImage?: string;
+          platform?: string;
+        },
+    )
+    .catch(
+      (): {
+        image?: string;
+        publishedImage?: string;
+        platform?: string;
+      } => ({}),
+    );
+  const imageStatus = {
+    runtimeAvailable,
+    ...(installed.image ? { image: installed.image } : {}),
+    ...(installed.publishedImage
+      ? { publishedImage: installed.publishedImage }
+      : {}),
+    ...(installed.platform ? { platform: installed.platform } : {}),
+  };
+  const validator = options.veraPdf
+    ? {
+        veraPdf: await execute("verapdf", ["--version"], { timeout: 10_000 })
+          .then(({ stdout }) => ({
+            available: true,
+            version: stdout.split("\n")[0] ?? "",
+          }))
+          .catch(() => ({ available: false })),
+      }
+    : {};
   try {
     const backend = await selectCompiler(source, {
       sourceDirectory: ".",
@@ -543,12 +735,18 @@ export async function doctorCompilers(source: LatexPackage): Promise<{
     });
     return {
       native,
+      ...validator,
       container: {
+        ...imageStatus,
         available: true,
         ...(backend.image ? { image: backend.image } : {}),
       },
     };
   } catch {
-    return { native, container: { available: false } };
+    return {
+      native,
+      container: { ...imageStatus, available: false },
+      ...validator,
+    };
   }
 }

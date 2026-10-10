@@ -1,0 +1,6 @@
+{
+  "recipeVersion": 2,
+  "publishedImage": null,
+  "platforms": ["linux/amd64", "linux/arm64"],
+  "verification": "Publication pending. Populate publishedImage from a successful compiler-release workflow manifest digest. Both platforms passed the publisher smoke and PDF/UA fixture gates locally on 2026-10-10 (amd64 native; arm64 confirmed linux/arm64 by inspect, executed under QEMU emulation)."
+}

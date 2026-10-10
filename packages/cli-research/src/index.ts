@@ -71,7 +71,7 @@ export type ResearchCommandName = (typeof researchCommandNames)[number];
 export const researchCommandHelp = `Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf|html [--style numeric|author-date|file.csl] [--output <new-file>]
 Journal templates: publisle export <file.json|file.md> --to pdf|submission --template ieee-journal [--engine pdflatex|lualatex] --output <new-file|new-directory>
 BibTeX import: publisle bibliography <file.bib>
-Compiler: publisle doctor | publisle setup compiler
+Compiler: publisle doctor [--verapdf] | publisle setup compiler
 Submission: --config host.ts --template-data data.json --compiler auto|native|container [--archive]
 pdf, submission, and html require --output. --output refuses existing files.
 html writes a self-contained zero-TeX preview page from the publication artifact; journals still need PDF tiers.
@@ -98,12 +98,28 @@ export async function runResearchCommand(
   context: ResearchCommandContext,
 ): Promise<number> {
   if (command === "setup") {
-    if (args.length !== 2 || args[1] !== "compiler")
-      throw new Error("Use publisle setup compiler");
-    io.stdout(`Installed compiler ${await setupCompiler()}\n`);
+    if (
+      args[1] !== "compiler" ||
+      !(
+        args.length === 2 ||
+        (args.length === 3 && args[2] === "--build") ||
+        (args.length === 4 && args[2] === "--image")
+      )
+    )
+      throw new Error(
+        "Use publisle setup compiler [--build | --image registry@sha256:digest]",
+      );
+    io.stdout(
+      `Installed compiler ${await setupCompiler({
+        ...(args[2] === "--build" ? { localBuild: true } : {}),
+        ...(args[2] === "--image" ? { image: args[3] } : {}),
+      })}\n`,
+    );
     return 0;
   }
   if (command === "doctor") {
+    if (args.length > 2 || (args[1] !== undefined && args[1] !== "--verapdf"))
+      throw new Error("Use publisle doctor [--verapdf]");
     const status = await doctorCompilers(
       createLatexPackage(
         document({
@@ -111,6 +127,7 @@ export async function runResearchCommand(
           blocks: [],
         }),
       ),
+      { veraPdf: args[1] === "--verapdf" },
     );
     io.stdout(JSON.stringify(status, null, 2) + "\n");
     return status.native.available || status.container.available ? 0 : 1;
@@ -382,6 +399,10 @@ async function exportCommand(
         : {}),
     });
     if (target === "latex") {
+      for (const diagnostic of sourcePackage.diagnostics)
+        io.stderr(
+          `${sourceName}: warning [${diagnostic.code}]: ${diagnostic.message}\n`,
+        );
       const text = sourcePackage.files["manuscript.tex"] ?? "";
       if (outputFile) await writeFile(destination, text, { flag: "wx" });
       else io.stdout(text);

@@ -1,0 +1,147 @@
+name: Release compiler
+
+# Run explicitly after reviewing the frozen recipe and release fixture results.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Immutable compiler release tag (for example recipe-2.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compiler-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate release name and choose registry
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$RELEASE_VERSION" =~ ^recipe-[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "COMPILER_REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/publisle-compiler" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: packages/research/compiler
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          provenance: false
+          sbom: false
+          tags: publisle-compiler:2
+          cache-from: type=gha,scope=compiler-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=compiler-${{ matrix.arch }}
+      - name: Register immutable local compiler
+        run: |
+          COMPILER_IMAGE=$(docker image inspect --format '{{.Id}}' publisle-compiler:2)
+          echo "PUBLISLE_COMPILER_IMAGE=$COMPILER_IMAGE" >> "$GITHUB_ENV"
+      - name: Install validator and PDF inspection tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre-headless poppler-utils
+          python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+          echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
+      - name: Verify all publisher classes and tagged articles on native architecture
+        run: |
+          node tools/compiler-smoke.ts
+          pnpm test:pdf-ua
+        env:
+          PUBLISLE_RESEARCH_ARTIFACTS: ${{ runner.temp }}/compiler-fixtures
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: compiler-fixtures-${{ matrix.arch }}
+          path: ${{ runner.temp }}/compiler-fixtures
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish verified platform image and record digest
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          REF="$COMPILER_REGISTRY:$RELEASE_VERSION-$ARCH"
+          if docker buildx imagetools inspect "$REF" >/dev/null 2>&1; then
+            echo "Refusing to overwrite existing release $REF" >&2
+            exit 1
+          fi
+          docker tag publisle-compiler:2 "$REF"
+          docker push "$REF"
+          mkdir -p "$RUNNER_TEMP/compiler-digests"
+          docker buildx imagetools inspect "$REF" --format '{{json .Manifest}}' | python3 tools/compiler-platform-digest.py "$ARCH" > "$RUNNER_TEMP/compiler-digests/$ARCH.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compiler-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/compiler-digests
+  manifest:
+    needs: platform
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: compiler-digest-*
+          merge-multiple: true
+          path: digests
+      - name: Publish multi-architecture manifest and release record
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/publisle-compiler"
+          REF="$REGISTRY:$RELEASE_VERSION"
+          if docker buildx imagetools inspect "$REF" >/dev/null 2>&1; then
+            echo "Refusing to overwrite existing release $REF" >&2
+            exit 1
+          fi
+          AMD64=$(cat digests/amd64.txt)
+          ARM64=$(cat digests/arm64.txt)
+          [[ "$AMD64" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$ARM64" =~ ^sha256:[a-f0-9]{64}$ ]]
+          docker buildx imagetools create --tag "$REF" "$REGISTRY@$AMD64" "$REGISTRY@$ARM64"
+          INDEX=$(docker buildx imagetools inspect "$REF" --format '{{.Manifest.Digest}}')
+          docker buildx imagetools inspect "$REGISTRY@$INDEX" --raw > manifest.json
+          python3 tools/compiler-release-record.py "$REGISTRY" "$INDEX" "$AMD64" "$ARM64" > compiler-release.json
+          cat compiler-release.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compiler-release-record
+          path: |
+            compiler-release.json
+            manifest.json
