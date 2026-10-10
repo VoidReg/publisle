@@ -386,20 +386,21 @@ export function projectArticle(
       const fallback = flowParagraphs(data["fallback"], losses).flat();
       const alt = textOf(data["alt"]) ?? textOf(data["title"]);
       const source = textOf(data["value"]);
+      const inlines: ArticleInline[] = [];
+      if (alt) inlines.push({ type: "text", value: alt });
+      if (fallback.length && inlines.length)
+        inlines.push({ type: "text", value: " " });
+      inlines.push(...fallback);
+      if (source) {
+        if (inlines.length) inlines.push({ type: "text", value: " " });
+        inlines.push({
+          type: "text",
+          value: source.replace(/<[^>]*>/gu, ""),
+        });
+      }
       blocks.push({
         kind: "paragraph",
-        inlines: [
-          ...(alt ? [{ type: "text" as const, value: alt }] : []),
-          ...fallback,
-          ...(source
-            ? [
-                {
-                  type: "text" as const,
-                  value: source.replace(/<[^>]*>/gu, ""),
-                },
-              ]
-            : []),
-        ],
+        inlines,
         abstract,
       });
     } else {
