@@ -1,6 +1,13 @@
 {
   "recipeVersion": 2,
-  "publishedImage": null,
-  "platforms": ["linux/amd64", "linux/arm64"],
-  "verification": "Publication pending. Populate publishedImage from a successful compiler-release workflow manifest digest. Both platforms passed the publisher smoke and PDF/UA fixture gates locally on 2026-10-10 (amd64 native; arm64 confirmed linux/arm64 by inspect, executed under QEMU emulation)."
+  "publishedImage": "ghcr.io/voidreg/publisle-compiler@sha256:224d31b5294c99d0e03ec5507b2f9430f29ee97cc2dc37713c9b7ddde163b802",
+  "platforms": {
+    "linux/amd64": "sha256:f58408dc50f581d56aba65e30d51151e972e50bc3d9b6ab24e6d15a2dd856db7",
+    "linux/arm64": "sha256:f112851ed6d678de32a29b48b28e5f5b18af1d19ecd08b21c8dd0c92bde6770f"
+  },
+  "veraPdf": {
+    "version": "1.28.2",
+    "installerSha256": "d1693a5f0bf0997180f6d97e8a5568b0cf39e27eee338d439c8adb58435c1e89"
+  },
+  "verification": "Native amd64 and arm64 publisher compilation and veraPDF PDF/UA-2 and PDF/UA-1 gates passed before platform publication."
 }

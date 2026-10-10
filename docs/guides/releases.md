@@ -1,7 +1,7 @@
 # Distribution and release checklist
 
-Publisle is in beta. All 23 publishable packages are prepared at **0.1.0**;
-publication remains pending. Frozen contract version integers are independent of
+Publisle is in beta. All 23 publishable packages use **0.1.0**, the first beta release
+under the npm `beta` tag. Frozen contract version integers are independent of
 that version. Development and CI use Node.js ≥24 and pnpm
 11.x (currently pinned to 11.17.0). No package publishing runs automatically.
 
@@ -103,13 +103,14 @@ veraPDF 1.28.2. Registry publication, credentials, clean-machine verification of
 each published platform image and the public showcase remain release/adoption
 gates.
 
-The `0.1.0` preparation check found no authenticated npm account (`npm whoami`
-returned `ENEEDAUTH`) and no registry organization at `publisle` (`npm org ls
-publisle` returned scope not found). Establish scope ownership and authentication,
-then repeat the ownership/name checks before publishing. The compiler release
-manifest still has `publishedImage: null`; run the reviewed compiler workflow,
-commit its digest record to `packages/research/compiler/release.json`, and rebuild
-the Research tarball before final package publication.
+Npm authentication and `publisle` organization ownership were verified for the
+release operator `voidreg`. Compiler recipe 2 was published as `recipe-2.0.0`
+after both native architecture jobs passed. Its reviewed manifest and platform
+digests, plus the veraPDF pin, are recorded in
+[the packaged compiler release record](../../packages/research/compiler/release.json)
+and the [changelog](../../CHANGELOG.md). Anonymous registry access to the compiler
+manifest was verified. The final npm tarballs must contain that digest record;
+preparation tarballs with `publishedImage: null` are superseded.
 
 The prepared `0.1.0` tree passed local validation: 632 unit tests, 33 Python tests,
 renderer parity, P0 TEST-01–13, 14 Research integration checks, three PDF/UA
@@ -117,5 +118,6 @@ fixtures, all example builds, and the full packed distribution gate. All 23
 tarball hashes, exact internal pins and publication order were checked against the
 release manifest; the installed Core consumer validated all 16 exported contract
 seals. The complete Fourier showcase then built and verified from eleven of those
-exact Core tarballs. These checks establish local package readiness; npm
-publication, a published compiler digest and a public showcase remain pending.
+exact Core tarballs. These checks establish local package readiness. Verify the published versions
+in a clean registry-only consumer before recording distribution completion.
+Public showcase deployment and the SaaS pilot remain separate adoption work.

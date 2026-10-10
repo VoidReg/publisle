@@ -2,11 +2,11 @@
 
 ## Unreleased
 
-## 0.1.0 — Prepared, not published
+## 0.1.0 — 2026-10-10
 
-All 23 publishable packages are coordinated at `0.1.0` for the first beta release.
-Registry publication and the release date remain pending. Contract version
-integers and npm versions are separate identifiers.
+All 23 public packages use `0.1.0` for the first beta release, published under
+the npm `beta` tag. Contract version integers and npm versions are separate
+identifiers.
 
 Contract versions at the first release, frozen and independent of the npm
 version: document envelope **1**, publication artifact **1**, block payloads
@@ -29,5 +29,23 @@ match a release.
 Compatibility: this is the first package release, with Core and Research profile
 boundaries described above. Node.js ≥24 is required. Research remains optional.
 
-Before publication, record the release date, compiler manifest/platform digests,
-veraPDF version and installer checksum, and links to retained validation evidence.
+Compiler recipe **2**, release **recipe-2.0.0**:
+
+- Multi-architecture image: `ghcr.io/voidreg/publisle-compiler@sha256:224d31b5294c99d0e03ec5507b2f9430f29ee97cc2dc37713c9b7ddde163b802`.
+- linux/amd64: `sha256:f58408dc50f581d56aba65e30d51151e972e50bc3d9b6ab24e6d15a2dd856db7`.
+- linux/arm64: `sha256:f112851ed6d678de32a29b48b28e5f5b18af1d19ecd08b21c8dd0c92bde6770f`.
+- veraPDF **1.28.2**, installer SHA-256
+  `d1693a5f0bf0997180f6d97e8a5568b0cf39e27eee338d439c8adb58435c1e89`.
+
+Both architectures passed native publisher compilation and all three PDF/UA
+fixtures before publication. Evidence: [compiler release and native fixture
+reports](https://github.com/VoidReg/publisle/actions/runs/38083600968),
+[Core checks and conformance](https://github.com/VoidReg/publisle/actions/runs/38083105036),
+[Research export](https://github.com/VoidReg/publisle/actions/runs/38083105023),
+and [packed distribution and showcase](https://github.com/VoidReg/publisle/actions/runs/38083105089).
+
+The [release artifacts](https://github.com/VoidReg/publisle/releases/tag/v0.1.0)
+retain the exact tarballs, publication-order/hash manifest, and offline built-in
+contract bundle with all 16 shipped contract identities and digest seals.
+Registry installation checks and public showcase deployment are recorded
+separately; a package release does not establish adoption.

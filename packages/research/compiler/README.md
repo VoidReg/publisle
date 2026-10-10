@@ -75,5 +75,6 @@ and uploads `compiler-release.json` plus the raw manifest. That record includes
 the index digest, both platform digests, recipe version, and veraPDF pin. Review
 and copy the generated record into `release.json` in the package release change;
 setup then pulls that immutable index. The workflow does not edit the repository
-or automatically change the default compiler. No published image or arm64
-verification is claimed until this workflow succeeds.
+or automatically change the default compiler. Recipe 2 release `recipe-2.0.0` passed this workflow on both native architectures.
+Its published index, platform digests and validator pin are recorded in
+[`release.json`](release.json).

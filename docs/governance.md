@@ -27,7 +27,7 @@ version-1 document. Release notes must never renumber these integers to match an
 npm version.
 
 Npm packages use **0.x** while beta. The first coordinated package version is
-**0.1.0**, prepared but not yet published. The private root workspace version is
+**0.1.0**. The private root workspace version is
 not a release. A package version records
 implementation/API delivery, not a document or artifact schema integer. Release
 notes must identify the shipped contract digests, supported roles and capability
