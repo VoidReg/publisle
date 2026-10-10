@@ -22,7 +22,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y latexmk texlive-publishers texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-lang-arabic texlive-lang-chinese fonts-paktype fonts-texgyre fonts-texgyre-math fontconfig poppler-utils libxml2-utils default-jre-headless
-          fc-cache /usr/share/texlive/texmf-dist/fonts/opentype/public/fandol
+          # apt TeX Live keeps fonts inside the texmf tree, which fontconfig
+          # does not index; register it so native compiler completeness checks
+          # (fc-match) see Fandol and the other TeX font families.
+          sudo tee /etc/fonts/local.conf > /dev/null <<'XML'
+          <?xml version="1.0"?>
+          <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+          <fontconfig>
+            <dir>/usr/share/texlive/texmf-dist/fonts</dir>
+          </fontconfig>
+          XML
+          sudo fc-cache -f
       - run: pnpm cli setup compiler --build
       - name: Install checksum-pinned veraPDF
         run: |
