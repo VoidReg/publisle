@@ -8,7 +8,6 @@ sources and PDF/JATS export.
 | Entry point                                                          | Purpose                                                                            |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | [Project overview and Core quickstart](../README.md#core-quickstart) | Small prepared article and supported integration paths                             |
-| [Core specification](../SPECS.md#part-i--publisle-core)              | Portable model, preparation, rendering and host boundaries                         |
 | [Normative standards index](standards/README.md)                     | Core contracts, named profiles and machine-readable sources                        |
 | [Research profile 1 (beta)](standards/publishing.md)                 | Optional citations, templates, export and compiler contracts                       |
 | [Conformance claims and evidence](standards/conformance.md)          | Roles, TEST-01–16 scope, executable gates and explicit unclaimed limits            |

@@ -57,7 +57,7 @@ The publication is an article artifact for your host to render. Follow the
 [framework host guide](docs/guides/framework-hosts.md) for native components or
 artifact delivery. Core installs no citeproc, TeX, xmllint, Docker or Research
 templates. See the [documentation index](docs/README.md),
-[Core specification](SPECS.md#part-i--publisle-core) and
+[Core standards](docs/standards/README.md) and
 [governance policy](docs/governance.md) for the contracts and beta limits.
 
 ## What it solves
