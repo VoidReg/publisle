@@ -1,0 +1,30 @@
+name: Packed consumer or rendering issue
+description: Report a reproducible problem with a Publisle package or article.
+title: "[Reproduction] "
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Package versions and environment
+      description: Include exact package versions, Node/package-manager and adapter/framework versions, plus workspace commit/patch or artifact identity.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide the source document, exact commands and an accessible repository or fixture. Follow docs/guides/reproductions.md for packed-consumer replay. Remove private material first.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+      description: Include diagnostics, logs and the affected output.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Conformance or compiler evidence
+      description: If relevant include claim/test ID, supported subset, compiler image/platform digest and architecture, veraPDF version/flavour/XML report and artifact workflow link.

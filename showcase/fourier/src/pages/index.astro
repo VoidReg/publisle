@@ -1,0 +1,42 @@
+---
+import Article from "@publisle/adapter-astro/Article.astro";
+import "@publisle/adapter-core/document.css";
+import "@publisle/adapter-core/katex.css";
+import "../host/theme.css";
+import { publication } from "../host/publication.ts";
+const title = "Fourier Series: Geometry Hidden Inside a Wave";
+---
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content="An illustrated tutorial on orthogonality, Fourier coefficients, convergence and the geometry of approximation." />
+  </head>
+  <body class="playground">
+    <header class="showcase-header">
+      <a href="https://github.com/VoidReg/publisle">Publisle</a>
+      <span>Illustrated mathematics · Static reading edition</span>
+    </header>
+    <main id="main" class="preview showcase-article">
+      <Article {publication} instanceId="fourier-showcase" />
+    </main>
+    <footer class="showcase-footer">
+      <a href="/fourier-series.md" download>Download the article source</a>
+      <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+      <a href="#main">Back to top</a>
+    </footer>
+  </body>
+</html>
+<style is:global>
+  .showcase-header, .showcase-footer { width: min(100% - 2rem, 64rem); margin: 1.4rem auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; color: var(--text-muted); }
+  .showcase-article { width: min(100% - 2rem, 64rem); margin: 0 auto; padding: clamp(1rem, 4vw, 3rem); overflow: visible; }
+  .showcase-article h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.13; letter-spacing: -.03em; }
+  .showcase-article h2 { font-size: 1.6rem; margin-top: 2.5rem; }
+  .showcase-article p, .showcase-article li { line-height: 1.75; }
+  .showcase-article .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: .4rem; }
+  .showcase-article table { display: block; overflow-x: auto; }
+  .showcase-article .publisle-interactive { border-inline-start: 3px solid var(--accent); background: var(--surface-raised); padding: 1rem; margin-block: 1.5rem; }
+  a { color: var(--accent); }
+  @media print { .showcase-header, .showcase-footer { display: none; } .showcase-article { border: 0; width: 100%; padding: 0; } }
+</style>

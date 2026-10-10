@@ -1,0 +1,31 @@
+{
+  "name": "publisle-fourier-showcase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1",
+    "verify": "node scripts/verify.ts"
+  },
+  "dependencies": {
+    "@publisle/schema": "file:.artifacts/publisle-schema-0.0.0.tgz",
+    "@publisle/contracts": "file:.artifacts/publisle-contracts-0.0.0.tgz",
+    "@publisle/core": "file:.artifacts/publisle-core-0.0.0.tgz",
+    "@publisle/block-sdk": "file:.artifacts/publisle-block-sdk-0.0.0.tgz",
+    "@publisle/blocks-core": "file:.artifacts/publisle-blocks-core-0.0.0.tgz",
+    "@publisle/blocks-technical": "file:.artifacts/publisle-blocks-technical-0.0.0.tgz",
+    "@publisle/markdown": "file:.artifacts/publisle-markdown-0.0.0.tgz",
+    "@publisle/profiles": "file:.artifacts/publisle-profiles-0.0.0.tgz",
+    "@publisle/adapter-core": "file:.artifacts/publisle-adapter-core-0.0.0.tgz",
+    "@publisle/adapter-astro": "file:.artifacts/publisle-adapter-astro-0.0.0.tgz",
+    "@publisle/cli": "file:.artifacts/publisle-cli-0.0.0.tgz",
+    "astro": "6.4.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.5"
+  }
+}
