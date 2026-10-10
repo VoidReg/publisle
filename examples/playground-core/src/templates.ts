@@ -11,10 +11,12 @@ export type BlockType =
   | "publisle:math"
   | "publisle:figure"
   | "publisle:table"
+  | "publisle:bibliography"
   | "publisle:callout"
   | "publisle:divider"
   | "publisle:embed"
   | "publisle:diagram"
+  | "publisle:raw-html"
   | "publisle:interactive-schematic"
   | "demo:interactive-scene"
   | "demo:fourier-partial-sum";
@@ -28,10 +30,12 @@ export const BLOCK_TYPES: BlockType[] = [
   "publisle:math",
   "publisle:figure",
   "publisle:table",
+  "publisle:bibliography",
   "publisle:callout",
   "publisle:divider",
   "publisle:embed",
   "publisle:diagram",
+  "publisle:raw-html",
   "publisle:interactive-schematic",
   "demo:interactive-scene",
   "demo:fourier-partial-sum",
@@ -46,10 +50,12 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   "publisle:math": "Math",
   "publisle:figure": "Figure",
   "publisle:table": "Table",
+  "publisle:bibliography": "Bibliography",
   "publisle:callout": "Callout",
   "publisle:divider": "Divider",
   "publisle:embed": "Embed",
   "publisle:diagram": "Diagram",
+  "publisle:raw-html": "Raw HTML",
   "publisle:interactive-schematic": "Interactive Schematic",
   "demo:interactive-scene": "3D Scene",
   "demo:fourier-partial-sum": "Fourier partial sums",
@@ -105,6 +111,21 @@ export function defaultData(type: BlockType): unknown {
           [cell("Cell 1"), cell("Cell 2")],
         ],
       };
+    case "publisle:bibliography":
+      return {
+        entries: [
+          {
+            id: "example2026",
+            type: "book",
+            authors: ["Author, Ada"],
+            title: "An Example Reference",
+            issued: "2026",
+            publisher: "Example Press",
+          },
+        ],
+      };
+    case "publisle:raw-html":
+      return { value: "<!-- authored raw HTML -->" };
     case "publisle:callout":
       return {
         variant: "info",

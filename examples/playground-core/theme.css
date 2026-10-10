@@ -1,17 +1,19 @@
 :root {
   color-scheme: light;
-  --bg: #e7edf3;
-  --surface: #ffffff;
-  --surface-raised: #e3ebf3;
-  --text: #14202b;
-  --text-muted: #3c4b5c;
-  --border: #6d7d90;
-  --accent: #0b4f8a;
-  --focus: #0b4f8a;
+  /* Publisle brand (VoidReg): paper, ink, vermilion. WCAG-AAA pairings. */
+  --bg: #fffdfa;
+  --surface: #fffdfa;
+  --surface-raised: #ffffff;
+  --text: #1a1513;
+  --text-muted: #574f4b;
+  --border: #e8e2dc;
+  --accent: #9b3214;
+  --focus: #c34016;
   --input-bg: #ffffff;
-  --danger: #9f1239;
-  --warning: #7a4100;
+  --danger: #a22136;
+  --warning: #613e03;
   font-family:
+    "Inter Variable",
     Inter,
     ui-sans-serif,
     system-ui,
@@ -25,18 +27,35 @@
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg: #0e141b;
-    --surface: #1a2330;
-    --surface-raised: #263244;
-    --text: #f4f7fb;
-    --text-muted: #c9d4e1;
-    --border: #93a4b8;
-    --accent: #9ec9ff;
-    --focus: #9ec9ff;
-    --input-bg: #101820;
-    --danger: #ffb4c0;
-    --warning: #ffd59a;
+    --bg: #1a1513;
+    --surface: #26201e;
+    --surface-raised: #352f2c;
+    --text: #fffdfa;
+    --text-muted: #d3ccc6;
+    --border: #574f4b;
+    --accent: #ec8a6d;
+    --focus: #ec8a6d;
+    --input-bg: #211b19;
+    --danger: #fed4d4;
+    --warning: #f9dab4;
   }
+}
+
+h1,
+h2,
+h3 {
+  font-family:
+    "Space Grotesk Variable", "Space Grotesk", "Inter Variable", Inter,
+    ui-sans-serif, system-ui, sans-serif;
+}
+
+code,
+pre,
+textarea[code],
+.font-mono {
+  font-family:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    Menlo, monospace;
 }
 
 * {
@@ -359,4 +378,91 @@ textarea:focus-visible {
 /* Printed SVG images should use the light palette even on a dark-mode device. */
 .preview .publisle-diagram-print .demo-mermaid-svg {
   color-scheme: light;
+}
+
+/* Metadata panel (document header fields). */
+.meta-panel {
+  margin: 0 16px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.meta-panel summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-weight: 600;
+}
+.meta-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  padding: 4px 12px 12px;
+}
+.meta-panel__authors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.meta-panel__authors > span {
+  font-weight: 600;
+}
+
+/* Field layout inside block editors. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 6px 0;
+}
+.field--segments {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.segment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+.segment__label {
+  min-width: 110px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.segment--add {
+  justify-content: flex-end;
+}
+.payload-json,
+.field--json {
+  margin-top: 8px;
+}
+.payload-json summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+/* Research PDF compile bar. */
+.compile-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.compile-bar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.compile-result {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+.compile-error {
+  color: var(--danger);
 }

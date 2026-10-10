@@ -78,6 +78,16 @@ export class DocumentEditor {
     this.notify();
   }
 
+  /** Replace blocks while preserving document metadata (never lossy). */
+  private replaceBlocks(blocks: UnknownBlock[]): void {
+    this.setDocument(
+      document({
+        blocks,
+        ...(this.current.metadata ? { metadata: this.current.metadata } : {}),
+      }),
+    );
+  }
+
   addBlock(type: BlockType, index?: number): void {
     const block = createBlock({
       type,
@@ -89,14 +99,12 @@ export class DocumentEditor {
         ? blocks.length
         : Math.max(0, Math.min(index, blocks.length));
     blocks.splice(insertAt, 0, block);
-    this.setDocument(document({ blocks }));
+    this.replaceBlocks(blocks);
   }
 
   removeBlock(id: BlockId): void {
-    this.setDocument(
-      document({
-        blocks: this.current.blocks.filter((block) => block.id !== id),
-      }),
+    this.replaceBlocks(
+      this.current.blocks.filter((block) => block.id !== id),
     );
   }
 
@@ -111,16 +119,14 @@ export class DocumentEditor {
     if (newIndex === index) return;
     const [moved] = blocks.splice(index, 1) as [UnknownBlock];
     blocks.splice(newIndex, 0, moved);
-    this.setDocument(document({ blocks }));
+    this.replaceBlocks(blocks);
   }
 
   updateBlock(id: BlockId, data: unknown): void {
-    this.setDocument(
-      document({
-        blocks: this.current.blocks.map((block) =>
-          block.id === id ? ({ ...block, data } as UnknownBlock) : block,
-        ),
-      }),
+    this.replaceBlocks(
+      this.current.blocks.map((block) =>
+        block.id === id ? ({ ...block, data } as UnknownBlock) : block,
+      ),
     );
   }
 

@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./mermaid": "./src/mermaid.ts",
+    "./compile-service": "./src/compile-service.ts",
     "./theme.css": "./theme.css"
   },
   "scripts": {
