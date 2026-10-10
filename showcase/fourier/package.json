@@ -23,7 +23,7 @@
     "@publisle/adapter-core": "file:.artifacts/publisle-adapter-core-0.1.0.tgz",
     "@publisle/adapter-astro": "file:.artifacts/publisle-adapter-astro-0.1.0.tgz",
     "@publisle/cli": "file:.artifacts/publisle-cli-0.1.0.tgz",
-    "astro": "6.4.8"
+    "astro": "7.2.8"
   },
   "devDependencies": {
     "@types/node": "24.13.5"
