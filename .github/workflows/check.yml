@@ -28,6 +28,8 @@ jobs:
 
       - run: pnpm check
 
+      - run: pnpm docs:check
+
       - run: pnpm test:python
 
       - run: pnpm test:conformance:renderer

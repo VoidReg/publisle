@@ -24,6 +24,7 @@
     "**/.next/**",
     "**/.astro/**",
     "examples/astro/**",
-    "examples/next/**"
+    "examples/next/**",
+    "examples/playground-svelte/src/routes/api/**"
   ]
 }

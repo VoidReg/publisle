@@ -47,7 +47,7 @@ package. Native execution retains `openin_any=p`. Both disable shell escape and
 restrict output paths. Selection checks the LaTeX format before using a tagged
 compiler.
 Native tools remain supported; tagged output requires LaTeX 2025-11-01 or later.
-See [accessibility](../../../docs/guides/accessibility.md) for the UA-2 fixture
+See the [accessibility guide](https://github.com/VoidReg/publisle/blob/main/docs/guides/accessibility.md) for the UA-2 fixture
 gate and checksum-pinned veraPDF installation.
 
 `cacert.pem` is the Mozilla CA bundle distributed by https://curl.se/ca/cacert.pem,
