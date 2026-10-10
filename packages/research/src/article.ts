@@ -1,6 +1,6 @@
 import { parseBibtex } from "./bibtex.ts";
 import { resolveReadable } from "@publisle/schema";
-import type { Document } from "@publisle/schema";
+import type { Block, BlockType, Document } from "@publisle/schema";
 import type {
   Article,
   ArticleBlock,
@@ -32,7 +32,7 @@ function pushLoss(losses: ResearchLoss[], code: string, message: string): void {
   losses.push({ code, message });
 }
 
-export function readEntries(document: Document): {
+export function readEntries(document: Document<Block<BlockType, unknown>>): {
   readonly entries: readonly CitationEntry[];
   readonly losses: readonly ResearchLoss[];
 } {
@@ -257,7 +257,9 @@ function flowParagraphs(
   return paragraphs;
 }
 
-export function projectArticle(document: Document): Article {
+export function projectArticle(
+  document: Document<Block<BlockType, unknown>>,
+): Article {
   const losses: ResearchLoss[] = [];
   const read = readEntries(document);
   losses.push(...read.losses);
@@ -295,7 +297,7 @@ export function projectArticle(document: Document): Article {
       blocks.push({
         kind: "list",
         ordered: data["ordered"] === true,
-        items: data["items"].map((item) => {
+        items: data["items"].map((item: unknown) => {
           const children = isRecord(item) ? item["children"] : [];
           return flowParagraphs(children, losses).flat();
         }),
@@ -332,7 +334,7 @@ export function projectArticle(document: Document): Article {
         caption: flowParagraphs(data["caption"], losses).flat(),
         headerRows:
           typeof data["headerRows"] === "number" ? data["headerRows"] : 1,
-        rows: data["rows"].map((row) =>
+        rows: data["rows"].map((row: unknown) =>
           Array.isArray(row) ? row.map((cell) => inlineList(cell, losses)) : [],
         ),
         abstract,

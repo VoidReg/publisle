@@ -1,4 +1,4 @@
-import type { Document } from "@publisle/schema";
+import type { Block, BlockType, Document } from "@publisle/schema";
 import {
   citationClusters,
   projectArticle,
@@ -22,7 +22,7 @@ export interface ResolvedDocument extends FormattedResearch {
 }
 
 export function resolveDocument(
-  document: Document,
+  document: Document<Block<BlockType, unknown>>,
   style = "numeric",
   options: CslOptions = {},
 ): ResolvedDocument {
