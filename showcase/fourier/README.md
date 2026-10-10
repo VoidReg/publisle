@@ -31,9 +31,9 @@ The script copies the eleven exact `0.0.0` Core tarballs, restores dependencies 
 resolved references, static fallbacks and absence of Research dependencies. It
 writes `dist/rehearsal.json` with source/page hashes, package versions/integrities
 and diagnostics. Packed tarball bytes are not reproducible across machines (gzip
-records timestamps), so the rehearsal uses `npm install` and records the actual
-audited digests into the lock; the verify step asserts installed content against
-that lock. The registry-release flow below restores `npm ci` integrity checking
+records timestamps), so the rehearsal first regenerates the lockfile against the
+exact copied tarballs and then lets `npm ci` verify the artifacts against those
+fresh digests. The registry-release flow below restores pure `npm ci` replay
 against published packages. `.artifacts/`, dependencies and generated output are
 ignored.
 
