@@ -44,12 +44,17 @@
   });
   $effect(() => { diagrams.update(mermaidSources(current)); });
 
-  const publication = $derived.by(() => {
-    // Rendering completion invalidates the synchronous publication compiler.
+  // Svelte's deep reactive proxies cannot pass through prepare's
+  // structuredClone-based detachment; hand it the plain snapshot instead.
+  const prepared = $derived.by(() => {
     void diagramStatus;
-    const prepared = prepare(current, { registry: editor.registry });
+    return prepare($state.snapshot(current), { registry: editor.registry });
+  });
+  const publication = $derived.by(() => {
     if (!prepared.document) return undefined;
-    return compilePublication(prepared.document, { diagramRenderers: { mermaid: diagrams.rendererFor(prepared.document) } });
+    return compilePublication(prepared.document, {
+      diagramRenderers: { mermaid: diagrams.rendererFor(prepared.document) },
+    });
   });
 
   function download(filename: string, content: string, type = "text/markdown") {
@@ -200,6 +205,11 @@
         <PublisleArticle {publication} instanceId="primary" {implementations} />
       {:else}
         <p class="muted">No preview available.</p>
+        {#each prepared.diagnostics.slice(0, 8) as diagnostic}
+          <p class="muted" data-level={diagnostic.level}>
+            [{diagnostic.level}] {diagnostic.code}: {diagnostic.message}
+          </p>
+        {/each}
       {/if}
     </aside>
   </div>
