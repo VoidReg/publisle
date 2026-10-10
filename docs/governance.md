@@ -26,8 +26,9 @@ the declared v1→2 migration; no supported path hands a reader an unmigrated
 version-1 document. Release notes must never renumber these integers to match an
 npm version.
 
-Npm packages use **0.x** while beta. The workspace's unpublished `0.0.0` package
-markers and root workspace version are not releases. A package version records
+Npm packages use **0.x** while beta. The first coordinated package version is
+**0.1.0**, prepared but not yet published. The private root workspace version is
+not a release. A package version records
 implementation/API delivery, not a document or artifact schema integer. Release
 notes must identify the shipped contract digests, supported roles and capability
 limits, compiler image manifest/platform digests and validator pin where applicable.

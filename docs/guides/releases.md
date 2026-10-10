@@ -1,8 +1,8 @@
 # Distribution and release checklist
 
-Publisle is in beta. `0.0.0` is an unreleased workspace placeholder. Select a
-coordinated 0.x npm version for an actual release; frozen contract version integers
-are independent of that version. Development and CI use Node.js ≥24 and pnpm
+Publisle is in beta. All 23 publishable packages are prepared at **0.1.0**;
+publication remains pending. Frozen contract version integers are independent of
+that version. Development and CI use Node.js ≥24 and pnpm
 11.x (currently pinned to 11.17.0). No package publishing runs automatically.
 
 ## Package artifacts
@@ -40,7 +40,14 @@ report. This remains local artifact evidence until released packages and public
 deployment are available.
 
 The Distribution workflow retains the tarballs, dependency lock, source document,
-and executable consumer so failures can be reproduced. Set
+and executable consumer so failures can be reproduced. After all consumer checks
+pass, `release-manifest.json` records the coordinated version, dependency-derived
+publication order, SHA-256 of each exact tarball, built-in contract identities and
+digests, and current compiler release metadata. `contract-bundle.json` contains
+the corresponding offline contracts exported by the installed Core tarballs.
+The gate rejects placeholder or mixed package versions and incorrect
+internal dependency pins. This report proves packed-artifact validation;
+publication and compiler registry availability remain separate checks. Set
 `PUBLISLE_DISTRIBUTION_ARTIFACTS` locally to choose the retained directory. From its
 `consumer/` directory, run `npm ci --ignore-scripts --legacy-peer-deps`,
 then `node consumer.ts` and
@@ -67,7 +74,7 @@ intentionally requires pnpm for workspace commands.
 
 ## Release rehearsal and operator checklist
 
-- Choose and apply the coordinated beta version. Update the lockfile and changelog;
+- Review the coordinated `0.1.0` beta version, lockfile and changelog;
   review compatibility and any changed contract digests. Never publish `0.0.0`.
 - Record the shipped contract version integers in the changelog. They are
   protocol revisions, independent of the npm version, and are never renumbered
@@ -95,3 +102,20 @@ each passing the five-publisher smoke and the three PDF/UA fixture gates with
 veraPDF 1.28.2. Registry publication, credentials, clean-machine verification of
 each published platform image and the public showcase remain release/adoption
 gates.
+
+The `0.1.0` preparation check found no authenticated npm account (`npm whoami`
+returned `ENEEDAUTH`) and no registry organization at `publisle` (`npm org ls
+publisle` returned scope not found). Establish scope ownership and authentication,
+then repeat the ownership/name checks before publishing. The compiler release
+manifest still has `publishedImage: null`; run the reviewed compiler workflow,
+commit its digest record to `packages/research/compiler/release.json`, and rebuild
+the Research tarball before final package publication.
+
+The prepared `0.1.0` tree passed local validation: 632 unit tests, 33 Python tests,
+renderer parity, P0 TEST-01–13, 14 Research integration checks, three PDF/UA
+fixtures, all example builds, and the full packed distribution gate. All 23
+tarball hashes, exact internal pins and publication order were checked against the
+release manifest; the installed Core consumer validated all 16 exported contract
+seals. The complete Fourier showcase then built and verified from eleven of those
+exact Core tarballs. These checks establish local package readiness; npm
+publication, a published compiler digest and a public showcase remain pending.

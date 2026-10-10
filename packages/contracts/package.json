@@ -1,6 +1,6 @@
 {
   "name": "@publisle/contracts",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Preparation-only portable schema validation and canonical contract digests.",
   "license": "MIT",
   "type": "module",

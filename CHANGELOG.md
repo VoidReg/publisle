@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-The repository remains in beta. Publishable packages currently use the workspace
-placeholder `0.0.0`; no release or registry availability is implied. Contract
-version integers and npm versions are separate identifiers.
+## 0.1.0 — Prepared, not published
+
+All 23 publishable packages are coordinated at `0.1.0` for the first beta release.
+Registry publication and the release date remain pending. Contract version
+integers and npm versions are separate identifiers.
 
 Contract versions at the first release, frozen and independent of the npm
 version: document envelope **1**, publication artifact **1**, block payloads
@@ -18,7 +20,14 @@ match a release.
 - Add ESM JavaScript, declarations, source maps and packed consumer validation for
   all 23 packages.
 - Add independent renderer/citation conformance and PDF accessibility validation.
+- Prepare the coordinated `0.1.0` beta package set and versioned showcase rehearsal.
+- Retain dependency-derived publication order, tarball hashes and installed Core
+  contract digests in the distribution release manifest.
+- Generate the showcase lock in a clean temporary directory and replay it with
+  `npm ci`, preserving integrity metadata when a previous installation exists.
 
-Before a release, replace this section with the selected 0.x version, dated
-changes, compatibility notes, compiler manifest/platform digests, veraPDF version
-and installer checksum, and links to the retained validation evidence.
+Compatibility: this is the first package release, with Core and Research profile
+boundaries described above. Node.js ≥24 is required. Research remains optional.
+
+Before publication, record the release date, compiler manifest/platform digests,
+veraPDF version and installer checksum, and links to retained validation evidence.

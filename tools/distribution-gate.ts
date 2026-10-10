@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -48,6 +49,9 @@ const sets = JSON.parse(
   await readFile(join(root, "packages/core-packages.json"), "utf8"),
 ) as { core: string[]; research: string[] };
 const packed = new Map<string, string>();
+const manifests = new Map<string, Manifest>();
+const releaseNames = new Set([...sets.core, ...sets.research]);
+let releaseVersion: string | undefined;
 const tarballs = join(stage, "tarballs");
 await mkdir(tarballs);
 for (const group of ["packages", "blocks"]) {
@@ -66,6 +70,22 @@ for (const group of ["packages", "blocks"]) {
       throw error;
     }
     if (!manifest.publishConfig) continue;
+    assert(
+      releaseNames.has(manifest.name),
+      `Unlisted package ${manifest.name}`,
+    );
+    assert.match(manifest.version, /^0\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$/u);
+    assert.notEqual(
+      manifest.version,
+      "0.0.0",
+      "Never release placeholder versions.",
+    );
+    releaseVersion ??= manifest.version;
+    assert.equal(
+      manifest.version,
+      releaseVersion,
+      "Release versions must agree.",
+    );
     run("pnpm", ["pack", "--pack-destination", tarballs], directory);
     const tarball = join(
       tarballs,
@@ -128,16 +148,43 @@ for (const group of ["packages", "blocks"]) {
       artifact.dependencies,
       artifact.peerDependencies,
     ]) {
-      for (const version of Object.values(dependencies ?? {}))
+      for (const [name, version] of Object.entries(dependencies ?? {})) {
         assert(!version.startsWith("workspace:"));
+        if (releaseNames.has(name))
+          assert.equal(
+            version,
+            releaseVersion,
+            `Incorrect packed pin: ${artifact.name} -> ${name}`,
+          );
+      }
     }
     packed.set(manifest.name, tarball);
+    manifests.set(manifest.name, artifact);
   }
 }
 assert.deepEqual(
   [...packed.keys()].sort(),
   [...sets.core, ...sets.research].sort(),
 );
+// Derive dependency order from the packed runtime graph, including package peers.
+// Development-only CLI/plugin links are deliberately absent from this graph.
+const publicationOrder: string[] = [];
+const visiting = new Set<string>();
+const visit = (name: string): void => {
+  if (publicationOrder.includes(name)) return;
+  assert(!visiting.has(name), `Published dependency cycle at ${name}`);
+  visiting.add(name);
+  const manifest = manifests.get(name);
+  assert(manifest);
+  for (const dependency of Object.keys({
+    ...manifest.dependencies,
+    ...manifest.peerDependencies,
+  }))
+    if (releaseNames.has(dependency)) visit(dependency);
+  visiting.delete(name);
+  publicationOrder.push(name);
+};
+for (const name of [...sets.core, ...sets.research]) visit(name);
 // The plain Node consumer includes the Core renderer but deliberately has no
 // framework peers or Research extension. It lives outside the workspace.
 const consumer = join(stage, "consumer");
@@ -348,6 +395,65 @@ run(
     "consumer.ts",
   ],
   researchConsumer,
+);
+console.log(`Publication order: ${publicationOrder.join(", ")}`);
+const contractBundleJson = run(
+  process.execPath,
+  [
+    "--input-type=module",
+    "-e",
+    `
+import {createRegistry} from '@publisle/core';
+import {coreBlockDefinitions} from '@publisle/blocks-core';
+import {interactiveSchematicDefinition} from '@publisle/blocks-technical';
+import {exportRegistryContracts} from '@publisle/contracts';
+console.log(JSON.stringify(await exportRegistryContracts(createRegistry([
+  ...coreBlockDefinitions, interactiveSchematicDefinition,
+]))));
+`,
+  ],
+  consumer,
+);
+const contractBundle = JSON.parse(contractBundleJson) as {
+  contracts: { id: string; digest: string; contract: { identity: unknown } }[];
+};
+await writeFile(join(stage, "contract-bundle.json"), contractBundleJson);
+await writeFile(
+  join(stage, "release-manifest.json"),
+  JSON.stringify(
+    {
+      version: releaseVersion,
+      status: "validated-packed-artifacts",
+      compiler: JSON.parse(
+        await readFile(
+          join(root, "packages/research/compiler/release.json"),
+          "utf8",
+        ),
+      ) as unknown,
+      publicationOrder,
+      contracts: contractBundle.contracts.map(({ id, digest, contract }) => ({
+        id,
+        digest,
+        identity: contract.identity,
+      })),
+      packages: await Promise.all(
+        publicationOrder.map(async (name) => {
+          const tarball = packed.get(name);
+          assert(tarball);
+          return {
+            name,
+            version: releaseVersion,
+            tarball: relative(stage, tarball),
+            sha256: createHash("sha256")
+              .update(await readFile(tarball))
+              .digest("hex"),
+          };
+        }),
+      ),
+    },
+    null,
+    2,
+  ) + "\n",
 );
 console.log(
   `Distribution gate passes: ${String(packed.size)} tarballs; Core-only runtime, CLI, dependency tree, consumer declarations, standalone Astro build and isolated Research consumers. Artifacts: ${stage}`,
