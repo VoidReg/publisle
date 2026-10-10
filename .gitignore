@@ -11,7 +11,6 @@ coverage
 .DS_Store
 .vscode
 
-SPECS.md
 /benchmarks/
 /Publisle-Standardization-Requirements.md
 
@@ -19,3 +18,4 @@ SPECS.md
 .astro/
 .next-env.d.ts
 .publisle-cache/
+.local/

@@ -21,24 +21,100 @@ suite and Chromium acceptance suite, then verifies required passing evidence for
 every TEST-01–10 group and this batch's P1 TEST-11/12/13 in `tools/p0-gate.ts`. Empty, missing or skipped evidence is
 an error. CI installs Python 3.11 and executes this gate in its required check job.
 
-| Test    | Required executable evidence                                                                                                                       |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TEST-01 | Shared structural classifications and JCS Unicode/binary64 digests in independent Python and TypeScript                                            |
-| TEST-02 | Offline Python built-in closure plus exact transitive TypeScript contract resolution                                                               |
-| TEST-03 | Unfamiliar input/output/action declarations exposed through JSON, without renderer code                                                            |
-| TEST-04 | Executable refinements/normalization/migrations retained as implementation-bound                                                                   |
-| TEST-05 | Object, array, scalar and null native/artifact inputs in both frameworks                                                                           |
-| TEST-06 | Missing contracts/plugins preserve opaque source and substantive no-JavaScript explanation                                                         |
-| TEST-07 | Unsupported vocabulary/pattern/ref/branching and substituted digest rejection                                                                      |
-| TEST-08 | Archival Markdown identity/pins and locked JSON/resource exchange round trips                                                                      |
-| TEST-09 | Python serves compiled host islands, shared chunks, independent placements and no-JavaScript fallback                                              |
-| TEST-10 | Production reader excludes registry/schema/core/compiler/Ajv, preserving baseline lifecycle/module/state tests                                     |
-| TEST-11 | Fourier numerical fixtures and both delivery paths; renderer-free instance semantics and authored reading projections with exact source references |
-| TEST-12 | Keyboard activation, focus retention, cancelled loads, reduced motion, and substantive print/no-JavaScript alternatives                            |
-| TEST-13 | Sealed bounded profiles, snapshot compatibility/limits, typed ports, async isolation and repeated-placement browser evidence                       |
+## Claim and evidence matrix
+
+The TEST identifiers name the requirement groups summarized below.
+Rows describe bounded evidence rather than certifying a future checkout. TEST-01–13
+are required by the [fresh-report P0 gate](../../tools/p0-gate.ts); their linked
+sources identify the passing assertions that the gate must find. The independent
+renderer contribution to TEST-01 has its own
+[required gate](../../tools/renderer-gate.ts). Run both gates for the revision
+being claimed; stored documentation is not the report.
+
+| Test    | Claim and scope                                                                                                   | Executable evidence / explicit limit                                                                                                                                                                                                                                                                                                                             |
+| ------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TEST-01 | Independent structural classifications, JCS Unicode/binary64 digests and the declared static renderer corpus      | [Independent validator fixtures](../../packages/contracts/tests/independent.test.ts), [Python tests](../../tools/python/), [static/MathML parity](../../packages/adapter-core/tests/python-rendering.test.ts), [migration/fallback/refusal parity](../../packages/adapter-core/tests/renderer-parity.test.ts); P0 + renderer gates                               |
+| TEST-02 | Offline built-in closure and exact transitive contract resolution                                                 | [Independent locked closure](../../packages/contracts/tests/independent.test.ts), [export dependency fixtures](../../packages/contracts/tests/export.test.ts); P0                                                                                                                                                                                                |
+| TEST-03 | Unfamiliar declarations are exposed as JSON without renderer execution                                            | [Meaning fixtures](../../packages/contracts/tests/meaning.test.ts); P0                                                                                                                                                                                                                                                                                           |
+| TEST-04 | Executable refinements, normalization and migrations remain implementation-bound                                  | [Export capability/refusal fixtures](../../packages/contracts/tests/export.test.ts); P0; universal callback portability is not claimed                                                                                                                                                                                                                           |
+| TEST-05 | JSON object, array, scalar and null inputs match native/artifact delivery                                         | [React delivery](../../packages/adapter-react/tests/delivery.acceptance.test.ts), [Svelte delivery](../../packages/adapter-svelte/tests/delivery.acceptance.test.ts); P0 Chromium                                                                                                                                                                                |
+| TEST-06 | Missing contracts/plugins retain opaque source and substantive no-JavaScript explanation                          | [Preservation fixtures](../../packages/core/tests/meaning.test.ts), [shared browser acceptance](../../packages/adapter-core/tests/adapter-acceptance.ts); P0                                                                                                                                                                                                     |
+| TEST-07 | Unsupported vocabulary/pattern/ref/branching and substituted digests reject                                       | [Structural refusal fixtures](../../packages/contracts/tests/structural.test.ts), [seal tampering](../../packages/contracts/tests/export.test.ts); P0                                                                                                                                                                                                            |
+| TEST-08 | Archival Markdown identity/pins and locked JSON/resource exchange round-trip                                      | [Archival Markdown](../../packages/markdown/tests/archive.test.ts), [exchange fixtures](../../packages/contracts/tests/exchange.test.ts); P0                                                                                                                                                                                                                     |
+| TEST-09 | Independent Python host serves compiled islands, shared chunks, independent placements and no-JavaScript fallback | [Python host Chromium acceptance](../../packages/adapter-core/tests/python.acceptance.test.ts); P0; Python does not execute arbitrary plugin semantics                                                                                                                                                                                                           |
+| TEST-10 | Production readers exclude registry/schema/core/compiler/Ajv and retain lifecycle/module/state behavior           | [React production](../../packages/adapter-react/tests/production.acceptance.test.ts), [Svelte production](../../packages/adapter-svelte/tests/production.acceptance.test.ts), [Python host](../../packages/adapter-core/tests/python.acceptance.test.ts); P0                                                                                                     |
+| TEST-11 | Fourier sample numerics, native/artifact delivery, renderer-free inspection and authored reading projection       | [Numerical fixtures](../../examples/playground-core/tests/fourier.test.ts), [Fourier browser fixtures](../../packages/adapter-core/tests/fourier.acceptance.test.ts), [inspection](../../packages/contracts/tests/inspection.test.ts), [reading projection](../../packages/markdown/tests/reading.test.ts); P0; arbitrary scientific verification is not claimed |
+| TEST-12 | Keyboard activation/focus, cancellation, reduced motion and substantive print/no-JavaScript alternatives          | [Lifecycle browser fixtures](../../packages/adapter-core/tests/lifecycle.acceptance.test.ts), [interactive profile fixtures](../../packages/profiles/tests/interactive-publication.test.ts); P0; universal accessibility conformance is not claimed                                                                                                              |
+| TEST-13 | Sealed bounded composition, compatible snapshots, typed ports and isolated repeated placements                    | [Profile sealing](../../packages/contracts/tests/composition.test.ts), [composition unit fixtures](../../packages/adapter-core/tests/composition.test.ts), [browser isolation](../../packages/adapter-core/tests/composition.acceptance.test.ts); P0; arbitrary simulation is not claimed                                                                        |
+| TEST-14 | Full corpus/instance-scale contract and module deduplication claim **not claimed**                                | Scoped [host cache deduplication](../../packages/core/tests/compilation.test.ts) and [browser module sharing](../../packages/adapter-core/tests/adapter-acceptance.ts) pass through the unit/browser suites; [scale measurements](../../tools/benchmarks/README.md) are local observations, not a required complete TEST-14 gate                                 |
+| TEST-15 | Affected-only host compilation reuse for changed documents, contract/resource identities and shared dependencies  | [Compilation cache regression fixtures](../../packages/core/tests/compilation.test.ts) run in `pnpm test` and the P0 unit run; persistent storage/watch infrastructure and arbitrary host caches are not claimed                                                                                                                                                 |
+| TEST-16 | Universal matched performance/cost claim **not claimed**                                                          | [Reproduction harness](../../tools/benchmarks/README.md), [measured preparation report](performance.md), [calibration snapshot and limits](performance-budgets.md); no required CI timing/byte comparison; heap, long tasks, CLS and unmeasured comparators remain observations                                                                                  |
 
 These are scoped profile/fixture claims, not universal parser equivalence,
 scientific verification or a declaration that arbitrary HTML is safe.
+
+## Independent renderer gate
+
+`pnpm test:conformance:renderer` is the required CI sibling of the P0 gate.
+It runs the Python suite and requires passing TypeScript evidence for the
+shared static document, normalized MathML trees, built-in migration payloads,
+the fallback/refusal cases in `packages/contracts/fixtures/renderer-parity.json`,
+and the Research citation corpus in `packages/contracts/fixtures/citations.json`.
+Missing, skipped or failing
+evidence fails the gate, including an unavailable Python executable.
+
+The compared TypeScript configuration uses only built-in definitions and no
+host renderers or host migrations. Both implementations declare the same static
+role: schema version 1, portable built-in migrations, no plugins, no full CSL.
+The schematic v1→2 conversion runs before rendering; future schematic and
+document versions reject the document with the existing shared version codes.
+Source inputs remain immutable. Authored fallback paragraph structure/text and
+diagnostic code sets must match. Host wrappers and KaTeX's visual spans may differ;
+the math comparison removes annotations and compares presentation MathML.
+
+This evidence covers the committed corpus, not arbitrary HTML tree equivalence.
+Full CSL, executable host migration parity and arbitrary plugin execution are
+not claimed. The TypeScript preparer can separately execute host-approved
+migrations; that capability is outside this portable renderer configuration.
+
+The optional Research citation role compares `resolvePortableCitations` from
+`@publisle/research` (citeproc-js) with `tools/python/citations.py` and its Python
+HTML integration. Both consume the same source documents, declare the capability
+record in `packages/contracts/citation-subset.json`, and reject unsupported
+features with `unsupported-citation-feature`. The corpus covers numeric and
+author-date styles, `en-US`/`fr-FR`, first-appearance numbering, numeric ranges,
+author/year bibliography sorting, et-al names, identical-author year suffixes,
+locators, missing/duplicate references, literal references and punctuation.
+Markers and reference-list text are whitespace-normalized; bibliography ids,
+labels, ordering, classification and diagnostic code sets must match exactly.
+
+This role admits only paragraphs/headings and bibliography blocks with v1
+payloads. Names use the restricted ASCII `Family` / `Family, Given` form in the
+descriptor; years and ranges have explicit patterns. General CSL XML/macros,
+structured names, particles, given-name/coauthor disambiguation, quotation
+processing, BibTeX acquisition, other locales and other block locations are
+rejected by both implementations under this role. The broader TypeScript
+`resolveDocument` API remains outside this parity claim. The gate also verifies
+the expectations generator's citeproc-js 2.4.63 pin; expectations are regenerated
+only with `pnpm generate:citations` and reviewed as source changes.
+
+## Research artifact evidence
+
+Research export validation is separate from TEST-01–16 and Core reader claims.
+The current local verification on 2026-10-10 passed the following bounded checks;
+CI must rerun them for the revision it reports.
+
+| Claim                                                   | Evidence and limits                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standard `article` and `article-arabic` PDF/UA fixtures | [`pnpm test:pdf-ua`](../../packages/research/tests/pdf-ua.integration.test.ts) passes three fixtures through the pinned container and veraPDF: English UA-2, the [authored Arabic article](../../examples/articles/article-arabic.md) UA-2, and English UA-1. Checks include PDF 2.0 for UA-2 / PDF 1.7 for UA-1, tagged structure, language metadata, figure/Formula tags, column-scoped table headers, attached MathML and extracted Arabic/Han text. The [strict report checker](../../tools/validate_pdf_ua.py) requires one compliant result for the selected UA-1/UA-2 flavour with no failed rules/checks or job errors. On 2026-10-10 all three fixtures passed on the pinned amd64 compiler image natively and on the arm64 compiler image under QEMU emulation (`linux/arm64` confirmed by `docker image inspect`). |
+| Publisher/source export compatibility                   | [`pnpm test:research`](../../vitest.research.config.ts) passes all 14 local integration checks with the container test enabled, including [publisher starters](../../packages/research/tests/templates.integration.test.ts) and [source rebuilds](../../packages/research/tests/latex.integration.test.ts). Compiler success does not establish publisher PDF/UA or journal acceptance.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| CI reproducibility                                      | The [Research workflow](../../.github/workflows/research.yml) installs [checksum-pinned veraPDF](../../tools/install-verapdf.py), runs the artifact gates and uploads PDFs, sources, logs and XML reports as `research-exports-and-pdf-ua-reports`. This is the executable CI definition; no hosted run is claimed by this local verification record.                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+The committed PDF/UA claim covers those three generated fixtures, not every
+possible article or visual/assistive usability. UA-1 has English fixture evidence;
+Arabic UA-1 is not claimed. Publisher starters emit explicit unavailable tagging
+losses. Core profile warnings and PDF tagging declarations alone do not certify
+WCAG or PDF/UA. See the [accessibility guide](../guides/accessibility.md).
 
 ## Capabilities
 
@@ -52,12 +128,16 @@ JSON contracts, examples and descriptor strings are untrusted content, not host 
 
 Validation/importing contracts MUST NOT perform network retrieval by default. Schema tooling compiles trusted/reviewed schema inputs at preparation time; it is not a sandbox for hostile executable code. Unknown-origin schema compilation requires host isolation/time/memory limits in addition to the synchronous profile's structural limits. The contract resolver permits retrieval only under explicit host-origin, byte, graph and timeout policy. Readers do not fetch schemas or receive the full registry/compiler merely to display a publication.
 
-## Beta policy and future release governance
+## Beta policy and release governance
 
-Existing numeric versions MUST remain frozen while this roadmap runs in beta. Content digests and Git history identify revisions. Changed pinned content gets a new identity/digest; publisher aliases may move, immutable pins may not. Publisher namespaces must have an identified owner; decentralized mirrors do not acquire namespace authority. Conflicting claims are reported, never resolved by trusting the first fetched file.
+[Governance and versioning](../governance.md) defines the beta freeze, exact digest
+identities, Core/Research compatibility, independent version domains, change
+review and deprecation policy. Existing numeric contract versions remain frozen;
+changed pinned content gets a new digest. Namespace authority and host execution
+approval are separate from integrity. No stable release support window is implied.
 
-Future independent domains are document envelope, payload schema, contract format, semantic vocabulary/profile, implementation ABI, publication artifact, snapshot schema and implementation/build revision. Once release policy is activated, a change to accepted wire meaning, required fields or behavior is breaking in its own domain; framework upgrades do not automatically change block payload versions. No new version counter is introduced solely to distinguish beta changes.
-
-Changes require a proposal documenting affected roles, shapes, fixtures, preservation/conversion, security and reader costs. Retain regression fixtures and a beta change log. Release deprecation periods and version transitions remain deferred until explicitly approved; no current deprecation duration is promised. A migration declares whether it is portable/declarative or executable/host-bound. Consumers without its capability preserve or reject source explicitly. Missing explanations require authorship, not generated migration facts.
-
-TEST-14 measurements are produced locally by `tools/benchmarks/{measure,matched,browser}.ts`. TEST-15 affected-only reuse is the host compilation cache in `@publisle/core`, which stays out of reader bundles. TEST-16 is the recorded numeric snapshot in `tools/benchmarks/accepted-budgets.json`. `tools/benchmarks/gate.ts` can compare a new local run with that snapshot. GitHub Actions does not run that comparison. Heap, long tasks, CLS, and unmeasured comparators remain observations. Passing the P0 gate does not run timing or byte benchmarks.
+TEST-14 deduplication, TEST-15 affected-only rebuilding and TEST-16 benchmark
+methodology are separate requirements. The matrix above distinguishes their
+bounded evidence and unclaimed limits. Passing the P0 gate does not run timing
+or byte benchmarks. The optional [local budget comparison](../../tools/benchmarks/gate.ts)
+uses a recorded snapshot; GitHub Actions does not enforce it.

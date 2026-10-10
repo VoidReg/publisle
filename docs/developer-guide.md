@@ -1,7 +1,11 @@
 # Developer guide
 
 Detailed integration and API notes for Publisle. For the project overview, system
-diagram, and playground setup, see the [README](../README.md).
+diagram, and playground setup, see the [README](../README.md). The
+[documentation index](README.md) separates Core standards from the optional
+[Research profile](standards/publishing.md). Core installations require none of
+citeproc, TeX, xmllint, Docker or the template packages. Exact beta compatibility
+and change policy are recorded in [governance](governance.md).
 
 ## Markdown
 
