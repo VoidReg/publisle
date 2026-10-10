@@ -28,6 +28,10 @@ jobs:
 
       - run: pnpm check
 
+      - run: pnpm test:python
+
+      - run: pnpm test:conformance:renderer
+
       - run: pnpm exec playwright-core install --with-deps chromium
 
       - run: pnpm test:conformance:p0

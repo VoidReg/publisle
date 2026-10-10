@@ -18,6 +18,7 @@ export default defineConfig(
       "**/next-env.d.ts",
       "**/.svelte-kit/**",
       "**/node_modules/**",
+      "**/.local/**",
       "examples/svelte/svelte.config.js",
       "examples/playground-svelte/svelte.config.js",
     ],
