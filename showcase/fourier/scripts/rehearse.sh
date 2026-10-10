@@ -12,9 +12,10 @@ for package in schema contracts core block-sdk blocks-core blocks-technical mark
 done
 # Packed tarball bytes are not reproducible across machines (gzip embeds
 # timestamps), so the committed lock's recorded digests never match a fresh
-# pack. Regenerate the lock against the exact tarballs being rehearsed, then
-# let npm ci verify the copied artifacts against those fresh digests.
-node "$(command -v npm)" install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
-node "$(command -v npm)" ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+# pack — npm enforces them even on plain install. Rebuild the lock from the
+# exact pinned package.json versions and the tarballs being rehearsed; the
+# verify step asserts installed content against that fresh lock.
+rm -f package-lock.json
+node "$(command -v npm)" install --ignore-scripts --legacy-peer-deps --no-audit --no-fund
 node node_modules/astro/bin/astro.mjs build
 node scripts/verify.ts
