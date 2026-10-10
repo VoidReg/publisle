@@ -82,7 +82,5 @@ reviewed. Breaking public API or accepted wire meaning requires a documented
 transition in its own domain, even if the numeric beta contract is frozen.
 
 A stable 1.0 release must separately adopt explicit support windows and version
-transition rules; this beta policy does not manufacture them. The
-[finalization plan](../PUBLISLE-FINALIZATION-PLAN.md) tracks distribution and adoption
-acceptance separately from documentation completion. Registry publication and live
-consumer evidence must be recorded when they occur.
+transition rules; this beta policy does not manufacture them. Registry
+publication and live consumer evidence must be recorded when they occur.

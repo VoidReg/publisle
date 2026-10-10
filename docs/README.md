@@ -56,7 +56,7 @@ packed entry points/types and proves the Core-only dependency/CLI boundary in a
 clean consumer. This is package readiness evidence, not registry publication.
 See the [release guide](guides/releases.md).
 
-The [finalization plan](../PUBLISLE-FINALIZATION-PLAN.md) tracks remaining release,
+The [release guide](guides/releases.md) tracks remaining release,
 registry and outside-consumer work. Documentation describes implemented contracts
 without asserting that package publication, multi-architecture image validation
 or public adoption has already happened.

@@ -36,7 +36,6 @@ the independent inspection, renderer and citation-role versions and limits.
 | [Performance measurements](performance.md)               | Observed preparation costs and reproduction conditions                         |
 | [Budget calibration](performance-budgets.md)             | Recorded local comparison; no CI timing/byte enforcement                       |
 | [Guides](../README.md#guides)                            | API usage and host/export workflows; normative contracts above take precedence |
-| [Finalization plan](../../PUBLISLE-FINALIZATION-PLAN.md) | Remaining milestones and acceptance, not a conformance report                  |
 
 ## Status and frozen versions
 
