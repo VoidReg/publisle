@@ -10,6 +10,10 @@ mkdir -p .artifacts
 for package in schema contracts core block-sdk blocks-core blocks-technical markdown profiles adapter-core adapter-astro cli; do
   cp "$tarballs/publisle-$package-0.0.0.tgz" .artifacts/
 done
-node "$(command -v npm)" ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+# npm install, not ci: `pnpm pack` output is not byte-reproducible across
+# machines (gzip embeds timestamps), so freshly packed tarballs never match the
+# committed lock's recorded digests. The rehearsal records the actual audited
+# digests into the lock; the verify step asserts installed content against it.
+node "$(command -v npm)" install --ignore-scripts --legacy-peer-deps --no-audit --no-fund
 node node_modules/astro/bin/astro.mjs build
 node scripts/verify.ts

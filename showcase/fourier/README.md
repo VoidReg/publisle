@@ -30,9 +30,12 @@ The script copies the eleven exact `0.0.0` Core tarballs, restores dependencies 
 `package-lock.json`, builds the Astro page, and verifies MathML, table/SVG output,
 resolved references, static fallbacks and absence of Research dependencies. It
 writes `dist/rehearsal.json` with source/page hashes, package versions/integrities
-and diagnostics. The lock verifies tarball integrity: intentionally changed packed
-bytes require a reviewed lock refresh, even while the placeholder version stays
-`0.0.0`. `.artifacts/`, dependencies and generated output are ignored.
+and diagnostics. Packed tarball bytes are not reproducible across machines (gzip
+records timestamps), so the rehearsal uses `npm install` and records the actual
+audited digests into the lock; the verify step asserts installed content against
+that lock. The registry-release flow below restores `npm ci` integrity checking
+against published packages. `.artifacts/`, dependencies and generated output are
+ignored.
 
 `0.0.0` is the unreleased workspace placeholder. This rehearsal does **not** prove
 registry publication or satisfy the public deployment acceptance criterion.
