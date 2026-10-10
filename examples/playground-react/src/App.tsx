@@ -16,12 +16,34 @@ import {
   FOURIER_ARTICLE,
   FOURIER_PARTIAL_SUMS,
   RESEARCH_PAPER,
+  metadataAuthors,
+  metadataField,
+  metadataSubjects,
+  withMetadataAuthors,
+  withMetadataField,
+  withMetadataSubjects,
+  type AuthorRow,
 } from "@publisle/playground-core";
 import { BlockEditor } from "./BlockEditor.tsx";
 import {
   createMermaidPreview,
   mermaidSources,
 } from "@publisle/playground-core/mermaid";
+
+const PAPER_TEMPLATES = [
+  { value: "article", label: "Standard article (PDF/UA-2, LuaLaTeX)" },
+  { value: "ieee-journal", label: "IEEE journal" },
+  { value: "acm-journal", label: "ACM journal (needs country data)" },
+  { value: "elsevier-numeric", label: "Elsevier (numeric)" },
+  { value: "springer-journal", label: "Springer journal" },
+];
+
+interface CompileState {
+  state: "idle" | "busy" | "ok" | "error";
+  message?: string;
+  pdfUrl?: string;
+  diagnostics?: { code: string; message: string }[];
+}
 
 const editor = new DocumentEditor();
 const implementations = {
@@ -71,6 +93,75 @@ export default function App() {
   >("pretty");
   const markdownInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
+  const [paperTemplate, setPaperTemplate] = useState("ieee-journal");
+  const [paperEngine, setPaperEngine] = useState<
+    "default" | "pdflatex" | "lualatex"
+  >("default");
+  const [compile, setCompile] = useState<CompileState>({ state: "idle" });
+
+  async function handleCompilePdf() {
+    setCompile({ state: "busy" });
+    try {
+      const exported = editor.exportMarkdown();
+      const response = await fetch("/api/compile-paper", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          markdown: exported.markdown,
+          template: paperTemplate,
+          ...(paperEngine === "default" ? {} : { engine: paperEngine }),
+        }),
+      });
+      const body = (await response.json()) as {
+        ok: boolean;
+        message?: string;
+        pdfBase64?: string;
+        diagnostics?: { code: string; message: string }[];
+      };
+      if (!response.ok || !body.ok || body.pdfBase64 === undefined)
+        throw new Error(
+          body.message ?? `Compile failed (${String(response.status)}).`,
+        );
+      const bytes = Uint8Array.from(atob(body.pdfBase64), (character) =>
+        character.charCodeAt(0),
+      );
+      const url = URL.createObjectURL(
+        new Blob([bytes], { type: "application/pdf" }),
+      );
+      setCompile({
+        state: "ok",
+        pdfUrl: url,
+        ...(body.diagnostics ? { diagnostics: body.diagnostics } : {}),
+      });
+    } catch (cause) {
+      setCompile({
+        state: "error",
+        message: cause instanceof Error ? cause.message : String(cause),
+      });
+    }
+  }
+
+  function updateMetadata(key: string, value: string): void {
+    editor.setMetadata(
+      withMetadataField(
+        document.metadata,
+        key,
+        value,
+      ) as typeof document.metadata,
+    );
+  }
+
+  function updateSubjects(csv: string): void {
+    editor.setMetadata(
+      withMetadataSubjects(document.metadata, csv) as typeof document.metadata,
+    );
+  }
+
+  function updateAuthors(rows: AuthorRow[]): void {
+    editor.setMetadata(
+      withMetadataAuthors(document.metadata, rows) as typeof document.metadata,
+    );
+  }
 
   const publication = useMemo(() => {
     const prepared = prepare(document, { registry: editor.registry });
@@ -207,6 +298,110 @@ export default function App() {
         </div>
       </header>
 
+      <details className="meta-panel">
+        <summary>Document metadata</summary>
+        <div className="meta-panel__grid">
+          <label>
+            Title
+            <input
+              type="text"
+              value={metadataField(document.metadata, "title")}
+              onChange={(event) => updateMetadata("title", event.target.value)}
+            />
+          </label>
+          <label>
+            Language
+            <input
+              type="text"
+              value={metadataField(document.metadata, "language")}
+              onChange={(event) =>
+                updateMetadata("language", event.target.value)
+              }
+            />
+          </label>
+          <label>
+            Subjects (comma-separated)
+            <input
+              type="text"
+              value={metadataSubjects(document.metadata)}
+              onChange={(event) => updateSubjects(event.target.value)}
+            />
+          </label>
+          <label>
+            Description
+            <textarea
+              rows={2}
+              value={metadataField(document.metadata, "description")}
+              onChange={(event) =>
+                updateMetadata("description", event.target.value)
+              }
+            />
+          </label>
+          <div className="meta-panel__authors">
+            <span>Authors</span>
+            {metadataAuthors(document.metadata).map((author, index) => (
+              <div className="segment" key={index}>
+                <input
+                  type="text"
+                  value={author.name}
+                  placeholder="Name"
+                  aria-label={`Author ${String(index + 1)} name`}
+                  onChange={(event) => {
+                    const rows: AuthorRow[] = metadataAuthors(
+                      document.metadata,
+                    );
+                    rows[index] = {
+                      name: event.target.value,
+                      affiliation: rows[index]?.affiliation ?? "",
+                    };
+                    updateAuthors(rows);
+                  }}
+                />
+                <input
+                  type="text"
+                  value={author.affiliation}
+                  placeholder="Affiliation"
+                  aria-label={`Author ${String(index + 1)} affiliation`}
+                  onChange={(event) => {
+                    const rows: AuthorRow[] = metadataAuthors(
+                      document.metadata,
+                    );
+                    rows[index] = {
+                      name: rows[index]?.name ?? "",
+                      affiliation: event.target.value,
+                    };
+                    updateAuthors(rows);
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label={`Remove author ${String(index + 1)}`}
+                  onClick={() => {
+                    const rows = metadataAuthors(document.metadata);
+                    updateAuthors(
+                      rows.filter((_, position) => position !== index),
+                    );
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() =>
+                updateAuthors([
+                  ...metadataAuthors(document.metadata),
+                  { name: "New Author", affiliation: "Affiliation" },
+                ])
+              }
+            >
+              Add author
+            </button>
+          </div>
+        </div>
+      </details>
+
       <div className="playground__layout">
         <aside className="palette">
           <h2>Blocks</h2>
@@ -240,6 +435,60 @@ export default function App() {
 
         <aside className="preview">
           <h2>Preview</h2>
+          <div className="compile-bar">
+            <label>
+              Theme
+              <select
+                value={paperTemplate}
+                onChange={(event) => setPaperTemplate(event.target.value)}
+              >
+                {PAPER_TEMPLATES.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Engine
+              <select
+                value={paperEngine}
+                onChange={(event) =>
+                  setPaperEngine(
+                    event.target.value as "default" | "pdflatex" | "lualatex",
+                  )
+                }
+              >
+                <option value="default">Template default</option>
+                <option value="pdflatex">pdfLaTeX</option>
+                <option value="lualatex">LuaLaTeX (PDF/UA-2)</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={compile.state === "busy"}
+              onClick={() => void handleCompilePdf()}
+            >
+              {compile.state === "busy" ? "Compiling…" : "Compile PDF"}
+            </button>
+          </div>
+          {compile.state === "ok" && compile.pdfUrl ? (
+            <div className="compile-result" role="status">
+              <a href={compile.pdfUrl} target="_blank" rel="noreferrer">
+                Open compiled PDF
+              </a>
+              {(compile.diagnostics ?? []).map((item) => (
+                <p key={item.code} className="muted">
+                  [{item.code}] {item.message}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {compile.state === "error" ? (
+            <p className="compile-error" role="alert">
+              {compile.message}
+            </p>
+          ) : null}
           {diagramStatus.pending > 0 && (
             <p role="status">Rendering {diagramStatus.pending} diagram(s)…</p>
           )}

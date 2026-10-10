@@ -1,4 +1,7 @@
 <script lang="ts">
+  import "@fontsource-variable/inter";
+  import "@fontsource-variable/space-grotesk";
+  import "@fontsource-variable/jetbrains-mono";
   import PublisleArticle from "@publisle/adapter-svelte/article";
   import { compilePublication } from "@publisle/adapter-core";
   import "@publisle/adapter-core/document.css";
@@ -13,6 +16,13 @@
     FOURIER_ARTICLE,
     RESEARCH_PAPER,
     FOURIER_PARTIAL_SUMS,
+    metadataAuthors,
+    metadataField,
+    metadataSubjects,
+    withMetadataAuthors,
+    withMetadataField,
+    withMetadataSubjects,
+    type AuthorRow,
   } from "@publisle/playground-core";
   import BlockEditor from "$lib/BlockEditor.svelte";
   import Schematic from "$lib/Schematic.svelte";
@@ -57,6 +67,84 @@
       diagramRenderers: { mermaid: diagrams.rendererFor(prepared.document) },
     });
   });
+
+  const PAPER_TEMPLATES = [
+    { value: "article", label: "Standard article (PDF/UA-2, LuaLaTeX)" },
+    { value: "ieee-journal", label: "IEEE journal" },
+    { value: "acm-journal", label: "ACM journal (needs country data)" },
+    { value: "elsevier-numeric", label: "Elsevier (numeric)" },
+    { value: "springer-journal", label: "Springer journal" },
+  ];
+  let paperTemplate = $state("ieee-journal");
+  let paperEngine = $state<"default" | "pdflatex" | "lualatex">("default");
+  let compile = $state<{
+    state: "idle" | "busy" | "ok" | "error";
+    message?: string;
+    pdfUrl?: string;
+    diagnostics?: { code: string; message: string }[];
+  }>({ state: "idle" });
+
+  async function compilePdf(): Promise<void> {
+    compile = { state: "busy" };
+    try {
+      const exported = editor.exportMarkdown();
+      if (exported.markdown === undefined)
+        throw new Error("Markdown export produced no document.");
+      const response = await fetch("/api/compile-paper", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          markdown: exported.markdown,
+          template: paperTemplate,
+          ...(paperEngine === "default" ? {} : { engine: paperEngine }),
+        }),
+      });
+      const body = (await response.json()) as {
+        ok: boolean;
+        message?: string;
+        pdfBase64?: string;
+        diagnostics?: { code: string; message: string }[];
+      };
+      if (!response.ok || !body.ok || body.pdfBase64 === undefined)
+        throw new Error(
+          body.message ?? `Compile failed (${String(response.status)}).`,
+        );
+      const bytes = Uint8Array.from(atob(body.pdfBase64), (character) =>
+        character.charCodeAt(0),
+      );
+      const url = URL.createObjectURL(
+        new Blob([bytes], { type: "application/pdf" }),
+      );
+      compile = { state: "ok", pdfUrl: url, diagnostics: body.diagnostics };
+    } catch (cause) {
+      compile = {
+        state: "error",
+        message: cause instanceof Error ? cause.message : String(cause),
+      };
+    }
+  }
+
+  const meta = $derived(
+    (current.metadata ?? {}) as Record<string, unknown>,
+  );
+
+  function updateMetadata(key: string, value: string): void {
+    editor.setMetadata(
+      withMetadataField(meta, key, value) as typeof current.metadata,
+    );
+  }
+
+  function updateSubjects(csv: string): void {
+    editor.setMetadata(
+      withMetadataSubjects(meta, csv) as typeof current.metadata,
+    );
+  }
+
+  function updateAuthors(rows: AuthorRow[]): void {
+    editor.setMetadata(
+      withMetadataAuthors(meta, rows) as typeof current.metadata,
+    );
+  }
 
   function download(filename: string, content: string, type = "text/markdown") {
     const blob = new Blob([content], { type });
@@ -170,6 +258,97 @@
     </div>
   </header>
 
+  <details class="meta-panel">
+    <summary>Document metadata</summary>
+    <div class="meta-panel__grid">
+      <label>
+        Title
+        <input
+          type="text"
+          value={metadataField(meta, "title")}
+          onchange={(event) => updateMetadata("title", event.currentTarget.value)}
+        />
+      </label>
+      <label>
+        Language
+        <input
+          type="text"
+          value={metadataField(meta, "language")}
+          onchange={(event) => updateMetadata("language", event.currentTarget.value)}
+        />
+      </label>
+      <label>
+        Subjects (comma-separated)
+        <input
+          type="text"
+          value={metadataSubjects(meta)}
+          onchange={(event) => updateSubjects(event.currentTarget.value)}
+        />
+      </label>
+      <label>
+        Description
+        <textarea
+          rows="2"
+          value={metadataField(meta, "description")}
+          onchange={(event) => updateMetadata("description", event.currentTarget.value)}
+        ></textarea>
+      </label>
+      <div class="meta-panel__authors">
+        <span>Authors</span>
+        {#each metadataAuthors(meta) as author, index (index)}
+          <div class="segment">
+            <input
+              type="text"
+              value={author.name}
+              placeholder="Name"
+              aria-label="Author {index + 1} name"
+              onchange={(event) => {
+                const rows: AuthorRow[] = metadataAuthors(meta);
+                rows[index] = {
+                  name: event.currentTarget.value,
+                  affiliation: rows[index]?.affiliation ?? "",
+                };
+                updateAuthors(rows);
+              }}
+            />
+            <input
+              type="text"
+              value={author.affiliation}
+              placeholder="Affiliation"
+              aria-label="Author {index + 1} affiliation"
+              onchange={(event) => {
+                const rows: AuthorRow[] = metadataAuthors(meta);
+                rows[index] = {
+                  name: rows[index]?.name ?? "",
+                  affiliation: event.currentTarget.value,
+                };
+                updateAuthors(rows);
+              }}
+            />
+            <button
+              type="button"
+              aria-label="Remove author {index + 1}"
+              onclick={() =>
+                updateAuthors(
+                  metadataAuthors(meta).filter((_, position) => position !== index),
+                )}
+            >✕</button>
+          </div>
+        {/each}
+        <button
+          type="button"
+          onclick={() =>
+            updateAuthors([
+              ...metadataAuthors(meta),
+              { name: "New Author", affiliation: "Affiliation" },
+            ])}
+        >
+          Add author
+        </button>
+      </div>
+    </div>
+  </details>
+
   <div class="playground__layout">
     <aside class="palette">
       <h2>Blocks</h2>
@@ -198,6 +377,37 @@
 
     <aside class="preview">
       <h2>Preview</h2>
+      <div class="compile-bar">
+        <label>
+          Theme
+          <select bind:value={paperTemplate}>
+            {#each PAPER_TEMPLATES as option (option.value)}
+              <option value={option.value}>{option.label}</option>
+            {/each}
+          </select>
+        </label>
+        <label>
+          Engine
+          <select bind:value={paperEngine}>
+            <option value="default">Template default</option>
+            <option value="pdflatex">pdfLaTeX</option>
+            <option value="lualatex">LuaLaTeX (PDF/UA-2)</option>
+          </select>
+        </label>
+        <button type="button" disabled={compile.state === "busy"} onclick={() => void compilePdf()}>
+          {compile.state === "busy" ? "Compiling…" : "Compile PDF"}
+        </button>
+      </div>
+      {#if compile.state === "ok" && compile.pdfUrl}
+        <div class="compile-result" role="status">
+          <a href={compile.pdfUrl} target="_blank" rel="noreferrer">Open compiled PDF</a>
+          {#each compile.diagnostics ?? [] as item (item.code)}
+            <p class="muted">[{item.code}] {item.message}</p>
+          {/each}
+        </div>
+      {:else if compile.state === "error"}
+        <p class="compile-error" role="alert">{compile.message}</p>
+      {/if}
       {#if diagramStatus.pending > 0}<p role="status">Rendering {diagramStatus.pending} diagram(s)…</p>{/if}
       {#if diagramStatus.errors.length > 0}
         <div role="status">
