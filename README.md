@@ -18,6 +18,38 @@ templates, LaTeX/JATS/PDF export, and a pinned compiler toolchain
 ([publishing standard](docs/standards/publishing.md),
 [export guide](docs/guides/journal-export.md)). Core adopters never install it.
 
+## Core quickstart
+
+Use the [source workspace](#try-the-playgrounds) with Node 24+ and pnpm 11.x.
+This example uses only Core packages:
+
+```ts
+import { document } from "@publisle/schema";
+import { paragraph, coreBlockDefinitions } from "@publisle/blocks-core";
+import { createRegistry, prepare, assertPrepared } from "@publisle/core";
+import { compilePublication } from "@publisle/adapter-core";
+
+const article = document({
+  metadata: { title: "First article", language: "en" },
+  blocks: [
+    paragraph({
+      content: [{ type: "text", value: "Readable without JavaScript." }],
+    }),
+  ],
+});
+const prepared = assertPrepared(
+  prepare(article, { registry: createRegistry(coreBlockDefinitions) }),
+);
+const publication = compilePublication(prepared);
+```
+
+The publication is an article artifact for your host to render. Follow the
+[framework host guide](docs/guides/framework-hosts.md) for native components or
+artifact delivery. Core installs no citeproc, TeX, xmllint, Docker or Research
+templates. See the [documentation index](docs/README.md),
+[Core specification](SPECS.md#part-i--publisle-core) and
+[governance policy](docs/governance.md) for the contracts and beta limits.
+
 ## What it solves
 
 Rich articles often become tied to a framework, hide their interactive data
@@ -61,8 +93,11 @@ instance state. Framework JavaScript still follows the host's rendering policy.
 
 ## Try the playgrounds
 
-This repository is a source workspace, not a prebuilt standalone npm distribution.
-Use Node **24+** and pnpm **11.17+ (11.x)**:
+Workspace development resolves TypeScript sources. `pnpm build:packages` builds
+ESM, declarations and source maps for packing; `pnpm test:distribution` checks the
+packed artifacts in a clean consumer. Registry publication is still pending.
+See the [release guide](docs/guides/releases.md). Use Node **24+** and pnpm
+**11.17+ (11.x)**:
 
 ```sh
 pnpm install
@@ -95,12 +130,38 @@ For immutable contract pins, archival Markdown and offline asset packages, see t
 [exchange guide](docs/guides/exchange.md). Native and precompiled artifacts share
 the same typed island inputs; full schemas and preparation tooling stay out of readers.
 
+## Research profile
+
+Install the optional `@publisle/research` tooling and the template packages you
+need; CLI export, bibliography, doctor and compiler setup are supplied by
+`@publisle/cli-research`. The Core CLI reports install guidance when the plugin
+is absent. Research provides citation resolution, publisher source packages and
+JATS/PDF exports. Its compiler tier is explicit; ordinary readers receive no TeX
+or citation processor.
+
+Start with the [Research profile standard](docs/standards/publishing.md) and
+[journal export guide](docs/guides/journal-export.md). The
+[accessibility guide](docs/guides/accessibility.md) separates tagging requests,
+validator evidence and manual review. Template availability does not imply
+journal acceptance or PDF/UA certification.
+
+## Standalone Fourier showcase
+
+The [Fourier showcase rehearsal](showcase/fourier/README.md) builds the complete
+illustrated tutorial as a standalone Astro site from packed Core packages, with
+its existing figures, MathML, tables, styles and authored static fallbacks.
+Its lockfile and replay script exercise the actual tarballs outside the workspace.
+The released-package public deployment remains pending package publication and a
+clean registry install; this local rehearsal does not claim public adoption.
+
 ## Development
 
 ```sh
 pnpm check
+pnpm test:conformance:renderer
 pnpm exec playwright-core install --with-deps chromium
-pnpm test:acceptance
+pnpm test:conformance:p0
+pnpm test:distribution
 ```
 
 These checks cover types, lint, formatting, unit tests, production builds, and

@@ -13,10 +13,34 @@
     }
   },
   "files": [
-    "src"
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
   ],
   "scripts": {
     "test": "vitest run --config ../../vitest.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/schema"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

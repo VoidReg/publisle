@@ -1,0 +1,41 @@
+name: Distribution
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  packed-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:distribution
+        env:
+          PUBLISLE_DISTRIBUTION_ARTIFACTS: ${{ runner.temp }}/distribution
+      - name: Rehearse the full Fourier showcase from packed Core artifacts
+        run: |
+          for tarballs in "$RUNNER_TEMP"/distribution/publisle-distribution-*/tarballs; do
+            ./showcase/fourier/scripts/rehearse.sh "$tarballs"
+          done
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: packed-consumer-and-tarballs
+          path: |
+            ${{ runner.temp }}/distribution
+            !${{ runner.temp }}/distribution/**/node_modules/**
+            showcase/fourier/dist
+          retention-days: 14

@@ -11,11 +11,51 @@
     "./legacy-pdf": "./src/pdf.ts"
   },
   "dependencies": {
+    "@publisle/contracts": "workspace:*",
     "@publisle/profiles": "workspace:*",
     "@publisle/schema": "workspace:*",
     "@publisle/template-article": "workspace:*",
     "@publisle/template-sdk": "workspace:*",
     "citeproc": "2.4.63",
     "fflate": "0.8.3"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./node": {
+        "types": "./dist/node.d.ts",
+        "import": "./dist/node.js",
+        "default": "./dist/node.js"
+      },
+      "./legacy-pdf": {
+        "types": "./dist/pdf.d.ts",
+        "import": "./dist/pdf.js",
+        "default": "./dist/pdf.js"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE",
+    "compiler",
+    "vendor"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/research"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

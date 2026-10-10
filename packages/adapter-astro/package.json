@@ -18,5 +18,38 @@
   },
   "devDependencies": {
     "astro": "^6.0.0"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./Article.astro": "./dist/Article.astro",
+      "./runtime": {
+        "types": "./dist/runtime.d.ts",
+        "import": "./dist/runtime.js",
+        "default": "./dist/runtime.js"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/adapter-astro"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

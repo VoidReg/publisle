@@ -9,5 +9,32 @@
   },
   "dependencies": {
     "@publisle/template-sdk": "workspace:*"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/template-ieee"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

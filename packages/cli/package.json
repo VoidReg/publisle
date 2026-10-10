@@ -23,5 +23,37 @@
   },
   "devDependencies": {
     "@publisle/cli-research": "workspace:*"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./run": {
+        "types": "./dist/run.d.ts",
+        "import": "./dist/run.js",
+        "default": "./dist/run.js"
+      }
+    },
+    "types": "./dist/index.d.ts",
+    "bin": {
+      "publisle": "./dist/bin.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

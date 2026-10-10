@@ -1,4 +1,4 @@
-import { sha256Hex } from "../../core/src/hash.ts";
+import { sha256Hex } from "@publisle/core/hash";
 import { parseBlockId, type BlockId } from "@publisle/schema";
 
 export function deterministicBlockId(

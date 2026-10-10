@@ -23,5 +23,55 @@
     "@publisle/blocks-core": "workspace:*",
     "@publisle/blocks-technical": "workspace:*",
     "@types/katex": "^0.16.8"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./document.css": "./dist/document.css",
+      "./katex.css": "./dist/katex.css",
+      "./island-runtime": {
+        "types": "./dist/island-runtime.d.ts",
+        "import": "./dist/island-runtime.js",
+        "default": "./dist/island-runtime.js"
+      },
+      "./publication-runtime": {
+        "types": "./dist/publication-runtime.d.ts",
+        "import": "./dist/publication-runtime.js",
+        "default": "./dist/publication-runtime.js"
+      },
+      "./vite": {
+        "types": "./dist/vite.d.ts",
+        "import": "./dist/vite.js",
+        "default": "./dist/vite.js"
+      },
+      "./node": {
+        "types": "./dist/node.d.ts",
+        "import": "./dist/node.js",
+        "default": "./dist/node.js"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/adapter-core"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }

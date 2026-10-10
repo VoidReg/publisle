@@ -913,6 +913,9 @@ importers:
 
   packages/research:
     dependencies:
+      '@publisle/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@publisle/profiles':
         specifier: workspace:*
         version: link:../profiles

@@ -14,12 +14,18 @@
     "./schemas/*": "./schemas/*.json",
     "./builtin-sources": "./src/builtin-sources.ts",
     "./exchange": "./src/exchange.ts",
+    "./citation-subset": "./citation-subset.json",
     "./fixtures/*": "./fixtures/*.json"
   },
   "files": [
+    "dist",
     "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE",
     "schemas",
-    "fixtures"
+    "fixtures",
+    "citation-subset.json"
   ],
   "dependencies": {
     "@publisle/schema": "workspace:*",
@@ -28,5 +34,38 @@
   "scripts": {
     "test": "vitest run --config ../../vitest.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
-  }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./schemas/*": "./schemas/*.json",
+      "./builtin-sources": {
+        "types": "./dist/builtin-sources.d.ts",
+        "import": "./dist/builtin-sources.js",
+        "default": "./dist/builtin-sources.js"
+      },
+      "./exchange": {
+        "types": "./dist/exchange.d.ts",
+        "import": "./dist/exchange.js",
+        "default": "./dist/exchange.js"
+      },
+      "./citation-subset": "./citation-subset.json",
+      "./fixtures/*": "./fixtures/*.json"
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/contracts"
+  },
+  "homepage": "https://github.com/VoidReg/publisle#readme"
 }
