@@ -19,6 +19,9 @@ export default defineConfig(
       "**/.svelte-kit/**",
       "**/node_modules/**",
       "**/.local/**",
+      // Standalone packed-consumer project: not a workspace package, linted
+      // with its own toolchain once its dependencies are installed.
+      "showcase/**",
       "examples/svelte/svelte.config.js",
       "examples/playground-svelte/svelte.config.js",
     ],
