@@ -47,7 +47,9 @@ describe("IEEE journal source packages", () => {
     expect(result.assets).toEqual([
       { source: "ieee-square-wave.pdf", destination: "assets/figure-1.pdf" },
     ]);
-    expect(result.diagnostics).toEqual([]);
+    expect(result.diagnostics.map((loss) => loss.code)).toEqual([
+      "pdf-ua-unavailable",
+    ]);
     expect(
       toPdf(resolveDocument(await fixture())).losses.map((loss) => loss.code),
     ).toContain("table-rendered-as-text");

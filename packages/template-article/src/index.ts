@@ -24,6 +24,7 @@ export const template: PublishingTemplate = {
       className: "article",
       classOptions: "11pt,a4paper",
       defaultEngine: "lualatex",
+      tagging: true,
       direction: "ltr",
     }),
 };
@@ -40,6 +41,7 @@ export const arabicTemplate: PublishingTemplate = {
       className: "article",
       classOptions: "11pt,a4paper",
       defaultEngine: "lualatex",
+      tagging: true,
       direction: "rtl",
     }),
 };

@@ -6,6 +6,8 @@ export type { LatexProfile } from "./render.ts";
 import type { Article, ResearchLoss } from "./article.ts";
 export type LatexEngine = "pdflatex" | "lualatex";
 export interface SourcePackage {
+  /** Requested tagging, not a claim that the compiled PDF passed validation. */
+  readonly pdfStandard?: "ua-1" | "ua-2";
   readonly template: string;
   readonly templateVersion: string;
   readonly format: "latex";
@@ -21,6 +23,7 @@ export interface SourcePackage {
   readonly diagnostics: readonly ResearchLoss[];
 }
 export interface TemplateContext {
+  readonly pdfUa?: "ua-1" | "ua-2" | false;
   readonly engine?: LatexEngine;
   readonly style: string;
   readonly fonts?: Readonly<Record<string, string>>;

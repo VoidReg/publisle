@@ -4,6 +4,8 @@ import { toBibtex } from "./bibtex.ts";
 import { latexKey, latexText } from "./escape.ts";
 type WritingDirection = "ltr" | "rtl" | "auto";
 export interface LatexProfile {
+  /** Only enable after validating the class against the pinned compiler. */
+  readonly tagging?: boolean;
   readonly id: string;
   readonly version: string;
   readonly className: string;
@@ -36,6 +38,21 @@ export function renderLatexArticle(
   profile: LatexProfile,
 ): SourcePackage {
   const engine = context.engine ?? profile.defaultEngine ?? "pdflatex";
+  const requested =
+    context.pdfUa ??
+    (context.data && Object.hasOwn(context.data, "pdfUa")
+      ? context.data["pdfUa"]
+      : "ua-2");
+  if (requested !== false && requested !== "ua-1" && requested !== "ua-2")
+    throw new Error("pdfUa must be ua-1, ua-2 or false.");
+  const pdfStandard =
+    profile.tagging && engine === "lualatex" && requested !== false
+      ? requested
+      : undefined;
+  const language =
+    article.language ?? (profile.direction === "rtl" ? "ar" : "en");
+  if (pdfStandard && !/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/u.test(language))
+    throw new Error("Tagged PDF requires a BCP 47 document language.");
   const fonts = {
     latin: context.fonts?.["latin"] ?? "TeX Gyre Termes",
     arabic: context.fonts?.["arabic"] ?? "PakType Naskh Basic",
@@ -200,6 +217,8 @@ export function renderLatexArticle(
           : `\\(${block.value}\\)`,
       );
     else if (block.kind === "figure") {
+      if (pdfStandard && !block.alt.trim())
+        throw new Error("Tagged PDF figures require alternative text.");
       if (/^(?:[a-z]+:|\/\/)/iu.test(block.src))
         throw new Error(`Remote figure assets are unsupported: ${block.src}`);
       const extension = /\.(pdf|png|jpe?g)$/iu
@@ -212,12 +231,19 @@ export function renderLatexArticle(
       const destination = `assets/figure-${String(assets.length + 1)}.${extension}`;
       assets.push({ source: block.src, destination });
       target.push(
-        `\\begin{figure}[!t]\n\\centering\n\\includegraphics[width=\\columnwidth]{${destination}}\n\\caption{${take(block.caption)}}${label}\n\\end{figure}`,
+        `\\begin{figure}[!t]\n\\centering\n\\includegraphics[width=\\columnwidth${pdfStandard ? `,alt={${latexText(block.alt)}}` : ""}]{${destination}}\n\\caption{${take(block.caption)}}${label}\n\\end{figure}`,
       );
     } else if (block.kind === "table") {
       const width = block.rows[0]?.length ?? 0;
       if (width === 0 || block.rows.some((row) => row.length !== width))
         throw new Error("Journal tables must be nonempty and rectangular.");
+      if (
+        pdfStandard &&
+        (!Number.isInteger(block.headerRows) ||
+          (block.headerRows ?? 0) < 1 ||
+          (block.headerRows ?? 0) > block.rows.length)
+      )
+        throw new Error("Tagged PDF tables require valid headerRows.");
       const rows = block.rows
         .map(
           (row, index) =>
@@ -231,7 +257,7 @@ export function renderLatexArticle(
         )
         .join("\n");
       target.push(
-        `\\begin{table}[!t]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
+        `\\begin{table}[!t]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n${pdfStandard ? `\\tagpdfsetup{table/header-rows={${Array.from({ length: block.headerRows ?? 0 }, (_, index) => String(index + 1)).join(",")}}}\n` : ""}\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
       );
     } else if (block.kind === "list")
       target.push(
@@ -295,7 +321,7 @@ ${profile.direction === "rtl" ? "\\babelprovide[import]{english}\n\\babelprovide
       ),
     };
   });
-  const manuscript = `\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
+  const manuscript = `${pdfStandard ? `\\DocumentMetadata{lang=${language},pdfstandard=${pdfStandard},${pdfStandard === "ua-1" ? "pdfversion=1.7," : ""}tagging=on,tagging-setup={math/setup={mathml-AF${pdfStandard === "ua-2" ? ",mathml-SE" : ""}}}}\n` : ""}\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
 ${unicodePreamble}\\usepackage{amsmath,${engine === "pdflatex" && profile.pdfSymbols === true ? "amssymb," : ""}graphicx,tabularx${profile.numericCitationPackage ? ",cite" : ""}}
 \\usepackage[normalem]{ulem}
 \\usepackage{hyperref}
@@ -315,14 +341,16 @@ ${profile.bibliographyStyle ? `${profile.automaticBibliographyStyle ? "" : `\\bi
     templateVersion: profile.version,
     format: "latex",
     engine,
+    ...(pdfStandard ? { pdfStandard } : {}),
     requirements: [
       "amsmath.sty",
       "graphicx.sty",
       "tabularx.sty",
       "ulem.sty",
       "hyperref.sty",
+      ...(pdfStandard ? ["tagpdf.sty", "luamml.sty"] : []),
       ...(engine === "lualatex"
-        ? ["fontspec.sty", "unicode-math.sty", "babel.sty"]
+        ? ["fontspec.sty", "unicode-math.sty", "lualatex-math.sty", "babel.sty"]
         : []),
       `${profile.className}.cls`,
       ...(profile.bibliographyStyle
@@ -333,9 +361,22 @@ ${profile.bibliographyStyle ? `${profile.automaticBibliographyStyle ? "" : `\\bi
     files: {
       "manuscript.tex": manuscript,
       "references.bib": toBibtex(entries),
-      "BUILD.md": `# Rebuild\n\nRequires latexmk, ${engine}, and ${profile.className}.\n\nRun: latexmk -${engine === "pdflatex" ? "pdf" : "lualatex"} -norc -interaction=nonstopmode -halt-on-error -no-shell-escape manuscript.tex\n`,
+      "BUILD.md": `# Rebuild\n\nRequires latexmk, ${engine}, and ${profile.className}.${pdfStandard ? ` LaTeX format >= 2025-11-01 is required for ${pdfStandard} tagging. Compiling does not run PDF/UA validation.` : ""}\n\nRun: latexmk -${engine === "pdflatex" ? "pdf" : "lualatex"} -norc -interaction=nonstopmode -halt-on-error -no-shell-escape manuscript.tex\n`,
     },
     assets,
-    diagnostics: article.losses,
+    diagnostics: [
+      ...article.losses,
+      ...(pdfStandard
+        ? []
+        : [
+            {
+              code: "pdf-ua-unavailable",
+              message:
+                requested === false
+                  ? "PDF tagging was explicitly disabled; this output does not claim PDF/UA conformance."
+                  : `PDF/UA tagging is unavailable for ${profile.id} with ${engine}; use a LuaLaTeX article template.`,
+            },
+          ]),
+    ],
   };
 }

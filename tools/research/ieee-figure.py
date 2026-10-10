@@ -5,6 +5,9 @@ import matplotlib
 
 matplotlib.use("Agg")
 matplotlib.rcParams["pdf.fonttype"] = 42
+# Keep tick labels in one embedded font subset. Matplotlib's separate Unicode
+# minus subset maps its only glyph to CID 0, which veraPDF flags as .notdef.
+matplotlib.rcParams["axes.unicode_minus"] = False
 import matplotlib.pyplot as plt
 
 x = np.linspace(-np.pi, np.pi, 2000)

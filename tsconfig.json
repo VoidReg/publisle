@@ -9,6 +9,7 @@
     "vitest.config.ts",
     "vitest.acceptance.config.ts",
     "vitest.research.config.ts",
+    "vitest.pdf-ua.config.ts",
     "packages/**/*.ts",
     "packages/**/*.tsx",
     "blocks/**/*.ts",

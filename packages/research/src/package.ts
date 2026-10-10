@@ -1,4 +1,4 @@
-import type { Document } from "@publisle/schema";
+import type { Block, BlockType, Document } from "@publisle/schema";
 import type {
   PublishingTemplate,
   TemplateRegistry,
@@ -15,6 +15,8 @@ import { resolveDocument } from "./resolve.ts";
 export type { LatexEngine } from "@publisle/template-sdk";
 export type LatexPackage = SourcePackage;
 export interface LatexPackageOptions {
+  /** Standard article templates default to UA-2. false explicitly disables tagging. */
+  readonly pdfUa?: "ua-1" | "ua-2" | false;
   readonly template?: string | PublishingTemplate;
   readonly templates?: TemplateRegistry;
   readonly engine?: LatexEngine;
@@ -24,7 +26,7 @@ export interface LatexPackageOptions {
   readonly data?: Readonly<Record<string, unknown>>;
 }
 export function createSubmissionPackage(
-  document: Document,
+  document: Document<Block<BlockType, unknown>>,
   options: LatexPackageOptions = {},
 ): SourcePackage {
   const resolved = resolveDocument(
@@ -64,6 +66,7 @@ export function createSubmissionPackage(
       citations: resolved.citations,
       citationForm: resolved.form,
       bibliography: resolved.bibliography,
+      ...(options.pdfUa === undefined ? {} : { pdfUa: options.pdfUa }),
       ...(options.engine ? { engine: options.engine } : {}),
       ...(options.fonts ? { fonts: options.fonts } : {}),
       ...(options.data ? { data: options.data } : {}),

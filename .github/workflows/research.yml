@@ -21,9 +21,17 @@ jobs:
       - name: Install local TeX and PDF tooling
         run: |
           sudo apt-get update
-          sudo apt-get install -y latexmk texlive-publishers texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-lang-arabic texlive-lang-chinese fonts-paktype fonts-texgyre fonts-texgyre-math fontconfig poppler-utils libxml2-utils
+          sudo apt-get install -y latexmk texlive-publishers texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-lang-arabic texlive-lang-chinese fonts-paktype fonts-texgyre fonts-texgyre-math fontconfig poppler-utils libxml2-utils default-jre-headless
           fc-cache /usr/share/texlive/texmf-dist/fonts/opentype/public/fandol
-      - run: pnpm cli setup compiler
+      - run: pnpm cli setup compiler --build
+      - name: Install checksum-pinned veraPDF
+        run: |
+          python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+          echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
+      - name: Validate tagged standard articles against PDF/UA-2
+        run: pnpm test:pdf-ua
+        env:
+          PUBLISLE_RESEARCH_ARTIFACTS: ${{ runner.temp }}/publisle-ieee/pdf-ua
       - run: pnpm test:research
         env:
           PUBLISLE_CONTAINER_TEST: "1"
@@ -31,6 +39,6 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: ieee-journal-exports
+          name: research-exports-and-pdf-ua-reports
           path: ${{ runner.temp }}/publisle-ieee
           if-no-files-found: warn

@@ -42,6 +42,7 @@ describe("publisher starter packages", () => {
       try {
         const source = createLatexPackage(await fixture(), {
           template,
+          pdfUa: false, // Native compatibility/rebuild tier; tagged output has its own gate.
           data: { country: "Jordan" },
           style:
             template.id === "elsevier-author-date" ? "author-date" : "numeric",
@@ -93,7 +94,7 @@ describe("publisher starter packages", () => {
         ...input,
         metadata: { ...input.metadata, direction: "rtl", language: "ar" },
       },
-      { template: arabicTemplate },
+      { template: arabicTemplate, pdfUa: false },
     );
     expect(source.files["manuscript.tex"]).toContain(
       "\\babelprovide[import,main]{arabic}",
