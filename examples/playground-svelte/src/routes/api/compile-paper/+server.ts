@@ -1,5 +1,4 @@
-import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
+import { json, type RequestHandler } from "@sveltejs/kit";
 import { compilePaper } from "@publisle/playground-core/compile-service";
 
 export const prerender = false;
