@@ -20,6 +20,12 @@ change requires a new digest and an explicitly updated lock or bundle. Moving
 publisher aliases do not change immutable pins. Integrity is not authority to
 execute code; the host still approves implementations and resources.
 
+Schematic 2 is the first published wire shape. Its version 1 predates
+publication, so pre-publication version-1 payloads reach adopters only through
+the declared v1→2 migration; no supported path hands a reader an unmigrated
+version-1 document. Release notes must never renumber these integers to match an
+npm version.
+
 Npm packages use **0.x** while beta. The workspace's unpublished `0.0.0` package
 markers and root workspace version are not releases. A package version records
 implementation/API delivery, not a document or artifact schema integer. Release

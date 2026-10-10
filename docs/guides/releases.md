@@ -69,6 +69,10 @@ intentionally requires pnpm for workspace commands.
 
 - Choose and apply the coordinated beta version. Update the lockfile and changelog;
   review compatibility and any changed contract digests. Never publish `0.0.0`.
+- Record the shipped contract version integers in the changelog. They are
+  protocol revisions, independent of the npm version, and are never renumbered
+  to match a release: schematic 2 is the first published wire shape even though
+  no public 1 ever shipped, and version-1 inputs migrate transparently.
 - Run `pnpm install --frozen-lockfile`, `pnpm check`, renderer and P0 conformance,
   `pnpm test:research`, `pnpm test:pdf-ua`, and `pnpm test:distribution`.
 - Review notices, contract/Research compatibility, accessibility claims, each packed
