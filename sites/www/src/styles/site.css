@@ -383,6 +383,15 @@
   @apply rounded border border-line bg-input px-2 py-1 font-mono text-xs;
 }
 
+/* Checkboxes sit inline with their label, without text-field chrome. */
+.field--check {
+  @apply w-fit flex-row items-center gap-2;
+}
+
+.field--check > input {
+  @apply size-4 shrink-0 rounded border-line bg-input p-0 accent-accent;
+}
+
 .fieldset-reset {
   @apply m-0 border-0 p-0;
 }
