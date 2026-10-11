@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, type Browser } from "playwright-core";
+import { chromium, devices, type Browser } from "playwright-core";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { playgroundExamples } from "../src/lib/playground-examples";
 
@@ -237,6 +237,31 @@ it("persists theme through Astro navigation and searches documentation", async (
       .toContain("No matching pages");
   } finally {
     await page.close();
+  }
+});
+
+it("activates the counter by touch after opening and restoring a tutorial", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const context = await browser.newContext({ ...devices["Pixel 5"] });
+  const page = await context.newPage();
+  try {
+    await page.goto(`${baseUrl}/playground/?example=full-article`);
+    for (let visit = 0; visit < 2; visit += 1) {
+      await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+      await page.getByRole("tab", { name: /^Preview/ }).tap();
+      const preview = page.getByRole("region", { name: "Compiled preview" });
+      await preview
+        .getByRole("button", { name: "Explore Clocked counter" })
+        .tap();
+      await preview.getByRole("button", { name: "Clock", exact: true }).tap();
+      expect(await preview.locator("output").innerText()).toBe("1");
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(393);
+      if (visit === 0) await page.reload();
+    }
+  } finally {
+    await context.close();
   }
 });
 

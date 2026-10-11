@@ -2,7 +2,7 @@
   // Playground shell: Edit/Preview view switcher, searchable block palette,
   // source views, and the compiled preview. One component owns the shared
   // editor state; loaded only on /playground.
-  import { onMount, mount as svelteMount, unmount as svelteUnmount } from "svelte";
+  import { onMount, tick, mount as svelteMount, unmount as svelteUnmount } from "svelte";
   import {
     blockCategories,
     blockDescriptions,
@@ -153,8 +153,17 @@ Edit this document and see the result beside it. Your draft saves on this device
   // Attach the island runtime to the compiled preview; re-runs (disposing the
   // previous attachment) whenever the compilation changes.
   $effect(() => {
-    if (!previewEl || compiled.error || !compiled.manifest) return;
-    return attachArticle(previewEl, compiled.manifest, previewEnvironment);
+    const target = previewEl;
+    const manifest = compiled.manifest;
+    if (!target || compiled.error || !manifest) return;
+    let cancelled = false;
+    let dispose: (() => void) | undefined;
+    // Restoring a draft in onMount can replace the initial HTML in the same
+    // flush. Attach only after that DOM update, and ignore superseded work.
+    void tick().then(() => {
+      if (!cancelled) dispose = attachArticle(target, manifest, previewEnvironment);
+    });
+    return () => { cancelled = true; dispose?.(); };
   });
 
   // $state does not deep-proxy the DocumentEditor class instance, so the
