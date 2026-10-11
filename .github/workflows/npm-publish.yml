@@ -1,0 +1,124 @@
+name: Validate and publish npm packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Coordinated beta version already prepared on main
+        required: true
+        type: string
+      expected_commit:
+        description: Exact prepared source commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publication
+  cancel-in-progress: false
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Verify source identity and coordinated version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$EXPECTED_COMMIT"
+          TAG_COMMIT=$(git ls-remote origin "refs/tags/v$RELEASE_VERSION" "refs/tags/v$RELEASE_VERSION^{}" | tail -1 | cut -f1)
+          if [ -n "$TAG_COMMIT" ]; then
+            test "$TAG_COMMIT" = "$GITHUB_SHA"
+          fi
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { releasePackages, validateVersion } from './tools/npm-release.ts';
+          validateVersion(process.env.RELEASE_VERSION);
+          for (const {manifest} of await releasePackages(process.cwd())) {
+            assert.equal(manifest.version, process.env.RELEASE_VERSION);
+          }
+          JS
+  check:
+    needs: source
+    uses: ./.github/workflows/check.yml
+  research:
+    needs: source
+    uses: ./.github/workflows/research.yml
+  distribution:
+    needs: source
+    uses: ./.github/workflows/distribution.yml
+  publish:
+    needs: [check, research, distribution]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install npm with trusted publishing support
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@12.2.0
+      - uses: actions/download-artifact@v8
+        with:
+          name: packed-consumer-and-tarballs
+          path: ${{ runner.temp }}/release
+      - name: Locate exact validated tarballs and restore previous upload progress
+        id: artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mapfile -t MANIFESTS < <(find "$RUNNER_TEMP/release" -name release-manifest.json)
+          test "${#MANIFESTS[@]}" -eq 1
+          echo "manifest=${MANIFESTS[0]}" >> "$GITHUB_OUTPUT"
+          echo "stage=$(dirname "${MANIFESTS[0]}")" >> "$GITHUB_OUTPUT"
+          PREVIOUS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --paginate --slurp --jq '[.[].artifacts[] | select(.expired == false) | select(.name | startswith("npm-publication-progress-"))] | sort_by(.id) | last | .name // empty')
+          if [ -n "$PREVIOUS" ]; then
+            gh run download "$GITHUB_RUN_ID" --name "$PREVIOUS" --dir "$(dirname "${MANIFESTS[0]}")"
+          fi
+      - name: Publish missing packages and verify public registry bytes and tags
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_MANIFEST: ${{ steps.artifacts.outputs.manifest }}
+        run: node tools/npm-release.ts publish "$RELEASE_VERSION" "$RELEASE_MANIFEST"
+      - name: Test fresh registry-only Core, Research and showcase consumers
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_STAGE: ${{ steps.artifacts.outputs.stage }}
+        run: node tools/npm-registry-consumers.ts "$RELEASE_VERSION" "$RELEASE_STAGE"
+      - name: Publish GitHub prerelease and retained evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_STAGE: ${{ steps.artifacts.outputs.stage }}
+        run: |
+          TAG="v$RELEASE_VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            test "$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Publisle $RELEASE_VERSION (beta)" --prerelease --draft --generate-notes
+          fi
+          gh release upload "$TAG" "$RELEASE_STAGE"/tarballs/*.tgz "$RELEASE_STAGE/release-manifest.json" "$RELEASE_STAGE/contract-bundle.json" "$RELEASE_STAGE/publication-record.json" "$RELEASE_STAGE/registry-consumers.json" --clobber
+          gh release edit "$TAG" --draft=false --prerelease
+      - uses: actions/upload-artifact@v7
+        if: always() && steps.artifacts.outputs.stage != ''
+        with:
+          name: npm-publication-progress-${{ github.run_attempt }}
+          path: |
+            ${{ steps.artifacts.outputs.stage }}/accepted-uploads.json
+            ${{ steps.artifacts.outputs.stage }}/publication-record.json
+            ${{ steps.artifacts.outputs.stage }}/registry-consumers.json
+          if-no-files-found: ignore
+          retention-days: 90

@@ -1,0 +1,56 @@
+name: Release npm packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Next coordinated beta version (for example 0.1.1)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prepare all package versions and release notes
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          node tools/npm-release.ts prepare "$RELEASE_VERSION"
+          pnpm install --lockfile-only --ignore-scripts
+          pnpm exec prettier --write packages blocks showcase/fourier/package.json CHANGELOG.md pnpm-lock.yaml
+      - name: Commit release metadata and start validation and publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages blocks showcase/fourier/package.json CHANGELOG.md pnpm-lock.yaml
+          git commit -m "Prepare npm release $RELEASE_VERSION"
+          git push origin HEAD:main
+          RELEASE_COMMIT=$(git rev-parse HEAD)
+          # Dispatch on the new commit so npm provenance identifies the actual
+          # source, including the version bump, instead of this preparation run.
+          gh workflow run npm-publish.yml --ref main -f version="$RELEASE_VERSION" -f expected_commit="$RELEASE_COMMIT"
+          echo "Prepared **$RELEASE_VERSION** at **$RELEASE_COMMIT**. Follow the [Validate and publish npm packages workflow](https://github.com/$GITHUB_REPOSITORY/actions/workflows/npm-publish.yml) for release progress." >> "$GITHUB_STEP_SUMMARY"

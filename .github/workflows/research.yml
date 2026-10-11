@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
 
 jobs:
   starter-profiles:
@@ -50,5 +51,6 @@ jobs:
         if: always()
         with:
           name: research-exports-and-pdf-ua-reports
+          overwrite: true
           path: ${{ runner.temp }}/publisle-ieee
           if-no-files-found: warn

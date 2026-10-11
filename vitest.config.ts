@@ -9,6 +9,7 @@ export default defineConfig({
     include: [
       "packages/*/tests/**/*.test.ts",
       "examples/playground-core/tests/**/*.test.ts",
+      "tools/tests/**/*.test.ts",
     ],
   },
 });

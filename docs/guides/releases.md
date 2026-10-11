@@ -1,9 +1,77 @@
 # Distribution and release checklist
 
-Publisle is in beta. All 23 publishable packages use **0.1.0**, the first beta release
+Publisle is in beta. All 23 publishable packages ship at one coordinated version
 under the npm `beta` tag. Frozen contract version integers are independent of
 that version. Development and CI use Node.js ≥24 and pnpm
-11.x (currently pinned to 11.17.0). No package publishing runs automatically.
+11.x (currently pinned to 11.17.0). Publishing starts only when a maintainer
+manually activates the release workflow.
+
+## Release all npm packages from GitHub
+
+1. Merge the changes to `main` and describe them under `Unreleased` in the
+   [changelog](../../CHANGELOG.md). Update contract revisions and the compiler
+   release record first if those independently versioned artifacts changed.
+2. Open **Actions → Release npm packages → Run workflow**, select `main`, and
+   enter the next coordinated beta version, for example `0.1.1` or `0.2.0`.
+   Versions must increase. The current beta policy accepts numeric `0.x.y`
+   versions other than the placeholder `0.0.0`.
+3. Follow **Validate and publish npm packages**, which the preparation workflow
+   starts automatically. Its URL is linked in the preparation run summary.
+
+The [preparation workflow](../../.github/workflows/npm-release.yml) updates all
+public package versions, exact internal dependency pins, package READMEs,
+Fourier showcase tarball references and the changelog. It refreshes the pnpm
+lockfile and commits the release metadata to `main`. Private root and example
+package versions and contract integers are not npm release versions.
+The showcase rehearsal regenerates its npm lockfile from the actual tarballs;
+the resulting lock and hashes are retained as distribution evidence.
+
+The [publication workflow](../../.github/workflows/npm-publish.yml) runs on that
+new commit so npm provenance identifies the source containing the version bump.
+It requires the existing Check, Research export and Distribution gates to pass,
+then publishes the exact validated tarballs in dependency order. It verifies
+every public package index, `beta` tag, integrity value and downloaded SHA-256,
+then installs fresh registry-only Core and Research consumers, checks strict
+declarations and CLI isolation, and builds the complete Fourier showcase.
+Finally it creates `vVERSION` and a GitHub prerelease containing the tarballs,
+contract bundle and publication/consumer verification records. Overlapping
+publication runs are serialized.
+
+The workflow does not overwrite npm versions. It checks the entire batch for
+conflicts before uploading anything. If npm publishing or post-publication
+verification fails, use **Re-run failed jobs** on the original publication run.
+This preserves the original Distribution artifacts and restores the upload
+progress record. Already published versions are skipped only when their bytes
+match those artifacts. Do not rerun all jobs or rebuild artifacts after a partial
+publish: packed bytes can differ between builds, and npm versions are immutable.
+If preparation dispatch fails after its commit was pushed, run the publication
+workflow directly on `main` with that version and its full commit SHA; the
+workflow rejects any mismatch between the selected source and expected commit.
+If validation fails before publication, fix the source and dispatch a new
+publication run with the prepared version and the new full commit SHA.
+
+### One-time npm authentication setup
+
+All 23 packages are configured to trust GitHub repository `VoidReg/publisle`,
+workflow filename **`npm-publish.yml`**, with direct publishing allowed and no
+environment restriction. The publishing job has `id-token: write` and uses npm
+12.2.0. It needs no stored npm token or interactive login. The dispatch workflow
+also needs the repository's Actions token to push release metadata and dispatch
+another workflow; branch protection must permit that release commit.
+
+For a newly added public package, first publish it and add the same trusted
+publisher in its npm settings, or run this command outside the pnpm workspace
+with a current npm CLI and authenticate when prompted:
+
+```sh
+npm trust github @publisle/PACKAGE --repo VoidReg/publisle --file npm-publish.yml --allow-publish --yes
+```
+
+See npm's [trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
+Changing the publishing workflow filename or repository requires updating these
+package settings. Compiler image releases retain their separate explicit
+[compiler workflow](../../.github/workflows/compiler-release.yml); ordinary npm
+updates reuse the digest recorded in the packaged compiler release record.
 
 ## Package artifacts
 
@@ -74,7 +142,7 @@ intentionally requires pnpm for workspace commands.
 
 ## Release rehearsal and operator checklist
 
-- Review the coordinated `0.1.0` beta version, lockfile and changelog;
+- Review the next coordinated beta version, lockfile and changelog;
   review compatibility and any changed contract digests. Never publish `0.0.0`.
 - Record the shipped contract version integers in the changelog. They are
   protocol revisions, independent of the npm version, and are never renumbered
