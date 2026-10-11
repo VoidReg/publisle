@@ -1,0 +1,35 @@
+[Unit]
+Description=Publisle API stub (health + PDF endpoint contract)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=publisle
+Group=publisle
+WorkingDirectory=/opt/publisle-api
+ExecStart=/usr/bin/env node /opt/publisle-api/server.mjs
+Environment=NODE_ENV=production
+Environment=PORT=8787
+Environment=PDF_ENABLED=false
+Restart=on-failure
+RestartSec=2
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

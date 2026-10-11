@@ -1,0 +1,14 @@
+# Publisle API — automatic HTTPS via Let's Encrypt.
+# Requires DNS: api.publisle.xyz A/AAAA -> this server.
+api.publisle.xyz {
+	encode zstd gzip
+
+	# Basic abuse guard; tighten with rate limits when PDF lands.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	reverse_proxy 127.0.0.1:8787
+}
