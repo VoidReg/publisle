@@ -93,19 +93,23 @@ const packages = coreBlockDefinitions.length >= 0
   </section>
 
   <section aria-label="Pipeline" class="pb-16">
-    <picture>
-      <source
-        media="(prefers-color-scheme: dark)"
-        srcset="/publisle-system-dark.svg"
-      />
-      <img
-        src="/publisle-system.svg"
-        alt="Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands."
-        width="820"
-        loading="lazy"
-        class="mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
-      />
-    </picture>
+    <img
+      src="/publisle-system.svg"
+      alt="Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands."
+      width="1060"
+      height="750"
+      loading="lazy"
+      class="mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4 dark:hidden"
+    />
+    <img
+      src="/publisle-system-dark.svg"
+      alt=""
+      aria-hidden="true"
+      width="1060"
+      height="750"
+      loading="lazy"
+      class="mx-auto hidden w-full max-w-4xl rounded-xl border border-line bg-surface p-4 dark:block"
+    />
   </section>
 
   <section aria-labelledby="features" class="py-16">

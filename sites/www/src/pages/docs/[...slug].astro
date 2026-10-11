@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Article from "@publisle/adapter-astro/Article.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { docRawRoute, docRepoPath } from "../../lib/docs-source";
 
 export async function getStaticPaths() {
   const entries = await getCollection("docs");
@@ -25,10 +26,8 @@ const next =
     : undefined;
 
 // Section overview entries store README.md under the bare section id.
-const repoPath =
-  entry.id === "standards" ? "standards/README.md" : `${entry.id}.md`;
-const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${repoPath}`;
-const rawSource = `https://raw.githubusercontent.com/VoidReg/publisle/main/docs/${repoPath}`;
+const raw = docRawRoute(entry.id);
+const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${docRepoPath(entry.id)}`;
 ---
 
 <BaseLayout title={`${entry.data.title} — Publisle Docs`} path={`/docs/${entry.id}`}>
@@ -44,22 +43,27 @@ const rawSource = `https://raw.githubusercontent.com/VoidReg/publisle/main/docs/
           </p>
           <ul class="mt-2 space-y-1">
             {
-              sectionEntries.map((item) => (
-                <li>
-                  <a
-                    href={`/docs/${item.id}`}
-                    aria-current={item.id === entry.id ? "page" : undefined}
-                    class:list={[
-                      "block rounded px-2 py-1",
-                      item.id === entry.id
-                        ? "bg-surface font-medium text-accent"
-                        : "text-muted hover:text-ink",
-                    ]}
-                  >
-                    {item.data.title}
-                  </a>
-                </li>
-              ))
+              sectionEntries.map((item) =>
+                item.id === entry.id ? (
+                  <li>
+                    <span
+                      aria-current="page"
+                      class="block rounded bg-surface px-2 py-1 font-medium text-accent"
+                    >
+                      {item.data.title}
+                    </span>
+                  </li>
+                ) : (
+                  <li>
+                    <a
+                      href={`/docs/${item.id}`}
+                      class="block rounded px-2 py-1 text-muted hover:text-ink"
+                    >
+                      {item.data.title}
+                    </a>
+                  </li>
+                ),
+              )
             }
           </ul>
         </div>
@@ -69,12 +73,9 @@ const rawSource = `https://raw.githubusercontent.com/VoidReg/publisle/main/docs/
     <article class="min-w-0">
       <p class="mb-2 text-xs tracking-wide text-muted uppercase">
         {entry.data.section === "guides" ? "Guide" : "Standard"} ·
-        <a href={rawSource} class="hover:text-accent">Markdown source</a> ·
+        <a href={raw} class="hover:text-accent">Markdown source</a> ·
         <a href={githubSource} class="hover:text-accent">View on GitHub</a>
       </p>
-      <h1 class="font-display text-3xl font-bold sm:text-4xl">
-        {entry.data.title}
-      </h1>
       <div class="mt-6">
         <Article publication={entry.data.publication} instanceId={`docs-${entry.id.replaceAll("/", "-")}`}/>
       </div>

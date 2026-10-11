@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  /* No explicit choice yet: follow the OS. */
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
 
 /* Publisle brand (VoidReg): paper, ink, vermilion. WCAG-AAA pairings.
    Layered resolution: light defaults → system preference (no explicit choice)
@@ -124,6 +134,100 @@
   ::selection {
     background: var(--accent);
     color: var(--bg);
+  }
+}
+
+/* Documentation/article typography. document.css is intentionally minimal
+   (hosts own styling); Tailwind preflight strips all default margins, so the
+   compiled publication needs this layer to read like a document. */
+@layer components {
+  .publisle-document {
+    @apply max-w-[72ch];
+  }
+
+  .publisle-document > :first-child {
+    margin-top: 0;
+  }
+
+  .publisle-document h1 {
+    @apply mb-4 mt-10 font-display text-3xl font-bold tracking-tight first:mt-0;
+  }
+
+  .publisle-document h2 {
+    @apply mb-3 mt-10 border-b border-line pb-1.5 font-display text-2xl font-semibold;
+  }
+
+  .publisle-document h3 {
+    @apply mb-2 mt-8 font-display text-xl font-semibold;
+  }
+
+  .publisle-document h4,
+  .publisle-document h5,
+  .publisle-document h6 {
+    @apply mb-2 mt-6 font-display text-lg font-semibold;
+  }
+
+  .publisle-document p {
+    @apply my-4 leading-7;
+  }
+
+  .publisle-document ul,
+  .publisle-document ol {
+    @apply my-4 space-y-1.5 leading-7;
+  }
+
+  .publisle-document ul {
+    @apply list-disc pl-6;
+  }
+
+  .publisle-document ol {
+    @apply list-decimal pl-6;
+  }
+
+  .publisle-document li > ul,
+  .publisle-document li > ol {
+    @apply my-1.5;
+  }
+
+  .publisle-document pre {
+    @apply my-5 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm leading-6;
+  }
+
+  .publisle-document :not(pre) > code {
+    @apply rounded border border-line bg-raised px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+
+  .publisle-document blockquote {
+    @apply my-5 border-l-4 border-accent/40 pl-4 text-muted;
+  }
+
+  .publisle-document table {
+    @apply my-5 w-full border-collapse text-sm;
+  }
+
+  .publisle-document th {
+    @apply border border-line bg-surface px-3 py-2 text-left font-semibold;
+  }
+
+  .publisle-document td {
+    @apply border border-line px-3 py-2 align-top;
+  }
+
+  .publisle-document hr {
+    @apply my-8 border-line;
+  }
+
+  .publisle-document a {
+    @apply text-accent underline decoration-accent/30 underline-offset-2 hover:decoration-accent;
+  }
+
+  .publisle-document img,
+  .publisle-document svg {
+    @apply h-auto max-w-full;
+  }
+
+  .publisle-document strong {
+    @apply font-semibold;
   }
 }
 

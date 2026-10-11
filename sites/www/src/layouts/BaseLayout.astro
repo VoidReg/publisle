@@ -5,6 +5,7 @@ import "@fontsource-variable/jetbrains-mono";
 import "@publisle/adapter-core/document.css";
 import "@publisle/adapter-core/katex.css";
 import "../styles/site.css";
+import { ClientRouter } from "astro:transitions";
 import ThemeToggle from "../components/ThemeToggle.svelte";
 
 interface Props {
@@ -69,6 +70,7 @@ const isActive = (href: string) =>
         }
       } catch (error) {}
     </script>
+    <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col">
     <a
@@ -100,20 +102,23 @@ const isActive = (href: string) =>
         </a>
         <nav aria-label="Main" class="flex items-center gap-1 text-sm">
           {
-            nav.map((item) => (
-              <a
-                href={item.href}
-                aria-current={isActive(item.href) ? "page" : undefined}
-                class:list={[
-                  "rounded-md px-3 py-1.5 transition",
-                  isActive(item.href)
-                    ? "bg-surface font-medium text-accent"
-                    : "text-muted hover:text-ink",
-                ]}
-              >
-                {item.label}
-              </a>
-            ))
+            nav.map((item) =>
+              isActive(item.href) ? (
+                <span
+                  aria-current="page"
+                  class="rounded-md bg-surface px-3 py-1.5 font-medium text-accent"
+                >
+                  {item.label}
+                </span>
+              ) : (
+                <a
+                  href={item.href}
+                  class="rounded-md px-3 py-1.5 text-muted transition hover:text-ink"
+                >
+                  {item.label}
+                </a>
+              ),
+            )
           }
           <ThemeToggle client:load />
           <a
