@@ -1,0 +1,11 @@
+# @publisle/blocks-technical
+
+## 0.1.1
+
+### Patch Changes
+
+- e97d4d7: Allow compatible updates between independently versioned Publisle packages. Require Astro 7.2.8 or newer in the Astro adapter to resolve the reported security advisories. Astro 6 is no longer supported.
+- Updated dependencies [e97d4d7]
+  - @publisle/block-sdk@0.1.1
+  - @publisle/blocks-core@0.1.1
+  - @publisle/contracts@0.1.1
