@@ -127,6 +127,22 @@ export class DocumentEditor {
     this.replaceBlocks(blocks);
   }
 
+  /** Deep-clone a block with a fresh ID, inserting the copy right after it. */
+  duplicateBlock(id: BlockId): BlockId | undefined {
+    const index = this.current.blocks.findIndex((block) => block.id === id);
+    if (index === -1) return undefined;
+    const source = this.current.blocks[index];
+    if (!source) return undefined;
+    const duplicate = createBlock({
+      type: source.type as `${string}:${string}`,
+      data: JSON.parse(JSON.stringify(source.data ?? {})) as unknown,
+    }) as UnknownBlock;
+    const blocks = [...this.current.blocks];
+    blocks.splice(index + 1, 0, duplicate);
+    this.replaceBlocks(blocks);
+    return duplicate.id;
+  }
+
   updateBlock(id: BlockId, data: unknown): void {
     this.replaceBlocks(
       this.current.blocks.map((block) =>

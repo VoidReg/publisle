@@ -11,6 +11,14 @@
       "svelte": "./src/BlockEditor.svelte",
       "default": "./src/BlockEditor.svelte"
     },
+    "./MathEditor.svelte": {
+      "svelte": "./src/MathEditor.svelte",
+      "default": "./src/MathEditor.svelte"
+    },
+    "./MathBlockEditor.svelte": {
+      "svelte": "./src/MathBlockEditor.svelte",
+      "default": "./src/MathBlockEditor.svelte"
+    },
     "./JsonField.svelte": {
       "svelte": "./src/JsonField.svelte",
       "default": "./src/JsonField.svelte"
@@ -27,7 +35,8 @@
     "@publisle/blocks-core": "workspace:^",
     "@publisle/core": "workspace:^",
     "@publisle/markdown": "workspace:^",
-    "@publisle/schema": "workspace:^"
+    "@publisle/schema": "workspace:^",
+    "katex": "^0.16.47"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
@@ -47,6 +56,16 @@
         "types": "./dist/BlockEditor.svelte.d.ts",
         "svelte": "./dist/BlockEditor.svelte",
         "default": "./dist/BlockEditor.svelte"
+      },
+      "./MathEditor.svelte": {
+        "types": "./dist/MathEditor.svelte.d.ts",
+        "svelte": "./dist/MathEditor.svelte",
+        "default": "./dist/MathEditor.svelte"
+      },
+      "./MathBlockEditor.svelte": {
+        "types": "./dist/MathBlockEditor.svelte.d.ts",
+        "svelte": "./dist/MathBlockEditor.svelte",
+        "default": "./dist/MathBlockEditor.svelte"
       },
       "./JsonField.svelte": {
         "types": "./dist/JsonField.svelte.d.ts",

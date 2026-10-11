@@ -949,6 +949,9 @@ importers:
       '@publisle/schema':
         specifier: workspace:^
         version: link:../schema
+      katex:
+        specifier: ^0.16.47
+        version: 0.16.47
     devDependencies:
       svelte:
         specifier: ^5.0.0

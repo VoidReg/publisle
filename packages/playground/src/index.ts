@@ -1,9 +1,14 @@
 export {
-  CORE_BLOCK_TYPES,
+  blockCategories,
+  blockDescriptions,
   blockLabels,
   blockTypes,
   coreDefaultData,
   defaultData,
+  CORE_BLOCK_CATEGORIES,
+  CORE_BLOCK_DESCRIPTIONS,
+  CORE_BLOCK_LABELS,
+  CORE_BLOCK_TYPES,
   type PlaygroundBlockExtension,
   type PlaygroundExtensions,
 } from "./templates.ts";
@@ -20,6 +25,17 @@ export {
   type DocumentEditorListener,
   type ImportResult,
 } from "./editor.ts";
+export {
+  highlightMath,
+  insertMathSnippet,
+  tokenizeMath,
+  MATH_PALETTE_TABS,
+  type MathInsertion,
+  type MathPaletteTab,
+  type MathSnippet,
+  type MathToken,
+  type MathTokenKind,
+} from "./math-palette.ts";
 export {
   SEGMENT_KINDS,
   appendSegment,

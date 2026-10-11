@@ -25,6 +25,10 @@ export interface PlaygroundBlockExtension {
   readonly label: string;
   readonly defaultData: () => unknown;
   readonly fieldSpecs?: readonly FieldSpec[];
+  /** One-line description for the block palette. */
+  readonly description?: string;
+  /** Palette category id; defaults to "interactive". */
+  readonly category?: string;
 }
 
 /** Host extension bundle: extra block definitions and editable blocks. */
@@ -68,6 +72,70 @@ export const CORE_BLOCK_LABELS: Record<string, string> = {
   "publisle:raw-html": "Raw HTML",
   "publisle:interactive-schematic": "Interactive Schematic",
 };
+
+export const CORE_BLOCK_DESCRIPTIONS: Record<string, string> = {
+  "publisle:paragraph": "Plain paragraph with rich inline content",
+  "publisle:heading": "Section heading with optional cross-reference label",
+  "publisle:list": "Bulleted or numbered list of items",
+  "publisle:quote": "Block quotation",
+  "publisle:code": "Code sample with language hint",
+  "publisle:math": "Display or inline math with a live LaTeX editor",
+  "publisle:figure": "Image with alternative text and caption",
+  "publisle:table": "Data table with header rows and caption",
+  "publisle:bibliography": "CSL JSON bibliography entries",
+  "publisle:callout": "Highlighted note, warning, or error",
+  "publisle:divider": "Horizontal rule",
+  "publisle:embed": "External media with a static fallback",
+  "publisle:diagram": "Mermaid, Graphviz, PlantUML, or WaveDrom diagram",
+  "publisle:raw-html": "Authored raw HTML passthrough",
+  "publisle:interactive-schematic": "Interactive circuit schematic island",
+};
+
+/** Palette category ids in display order. */
+export const CORE_BLOCK_CATEGORIES: readonly {
+  readonly id: string;
+  readonly label: string;
+  readonly types: readonly string[];
+}[] = [
+  {
+    id: "text",
+    label: "Text",
+    types: [
+      "publisle:paragraph",
+      "publisle:heading",
+      "publisle:list",
+      "publisle:quote",
+      "publisle:callout",
+      "publisle:code",
+    ],
+  },
+  {
+    id: "math-figures",
+    label: "Math & Figures",
+    types: [
+      "publisle:math",
+      "publisle:figure",
+      "publisle:table",
+      "publisle:diagram",
+      "publisle:embed",
+    ],
+  },
+  {
+    id: "structure",
+    label: "Structure",
+    types: ["publisle:divider", "publisle:raw-html"],
+  },
+  {
+    id: "bibliography",
+    label: "Bibliography",
+    types: ["publisle:bibliography"],
+  },
+  {
+    id: "interactive",
+    label: "Interactive",
+    types: ["publisle:interactive-schematic"],
+  },
+];
 
 function text(value: string): InlineNode {
   return { type: "text", value };
@@ -203,4 +271,36 @@ export function defaultData(
   const extension = extensions?.blocks?.find((block) => block.type === type);
   if (extension) return extension.defaultData();
   return coreDefaultData(type);
+}
+
+/** Description lookup including host extensions. */
+export function blockDescriptions(
+  extensions?: PlaygroundExtensions,
+): Record<string, string> {
+  const descriptions: Record<string, string> = { ...CORE_BLOCK_DESCRIPTIONS };
+  for (const block of extensions?.blocks ?? [])
+    if (block.description) descriptions[block.type] = block.description;
+  return descriptions;
+}
+
+/** Palette categories including host extension blocks. */
+export function blockCategories(extensions?: PlaygroundExtensions): readonly {
+  readonly id: string;
+  readonly label: string;
+  readonly types: readonly string[];
+}[] {
+  const categories = CORE_BLOCK_CATEGORIES.map((category) => ({
+    ...category,
+    types: [...category.types],
+  }));
+  for (const block of extensions?.blocks ?? []) {
+    const id = block.category ?? "interactive";
+    let category = categories.find((entry) => entry.id === id);
+    if (!category) {
+      category = { id, label: id, types: [] };
+      categories.push(category);
+    }
+    (category.types as string[]).push(block.type);
+  }
+  return categories;
 }

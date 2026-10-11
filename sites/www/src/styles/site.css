@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Package components are consumed through node_modules symlinks, which
+   Tailwind's automatic source detection ignores — register them explicitly. */
+@source "../../../../packages/playground/src";
+
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *) {
     @slot;
@@ -228,6 +232,122 @@
 
   .publisle-document strong {
     @apply font-semibold;
+  }
+
+  /* Math editor (from @publisle/playground). */
+  .math-editor {
+    @apply overflow-hidden rounded-lg border border-line bg-surface;
+  }
+
+  .math-editor__preview {
+    @apply overflow-x-auto border-b border-line bg-raised px-4 py-3 text-lg;
+  }
+
+  .math-editor[data-display="true"] .math-editor__preview {
+    @apply py-6 text-center text-xl;
+  }
+
+  .math-editor__error {
+    @apply m-0 font-mono text-xs text-danger;
+  }
+
+  .math-editor__empty {
+    @apply m-0 text-sm text-muted;
+  }
+
+  .math-editor__source {
+    @apply relative font-mono text-sm leading-6;
+  }
+
+  .math-editor__highlight,
+  .math-editor__input {
+    @apply m-0 w-full border-0 bg-transparent p-3 font-mono text-sm leading-6;
+  }
+
+  .math-editor__highlight {
+    @apply pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words text-ink;
+  }
+
+  .math-editor__input {
+    @apply relative block resize-y text-transparent caret-accent outline-none selection:bg-accent/25;
+  }
+
+  .math-editor__toggle {
+    @apply m-2 rounded-md border border-line px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent;
+  }
+
+  .math-editor__tabs {
+    @apply flex gap-1 overflow-x-auto border-b border-line px-2 pt-2;
+  }
+
+  .math-editor__tab {
+    @apply -mb-px rounded-t-md border border-transparent px-2.5 py-1 text-xs whitespace-nowrap text-muted hover:text-ink;
+  }
+
+  .math-editor__tab.active {
+    @apply border-line border-b-transparent bg-raised text-accent;
+  }
+
+  .math-editor__snippets {
+    @apply flex flex-wrap gap-1.5 p-2;
+  }
+
+  .math-editor__snippet {
+    @apply min-w-9 rounded-md border border-line bg-raised px-2 py-1 font-mono text-sm hover:border-accent hover:text-accent;
+  }
+
+  .math-editor__fields {
+    @apply flex flex-wrap gap-4;
+  }
+
+  /* LaTeX token colors for the highlight overlay. */
+  .math-tok-command {
+    @apply font-semibold text-accent;
+  }
+
+  .math-tok-brace {
+    @apply text-muted;
+  }
+
+  .math-tok-script {
+    @apply text-warning;
+  }
+
+  .math-tok-number {
+    @apply text-sky-700 dark:text-sky-300;
+  }
+
+  /* Inline segment tint chips (editor-only decoration). */
+  .segment__chip {
+    @apply shrink-0 rounded border border-line bg-raised px-2 py-0.5 text-xs text-muted;
+  }
+
+  .segment--math {
+    @apply border-accent/40 bg-accent/10 text-accent;
+  }
+
+  .segment--code {
+    @apply border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-300;
+  }
+
+  .segment--citation {
+    @apply border-violet-600/40 bg-violet-600/10 text-violet-700 dark:text-violet-300;
+  }
+
+  .segment--xref {
+    @apply border-sky-600/40 bg-sky-600/10 text-sky-700 dark:text-sky-300;
+  }
+
+  .segment--footnote {
+    @apply border-amber-600/40 bg-amber-600/10 text-amber-700 dark:text-amber-300;
+  }
+
+  .block-editor.selected {
+    @apply ring-2 ring-accent/50;
+  }
+
+  .segment__editor {
+    @apply min-w-0 flex-1;
   }
 }
 

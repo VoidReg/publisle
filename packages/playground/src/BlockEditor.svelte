@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Block, BlockId } from "@publisle/schema";
   import JsonField from "./JsonField.svelte";
+  import MathEditor from "./MathEditor.svelte";
   import {
     appendSegment,
     blockFields,
@@ -27,12 +28,25 @@
     onRemove: (id: BlockId) => void;
     onMove: (id: BlockId, direction: "up" | "down") => void;
     onUpdate: (id: BlockId, data: unknown) => void;
+    onDuplicate?: (id: BlockId) => void;
+    onSelect?: (id: BlockId) => void;
+    selected?: boolean;
     extensions?: PlaygroundExtensions;
   }
 
-  let { block, onRemove, onMove, onUpdate, extensions }: Props = $props();
+  let {
+    block,
+    onRemove,
+    onMove,
+    onUpdate,
+    onDuplicate,
+    onSelect,
+    selected = false,
+    extensions,
+  }: Props = $props();
 
   let addKind = $state("text");
+  let expandedMath = $state<number | null>(null);
 
   const label = $derived(blockLabels(extensions)[block.type] ?? block.type);
   const data = $derived(
@@ -41,6 +55,19 @@
       : {},
   );
   const specs = $derived(blockFields(block.type, extensions));
+
+  // Per-kind tint classes for inline segment chips (editor-only decoration).
+  const SEGMENT_TINTS: Record<string, string> = {
+    inlineMath: "segment--math",
+    inlineCode: "segment--code",
+    citation: "segment--citation",
+    crossReference: "segment--xref",
+    footnote: "segment--footnote",
+  };
+
+  function segmentTint(kind: string): string {
+    return SEGMENT_TINTS[kind] ?? "";
+  }
 
   function plainValue(spec: FieldSpec): string {
     const value = fieldValue(data, spec);
@@ -62,15 +89,36 @@
     if (spec.key === "rows") return tableText(data[spec.key] as never);
     return listText(data[spec.key]);
   }
+
+  function setSegment(
+    key: string,
+    nodes: readonly unknown[],
+    index: number,
+    value: string,
+  ): void {
+    onUpdate(block.id, {
+      ...data,
+      [key]: setSegmentText(nodes, index, value),
+    });
+  }
 </script>
 
-<section class="block-editor" data-block-type={block.type}>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<section
+  class="block-editor"
+  class:selected
+  data-block-type={block.type}
+  onclick={() => onSelect?.(block.id)}
+>
   <header class="block-editor__header">
     <strong>{label}</strong>
     <div class="block-editor__actions">
       <button type="button" onclick={() => onMove(block.id, "up")} aria-label="Move block up">↑</button>
       <button type="button" onclick={() => onMove(block.id, "down")} aria-label="Move block down">↓</button>
-      <button type="button" onclick={() => onRemove(block.id)} aria-label="Remove block">Remove</button>
+      {#if onDuplicate}
+        <button type="button" onclick={() => onDuplicate(block.id)} aria-label="Duplicate block">⧉</button>
+      {/if}
+      <button type="button" onclick={() => onRemove(block.id)} aria-label="Remove block">✕</button>
     </div>
   </header>
   <div class="block-editor__body">
@@ -82,22 +130,59 @@
           <fieldset class="field field--segments">
             <legend>{spec.label}</legend>
             {#each inlineSegments(data[spec.key] as readonly unknown[]) as segment (segment.index)}
-              <div class="segment">
-                <span class="segment__label">{segment.label}</span>
-                <input
-                  type="text"
-                  value={segment.value}
-                  placeholder={segment.placeholder ?? ""}
-                  onchange={(event) =>
-                    onUpdate(block.id, {
-                      ...data,
-                      [spec.key]: setSegmentText(
-                        data[spec.key] as readonly unknown[],
-                        segment.index,
-                        event.currentTarget.value,
-                      ),
-                    })}
-                />
+              <div class="segment" data-segment-kind={segment.kind}>
+                <button
+                  type="button"
+                  class="segment__chip {segmentTint(segment.kind)}"
+                  title={segment.kind === "inlineMath"
+                    ? "Toggle math editor"
+                    : segment.kind}
+                  aria-expanded={segment.kind === "inlineMath"
+                    ? expandedMath === segment.index
+                    : undefined}
+                  onclick={() => {
+                    if (segment.kind === "inlineMath")
+                      expandedMath =
+                        expandedMath === segment.index
+                          ? null
+                          : segment.index;
+                  }}
+                >
+                  {segment.kind === "inlineMath" && expandedMath !== segment.index ? "∑ " : ""}{segment.label}
+                </button>
+                {#if segment.kind === "inlineMath" && expandedMath === segment.index}
+                  <div class="segment__editor">
+                    <MathEditor
+                      compact
+                      collapsible
+                      value={segment.value}
+                      ariaLabel="Inline math for {segment.label}"
+                      onchange={(value) =>
+                        setSegment(
+                          spec.key,
+                          data[spec.key] as readonly unknown[],
+                          segment.index,
+                          value,
+                        )}
+                    />
+                  </div>
+                {:else}
+                  <input
+                    type="text"
+                    value={segment.value}
+                    placeholder={segment.placeholder ?? ""}
+                    class={segmentTint(segment.kind)}
+                    onchange={(event) =>
+                      onUpdate(block.id, {
+                        ...data,
+                        [spec.key]: setSegmentText(
+                          data[spec.key] as readonly unknown[],
+                          segment.index,
+                          event.currentTarget.value,
+                        ),
+                      })}
+                  />
+                {/if}
                 <button
                   type="button"
                   aria-label="Remove {segment.label}"
