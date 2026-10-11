@@ -13,6 +13,8 @@ export interface DocSource {
   readonly id: string;
   readonly section: DocSection;
   readonly title: string;
+  /** First-paragraph summary for meta descriptions (~155 chars). */
+  readonly description: string;
   /** Absolute path of the Markdown source in the checkout. */
   readonly file: string;
   /** Path under docs/ in the repository, e.g. "guides/meaning.md". */
@@ -45,6 +47,34 @@ export function docRawRoute(id: string): string {
   return `/docs/${docRepoPath(id)}`;
 }
 
+/** First prose paragraph of a document, flattened to ~155 plain characters. */
+export function describeMarkdown(source: string): string {
+  const lines = source.split("\n");
+  const paragraph: string[] = [];
+  for (const line of lines.slice(
+    lines.findIndex((line) => line.startsWith("# ")) + 1,
+  )) {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      if (paragraph.length > 0) break;
+      continue;
+    }
+    if (/^(#|>|\||[-*]\s|```|\s{4})/.test(trimmed)) continue;
+    paragraph.push(trimmed);
+  }
+  const plain = paragraph
+    .join(" ")
+    .replaceAll(/\[([^\]]+)\]\([^)]*\)/gu, "$1")
+    .replaceAll(/`([^`]*)`/gu, "$1")
+    .replaceAll(/[*_]/gu, "")
+    .replaceAll(/\s+/gu, " ")
+    .trim();
+  if (plain.length <= 155) return plain;
+  const cut = plain.slice(0, 155);
+  const boundary = cut.lastIndexOf(" ");
+  return `${cut.slice(0, boundary > 80 ? boundary : 155).trimEnd()}…`;
+}
+
 function sectionSources(section: DocSection): DocSource[] {
   const dir = join(docsRoot, section);
   return readdirSync(dir)
@@ -59,6 +89,7 @@ function sectionSources(section: DocSection): DocSource[] {
         id: isReadme ? section : `${section}/${base}`,
         section,
         title: heading ?? (isReadme ? section : base),
+        description: describeMarkdown(source),
         file,
         repoPath: `${section}/${name}`,
       };

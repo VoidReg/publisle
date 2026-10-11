@@ -206,7 +206,7 @@
   }
 
   .publisle-document table {
-    @apply my-5 w-full border-collapse text-sm;
+    @apply my-5 block w-full max-w-full overflow-x-auto border-collapse text-sm;
   }
 
   .publisle-document th {
@@ -232,6 +232,28 @@
 
   .publisle-document strong {
     @apply font-semibold;
+  }
+
+  /* Keep anchored headings clear of the sticky header. */
+  .publisle-document [id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  /* Live schematic island (publisle:interactive-schematic). */
+  .publisle-schematic {
+    @apply my-4 flex flex-wrap items-center gap-4 rounded-lg border border-line bg-raised p-4;
+  }
+
+  .publisle-schematic output {
+    @apply rounded-md border border-accent/40 bg-surface px-4 py-2 font-mono text-xl text-accent;
+  }
+
+  .publisle-schematic__controls {
+    @apply flex gap-2;
+  }
+
+  .publisle-schematic__controls button {
+    @apply rounded-md border border-line bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent;
   }
 
   /* Math editor (from @publisle/playground). */
@@ -349,6 +371,35 @@
   .segment__editor {
     @apply min-w-0 flex-1;
   }
+}
+
+/* Theme-aware media swap for brand art (logo lockups, pipeline diagram).
+   Deliberately plain, unlayered CSS: it beats utility classes regardless of
+   source order, so refactors cannot drop the pairing again. */
+.brand-light {
+  display: block;
+}
+
+.brand-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-light {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .brand-dark {
+    display: block;
+  }
+}
+
+:root[data-theme="dark"] .brand-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .brand-dark {
+  display: block;
 }
 
 /* Playground editor primitives (promoted from the example hosts). */

@@ -44,7 +44,36 @@ const packages = coreBlockDefinitions.length >= 0
   : [];
 ---
 
-<BaseLayout title="Publisle · portable semantic articles, compiled">
+<BaseLayout
+  title="Publisle · portable semantic articles, compiled"
+  description="Publisle turns Markdown or typed JSON into validated, portable documents, compiled into static HTML with typed interactive islands."
+>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify([
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "Publisle",
+        url: "https://publisle.xyz",
+        description:
+          "Portable semantic articles compiled into static HTML with typed interactive islands.",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Publisle",
+        url: "https://publisle.xyz",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Node.js 24+",
+        description:
+          "Publishing toolkit for technical articles, research papers, and interactive explanations: Markdown or JSON in, validated portable documents, static HTML out.",
+        license: "https://github.com/VoidReg/publisle/blob/main/LICENSE",
+        author: { "@type": "Organization", name: "VoidReg" },
+      },
+    ])}
+  />
+
   <section class="py-16 sm:py-24">
     <div class="mx-auto max-w-3xl text-center">
       <p
@@ -99,7 +128,7 @@ const packages = coreBlockDefinitions.length >= 0
       width="1060"
       height="750"
       loading="lazy"
-      class="mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4 dark:hidden"
+      class="brand-light mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
     />
     <img
       src="/publisle-system-dark.svg"
@@ -108,7 +137,7 @@ const packages = coreBlockDefinitions.length >= 0
       width="1060"
       height="750"
       loading="lazy"
-      class="mx-auto hidden w-full max-w-4xl rounded-xl border border-line bg-surface p-4 dark:block"
+      class="brand-dark mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
     />
   </section>
 

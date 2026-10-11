@@ -32,6 +32,8 @@ export interface DocEntryInput {
   readonly file: string;
   readonly section: "guides" | "standards";
   readonly title: string;
+  /** First-paragraph summary used as the meta description. */
+  readonly description: string;
 }
 
 export interface PublisleDocsLoaderOptions extends LocalPublicationOptions {
@@ -137,6 +139,7 @@ export function publisleDocsLoader(
           data: {
             publication: artifact,
             title: entry.title,
+            description: entry.description,
             section: entry.section,
           },
         });

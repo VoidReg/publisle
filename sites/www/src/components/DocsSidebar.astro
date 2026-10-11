@@ -1,0 +1,38 @@
+---
+// Documentation navigation list, shared by the mobile disclosure and the
+// desktop sticky sidebar.
+interface DocEntryRef {
+  readonly id: string;
+  readonly data: { readonly title: string };
+}
+
+interface Props {
+  readonly entries: readonly DocEntryRef[];
+  readonly section: "guides" | "standards";
+  readonly activeId: string;
+}
+
+const { entries, section, activeId } = Astro.props;
+---
+
+<nav class="space-y-1 text-sm" aria-label={section === "guides" ? "Guides" : "Standards"}>
+  {
+    entries.map((item) =>
+      item.id === activeId ? (
+        <span
+          aria-current="page"
+          class="block rounded bg-surface px-2 py-1 font-medium text-accent"
+        >
+          {item.data.title}
+        </span>
+      ) : (
+        <a
+          href={`/docs/${item.id}`}
+          class="block rounded px-2 py-1 text-muted hover:text-ink"
+        >
+          {item.data.title}
+        </a>
+      ),
+    )
+  }
+</nav>

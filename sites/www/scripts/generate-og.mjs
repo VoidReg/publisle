@@ -31,3 +31,13 @@ const png = await sharp(Buffer.from(card)).png().toBuffer();
 const out = new URL("../public/og.png", import.meta.url);
 await writeFile(out, png);
 console.log(`Wrote ${out.pathname} (${n(png.length)} bytes)`);
+
+// Apple touch icon: full-bleed brand mark, 180x180, no transparency.
+const touchIcon = `<svg width="180" height="180" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" fill="${VERMILION}"/>
+  <path d="M20 48V16h13.5c7.5 0 12.5 4.6 12.5 11.6S41 39.2 33.5 39.2H28V48h-8zm8-15.6h4.9c3.1 0 5-1.9 5-4.8 0-2.9-1.9-4.8-5-4.8H28v9.6z" fill="#fffdfa"/>
+</svg>`;
+const icon = await sharp(Buffer.from(touchIcon)).png().toBuffer();
+const iconOut = new URL("../public/apple-touch-icon.png", import.meta.url);
+await writeFile(iconOut, icon);
+console.log(`Wrote ${iconOut.pathname} (${n(icon.length)} bytes)`);

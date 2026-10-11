@@ -2,6 +2,8 @@
   // Playground shell: Edit/Preview view switcher, searchable block palette,
   // source views, and the compiled preview. One component owns the shared
   // editor state; loaded only on /playground.
+  import { tick } from "svelte";
+  import { mount as svelteMount, unmount as svelteUnmount } from "svelte";
   import {
     blockCategories,
     blockDescriptions,
@@ -13,10 +15,33 @@
   import BlockEditor from "@publisle/playground/BlockEditor.svelte";
   import MathBlockEditor from "@publisle/playground/MathBlockEditor.svelte";
   import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
+  import { attachArticle } from "@publisle/adapter-astro/runtime";
   import { prepare } from "@publisle/core";
-  import { compilePublication } from "@publisle/adapter-core";
+  import { compilePublication, publicationReaderManifest } from "@publisle/adapter-core";
   import { fetchHealth, PDF_ENABLED, type ApiHealth } from "../lib/api";
+  import {
+    playgroundExamples,
+    type PlaygroundExample,
+  } from "../lib/playground-examples";
   import BlockPalette from "./BlockPalette.svelte";
+  import SchematicIsland from "./islands/Schematic.svelte";
+
+  // Live island runtime for the preview: schematic islands mount the real
+  // counter instead of their static fallback.
+  const previewEnvironment = {
+    implementations: {
+      "publisle:interactive-schematic": (): Promise<unknown> =>
+        Promise.resolve({ default: SchematicIsland }),
+    },
+    mount: (module: unknown, target: HTMLElement, props: unknown): unknown =>
+      svelteMount(module as never, {
+        target,
+        props: props as Record<string, unknown>,
+      }),
+    unmount: (instance: unknown): void => {
+      svelteUnmount(instance as never);
+    },
+  };
 
   const registry = createPlaygroundRegistry([interactiveSchematicDefinition]);
 
@@ -56,6 +81,14 @@ Edit this document on the left; switch to Preview to see the compilation.
   let health = $state<ApiHealth | undefined>(undefined);
   let selectedId = $state<string | undefined>(undefined);
   let paletteOpen = $state(false);
+  let previewEl = $state<HTMLDivElement | null>(null);
+
+  // Attach the island runtime to the compiled preview; re-runs (disposing the
+  // previous attachment) whenever the compilation changes.
+  $effect(() => {
+    if (!previewEl || compiled.error || !compiled.manifest) return;
+    return attachArticle(previewEl, compiled.manifest, previewEnvironment);
+  });
 
   // $state does not deep-proxy the DocumentEditor class instance, so the
   // block list must read `version` to re-render on editor mutations.
@@ -90,6 +123,7 @@ Edit this document on the left; switch to Preview to see the compilation.
           error: result.diagnostics
             .map((item) => `${item.code}: ${item.message}`)
             .join("\n"),
+          manifest: undefined,
         };
       }
       const artifact = compilePublication(result.document, { registry });
@@ -97,12 +131,14 @@ Edit this document on the left; switch to Preview to see the compilation.
         html: artifact.html,
         warnings: artifact.diagnostics.length,
         error: "",
+        manifest: publicationReaderManifest(artifact),
       };
     } catch (error) {
       return {
         html: "",
         warnings: 0,
         error: error instanceof Error ? error.message : "Compilation failed.",
+        manifest: undefined,
       };
     }
   });
@@ -161,6 +197,16 @@ Edit this document on the left; switch to Preview to see the compilation.
             .map((item) => `${item.code}: ${item.message}`)
             .join(" · ")
         : undefined;
+    version += 1;
+  }
+
+  function loadExample(example: PlaygroundExample): void {
+    editor.importMarkdown(example.markdown);
+    markdownText = example.markdown;
+    jsonText = editor.toJson();
+    selectedId = undefined;
+    notice = `Loaded "${example.title}".`;
+    view = "edit";
     version += 1;
   }
 
@@ -342,6 +388,31 @@ Edit this document on the left; switch to Preview to see the compilation.
     </p>
   {/if}
 
+  {#if view === "edit" && mode === "blocks"}
+    <section
+      aria-label="Example documents"
+      class="rounded-xl border border-line bg-surface p-3"
+    >
+      <p class="mb-2 text-xs font-medium tracking-wide text-muted uppercase">
+        Load an example
+      </p>
+      <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {#each playgroundExamples as example (example.id)}
+          <button
+            type="button"
+            class="rounded-lg border border-line bg-raised p-3 text-left transition hover:border-accent"
+            onclick={() => loadExample(example)}
+          >
+            <span class="block text-sm font-medium">{example.title}</span>
+            <span class="mt-0.5 block text-xs text-muted">
+              {example.description}
+            </span>
+          </button>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
   {#if view === "edit"}
     <section
       aria-label="Document editor"
@@ -402,22 +473,22 @@ Edit this document on the left; switch to Preview to see the compilation.
       class="max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-6"
     >
       <p class="mb-4 text-xs text-muted">
-        Live output of <code>compilePublication</code> · islands render static
-        fallbacks in this preview
+        Live output of <code>compilePublication</code> · interactive islands
+        run for real (schematic: Clock and Reset)
       </p>
       {#if compiled.error}
         <p class="whitespace-pre-wrap rounded-lg border border-danger bg-surface px-3 py-2 font-mono text-xs">
           {compiled.error}
         </p>
       {:else}
-        <div class="publisle-preview">
+        <div class="publisle-preview" bind:this={previewEl}>
           {@html compiled.html}
         </div>
       {/if}
     </section>
   {/if}
 
-  <p class="text-xs text-muted">
+  <p class="hidden text-xs text-muted sm:block">
     <kbd class="rounded border border-line bg-raised px-1 font-mono">Ctrl+K</kbd>
     add block ·
     <kbd class="rounded border border-line bg-raised px-1 font-mono">Ctrl+↵</kbd>
