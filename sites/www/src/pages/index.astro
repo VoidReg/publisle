@@ -1,6 +1,26 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
+import { createRegistry } from "@publisle/core";
+import { fromMarkdown } from "@publisle/markdown";
+import { preparePublication } from "@publisle/adapter-astro";
+import Article from "@publisle/adapter-astro/Article.astro";
+
+const sample = fromMarkdown(`# A small experiment
+
+Good articles bring **explanations, equations, and evidence** together.
+
+The energy of a moving object is $E = \\frac{1}{2}mv^2$.
+
+| Speed | Energy (1 kg) |
+| --- | --- |
+| 2 m/s | 2 J |
+| 4 m/s | 8 J |
+
+> Double the speed, quadruple the energy.
+`);
+if (!sample.document) throw new Error("Invalid hero example");
+const heroPublication = preparePublication(sample.document, { registry: createRegistry(coreBlockDefinitions) });
 
 const github = "https://github.com/VoidReg/publisle";
 const npmScope = "https://www.npmjs.com/org/publisle";
@@ -74,50 +94,27 @@ const packages = coreBlockDefinitions.length >= 0
     ])}
   />
 
-  <section class="py-16 sm:py-24">
-    <div class="mx-auto max-w-3xl text-center">
-      <p
-        class="mb-4 inline-block rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium tracking-wide text-muted uppercase"
-      >
-        Beta · v0.2 contracts frozen
-      </p>
-      <h1
-        class="text-balance font-display text-4xl font-bold sm:text-6xl"
-      >
-        Portable semantic articles,
-        <span class="text-accent">compiled to static HTML</span>
+  <section class="grid items-center gap-8 py-10 lg:grid-cols-2 lg:py-14">
+    <div class="min-w-0">
+      <p class="mb-4 text-sm font-medium text-accent">Open source · Beta</p>
+      <h1 class="text-balance font-display text-4xl font-bold sm:text-5xl">
+        Write once. <span class="text-accent">Publish a better article.</span>
       </h1>
-      <p class="mx-auto mt-6 max-w-2xl text-lg text-muted">
-        Publisle turns Markdown or typed JSON into validated, portable
-        documents, then compiles them into static content with optional
-        interactive islands. Your host keeps the layout; Publisle keeps the
-        semantics.
+      <p class="mt-5 max-w-2xl text-lg text-muted">
+        Turn Markdown into readable web articles, working interactive examples,
+        and print-ready exports. Keep your content in one place and publish it
+        in your own website.
       </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href="/docs"
-          class="rounded-lg bg-accent px-5 py-2.5 font-medium text-bg transition hover:opacity-90"
-        >
-          Read the docs
-        </a>
-        <a
-          href="/playground"
-          class="rounded-lg border border-line bg-surface px-5 py-2.5 font-medium transition hover:border-accent hover:text-accent"
-        >
-          Try the playground
-        </a>
-        <a
-          href={github}
-          class="rounded-lg px-5 py-2.5 text-muted transition hover:text-accent"
-          rel="me noopener"
-        >
-          Source on GitHub →
-        </a>
+      <div class="mt-6 flex flex-wrap items-center gap-3">
+        <a href="/playground" class="rounded-lg bg-accent px-5 py-2.5 font-medium text-bg hover:opacity-90">Try the playground</a>
+        <a href="/docs" class="rounded-lg border border-line px-5 py-2.5 font-medium hover:border-accent">Read the docs</a>
+        <a href={github} class="text-sm text-accent underline underline-offset-2" rel="me noopener">Source on GitHub →</a>
       </div>
-      <p class="mt-4 text-sm text-muted">
-        These very docs are compiled by Publisle's own pipeline: the site is
-        the demo.
-      </p>
+      <p class="mt-4 text-sm text-muted">The example beside this text is compiled by Publisle.</p>
+    </div>
+    <div class="publication-wide min-w-0 rounded-xl border border-line bg-raised p-5 sm:p-6" aria-label="Rendered article example">
+      <p class="mb-4 text-xs font-medium tracking-wide text-muted uppercase">Markdown → published article</p>
+      <Article publication={heroPublication} instanceId="hero-example" />
     </div>
   </section>
 
@@ -145,7 +142,7 @@ const packages = coreBlockDefinitions.length >= 0
     <h2 id="features" class="font-display text-3xl font-semibold">
       One document, every host
     </h2>
-    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {
         features.map((feature) => (
           <article class="rounded-xl border border-line bg-surface p-5">
@@ -193,9 +190,9 @@ export const collections = &#123;
       Published packages
     </h2>
     <p class="mt-2 text-muted">
-      Independently versioned under the
+      Independently versioned under the{" "}
       <a class="text-accent hover:underline" href={npmScope}>@publisle</a>
-      npm scope. Core adopters never install research tooling.
+      {" "}npm scope. Core adopters never install research tooling.
     </p>
     <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {

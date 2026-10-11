@@ -13,7 +13,7 @@ import Playground from "../components/Playground.svelte";
       <div>
         <h1 class="font-display text-4xl font-bold">Playground</h1>
         <p class="mt-2 max-w-2xl text-muted">
-          One document, three views. The preview is the same
+          One document, three views. The preview is the same{" "}
           <code>compilePublication</code> output the adapters ship: compiled in
           your browser, nothing leaves the page.
         </p>
@@ -21,10 +21,10 @@ import Playground from "../components/Playground.svelte";
     </div>
     <noscript>
       <p class="rounded-lg border border-line bg-surface p-4 text-sm">
-        The playground needs JavaScript. The
+        The playground needs JavaScript. The{" "}
         <a class="text-accent hover:underline" href="/docs">documentation</a>
-        and <a class="text-accent hover:underline" href="/examples">examples</a>
-        work without it.
+        {" "}and <a class="text-accent hover:underline" href="/examples">examples</a>
+        {" "}work without it.
       </p>
     </noscript>
     <Playground client:load />

@@ -1,22 +1,25 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   type Theme = "light" | "dark";
 
   let theme: Theme = $state("light");
 
-  $effect(() => {
-    const stored = document.documentElement.dataset.theme;
-    theme =
-      stored === "dark" || stored === "light"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+  onMount(() => {
+    const sync = () => {
+      const current = document.documentElement.dataset.theme;
+      theme = current === "dark" || current === "light" ? current
+        : window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    };
+    sync();
+    document.addEventListener("astro:page-load", sync);
+    return () => document.removeEventListener("astro:page-load", sync);
   });
 
   function toggle(): void {
     theme = theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("publisle-theme", theme);
+    try { localStorage.setItem("publisle-theme", theme); } catch {}
   }
 </script>
 

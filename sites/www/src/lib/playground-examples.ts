@@ -221,14 +221,28 @@ formats them for journal exports; core readers list them as authored.
     id: "full-article",
     title: "Full demo article",
     description:
-      "Everything at once: sections, math, island, figure, table, callouts, bibliography.",
+      "A complete tutorial with experiments, equations, figures, a diagram, code, and results.",
     markdown: String.raw`# Measuring a Clocked Counter
 
 :::callout{variant="info" title="Abstract"}
-A miniature article that exercises every core block in one document:
+A complete worked example for a reader learning how a clocked counter works.
+Follow the model, inspect the circuit, run an experiment, and compare results.
+This article combines
 structured sections, inline and display mathematics, an interactive island
 with a static fallback, a captioned figure and table, and a bibliography.
 :::
+
+## What you will learn
+
+By the end of this tutorial, you can:
+
+1. Describe how a clock changes a counter's state.
+2. Predict the result of a sequence of clock and reset events.
+3. Compare a mathematical model with an interactive demonstration.
+4. Publish the same explanation for web and print readers.
+
+You do not need electronics experience. A clock edge is simply the event
+that tells the counter to advance once.
 
 ## Model
 
@@ -240,6 +254,30 @@ $$
 
 with reset mapping $c(n) \mapsto 0$. The increments relate as
 $\Delta c \propto \nabla t$, and the state space is $\mathbb{Z}/256\mathbb{Z}$.
+
+## Reading the circuit
+
+::::figure{src="/counter-experiment.svg" alt="A counter starts at zero, advances to one and two on successive Clock events, then returns to zero on Reset"}
+:::caption
+Two Clock events produce two increments. Reset returns the output to its initial state.
+:::
+::::
+
+::::diagram{engine="mermaid" alt="Clock and Reset inputs feed the counter, whose state feeds the numeric output"}
+${FENCE}mermaid
+flowchart LR
+  Clock --> Counter
+  Reset --> Counter
+  Counter --> Output
+${FENCE}
+:::caption
+The counter has two inputs and one observable output.
+:::
+:::fallback
+Clock advances the counter by one. Reset sets it to zero. The numeric output
+shows the current count after each event.
+:::
+::::
 
 ## Interactive measurement
 
@@ -253,6 +291,22 @@ ${FENCE}
 The island above renders as its authored fallback in print and PDF targets.
 :::
 
+## Experiment procedure
+
+1. Activate the example with **Explore Clocked counter**.
+2. Select **Reset** so that every experiment starts from the same state.
+3. Select **Clock** five times and record the output.
+4. Select **Reset** again, then select **Clock** three times.
+5. Compare your readings with the table below.
+
+> A repeatable experiment starts from a known state. Reset is part of the
+> procedure, rather than an afterthought.
+
+### Predict before you click
+
+Starting from zero, three clock edges should produce three. Reset should
+immediately return the output to zero, even if no clock edge follows it.
+
 ## Recorded runs
 
 ::::table{headerRows="1"}
@@ -265,6 +319,54 @@ The island above renders as its authored fallback in print and PDF targets.
 Three runs of the counter under the model of Section Model.
 :::
 ::::
+
+## Implementing the behavior
+
+A small state machine is enough to model the controls in this demo:
+
+${FENCE}ts
+let count = 0;
+
+function clock(): number {
+  count += 1;
+  return count;
+}
+
+function reset(): number {
+  count = 0;
+  return count;
+}
+${FENCE}
+
+### A note about the model
+
+The eight-bit equation describes a hardware counter that wraps after 255.
+The interactive example deliberately counts upwards without a hardware limit.
+For the short experiments in this article, both produce the same readings.
+
+:::callout{variant="warning" title="Know the limits of your simulation"}
+A demonstration is useful only when its assumptions are clear. If your lesson
+needs eight-bit overflow, implement the wrap and test the transition from
+255 back to zero before using it to explain hardware behavior.
+:::
+
+## Publishing the experiment
+
+The same source contains the explanation, mathematical notation, diagram
+source, captions, table headers, code, and interactive fallback. Readers can
+understand the procedure even when JavaScript is unavailable.
+
+- **Web:** activate the counter and follow the experiment.
+- **Print:** read the fallback description and the recorded measurements.
+- **Another host:** compile the document again and apply that host's layout.
+
+### Try changing this article
+
+Edit the table measurements, add a paragraph explaining your observations,
+or switch to Markdown and change the experiment procedure. The preview updates
+as you type, and your draft is saved on this device.
+
+---
 
 ## Summary
 
