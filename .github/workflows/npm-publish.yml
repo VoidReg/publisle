@@ -79,7 +79,7 @@ jobs:
           test "${#MANIFESTS[@]}" -eq 1
           echo "manifest=${MANIFESTS[0]}" >> "$GITHUB_OUTPUT"
           echo "stage=$(dirname "${MANIFESTS[0]}")" >> "$GITHUB_OUTPUT"
-          PREVIOUS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --paginate --slurp --jq '[.[].artifacts[] | select(.expired == false) | select(.name | startswith("npm-publication-progress-"))] | sort_by(.id) | last | .name // empty')
+          PREVIOUS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --paginate --slurp | jq -r '[.[].artifacts[] | select(.expired == false) | select(.name | startswith("npm-publication-progress-"))] | sort_by(.id) | last | .name // empty')
           if [ -n "$PREVIOUS" ]; then
             gh run download "$GITHUB_RUN_ID" --name "$PREVIOUS" --dir "$(dirname "${MANIFESTS[0]}")"
           fi
