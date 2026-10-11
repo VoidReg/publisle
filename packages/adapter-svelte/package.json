@@ -17,9 +17,9 @@
     "./runtime": "./src/runtime.ts"
   },
   "dependencies": {
-    "@publisle/adapter-core": "workspace:*",
-    "@publisle/core": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/adapter-core": "workspace:^",
+    "@publisle/core": "workspace:^",
+    "@publisle/schema": "workspace:^"
   },
   "peerDependencies": {
     "svelte": "^5.0.0",

@@ -9,9 +9,9 @@
     "./runtime": "./src/runtime.ts"
   },
   "dependencies": {
-    "@publisle/adapter-core": "workspace:*",
-    "@publisle/core": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/adapter-core": "workspace:^",
+    "@publisle/core": "workspace:^",
+    "@publisle/schema": "workspace:^"
   },
   "peerDependencies": {
     "vue": "^3.5.0",

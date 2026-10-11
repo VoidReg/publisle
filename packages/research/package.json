@@ -11,11 +11,11 @@
     "./legacy-pdf": "./src/pdf.ts"
   },
   "dependencies": {
-    "@publisle/contracts": "workspace:*",
-    "@publisle/profiles": "workspace:*",
-    "@publisle/schema": "workspace:*",
-    "@publisle/template-article": "workspace:*",
-    "@publisle/template-sdk": "workspace:*",
+    "@publisle/contracts": "workspace:^",
+    "@publisle/profiles": "workspace:^",
+    "@publisle/schema": "workspace:^",
+    "@publisle/template-article": "workspace:^",
+    "@publisle/template-sdk": "workspace:^",
     "citeproc": "2.4.63",
     "fflate": "0.8.3"
   },

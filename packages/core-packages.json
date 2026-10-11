@@ -1,5 +1,5 @@
 {
-  "comment": "Publisle package sets. Core packages MUST NOT import Research packages (enforced by eslint.config.ts). The Core CLI is the single sanctioned seam: it may load @publisle/cli-research dynamically so a Core-only install carries no research, template, or TeX tooling. npm packages ship coordinated beta releases; contract versions evolve independently. This manifest describes package boundaries.",
+  "comment": "Publisle package sets. Core packages MUST NOT import Research packages (enforced by eslint.config.ts). The Core CLI is the single sanctioned seam: it may load @publisle/cli-research dynamically so a Core-only install carries no research, template, or TeX tooling. npm packages ship independently versioned beta releases; contract versions evolve independently. This manifest describes package boundaries.",
   "core": [
     "@publisle/schema",
     "@publisle/contracts",

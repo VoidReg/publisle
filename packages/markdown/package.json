@@ -15,10 +15,10 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@publisle/blocks-core": "workspace:*",
-    "@publisle/blocks-technical": "workspace:*",
-    "@publisle/core": "workspace:*",
-    "@publisle/schema": "workspace:*",
+    "@publisle/blocks-core": "workspace:^",
+    "@publisle/blocks-technical": "workspace:^",
+    "@publisle/core": "workspace:^",
+    "@publisle/schema": "workspace:^",
     "mdast-util-directive": "^3.1.0",
     "mdast-util-from-markdown": "^2.0.2",
     "mdast-util-frontmatter": "^2.0.1",

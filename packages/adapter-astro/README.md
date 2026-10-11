@@ -11,3 +11,5 @@ Frozen contract version integers are independent of npm package versions.
 - [Distribution and release checklist](https://github.com/VoidReg/publisle/blob/main/docs/guides/releases.md)
 
 Core packages do not install Research templates, citeproc, PDF compilers, or TeX.
+
+Requires Astro 7.2.8 or newer within Astro 7. Astro 6 is no longer supported.

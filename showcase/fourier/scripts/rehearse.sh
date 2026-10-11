@@ -31,9 +31,9 @@ cp package.json "$rehearsal_stage/"
 cp -R .artifacts "$rehearsal_stage/"
 (
   cd "$rehearsal_stage"
-  node "$npm_cli" install --package-lock-only --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+  node "$npm_cli" install --package-lock-only --ignore-scripts --no-audit --no-fund
 )
 cp "$rehearsal_stage/package-lock.json" package-lock.json
-node "$npm_cli" ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+node "$npm_cli" ci --ignore-scripts --no-audit --no-fund
 node node_modules/astro/bin/astro.mjs build
 node scripts/verify.ts

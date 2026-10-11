@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFile, readdir, writeFile, appendFile } from "node:fs/promises";
+import {
+  readFile,
+  readdir,
+  writeFile,
+  appendFile,
+  mkdir,
+  mkdtemp,
+  rm,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { existsSync, realpathSync } from "node:fs";
 import { delimiter, dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { satisfies, gt } from "semver";
 
 interface PackageManifest {
   name: string;
@@ -15,8 +24,17 @@ interface PackageManifest {
   peerDependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
 }
+export interface ReleasePlan {
+  schemaVersion: 2;
+  id: string;
+  versions: Record<string, string>;
+  releases: { name: string; oldVersion: string; version: string }[];
+}
 interface ReleaseManifest {
-  version: string;
+  schemaVersion: 2;
+  releaseId: string | null;
+  sourceCommit: string | null;
+  versions: Record<string, string>;
   status: string;
   compiler: { publishedImage: string | null };
   publicationOrder: string[];
@@ -44,7 +62,7 @@ export function validateVersion(version: string): void {
   assert.match(
     version,
     /^0\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/u,
-    "Use a coordinated beta version such as 0.1.1 or 0.2.0.",
+    "Use a numeric beta version such as 0.1.1 or 0.2.0.",
   );
   assert.notEqual(version, "0.0.0", "Placeholder versions cannot be released.");
 }
@@ -80,96 +98,163 @@ export async function releasePackages(root: string) {
   return packages;
 }
 
+export function validatePlan(
+  plan: ReleasePlan,
+  packages: { manifest: PackageManifest }[],
+): void {
+  assert.equal(plan.schemaVersion, 2);
+  assert.match(plan.id, /^npm-release-[a-zA-Z0-9-]+$/u);
+  const versions = Object.fromEntries(
+    packages.map(({ manifest }) => [manifest.name, manifest.version]),
+  );
+  assert.deepEqual(
+    plan.versions,
+    versions,
+    "Release plan does not match source versions.",
+  );
+  assert(plan.releases.length, "Empty publication plan.");
+  const seen = new Set<string>();
+  for (const pkg of plan.releases) {
+    assert(!seen.has(pkg.name), "Duplicate planned package.");
+    seen.add(pkg.name);
+    validateVersion(pkg.version);
+    validateVersion(pkg.oldVersion);
+    assert(gt(pkg.version, pkg.oldVersion), "Release version must increase.");
+    assert.equal(plan.versions[pkg.name], pkg.version);
+  }
+}
+
+export async function readReleasePlan(root: string): Promise<ReleasePlan> {
+  const plan = JSON.parse(
+    await readFile(join(root, ".release/plan.json"), "utf8"),
+  ) as ReleasePlan;
+  validatePlan(plan, await releasePackages(root));
+  return plan;
+}
+
 export async function prepareRelease(
   root: string,
-  version: string,
-): Promise<void> {
-  validateVersion(version);
+): Promise<ReleasePlan | null> {
   const packages = await releasePackages(root);
-  const previous = packages[0]?.manifest.version;
-  assert(previous);
-  for (const { manifest } of packages)
-    assert.equal(manifest.version, previous, "Current versions must agree.");
-  validateVersion(previous);
-  const oldParts = previous.split(".").map(Number);
-  const newParts = version.split(".").map(Number);
-  const oldMinor = oldParts[1];
-  const oldPatch = oldParts[2];
-  const newMinor = newParts[1];
-  const newPatch = newParts[2];
-  assert(
-    oldMinor !== undefined &&
-      oldPatch !== undefined &&
-      newMinor !== undefined &&
-      newPatch !== undefined,
-  );
-  assert(
-    newMinor > oldMinor || (newMinor === oldMinor && newPatch > oldPatch),
-    "Choose a version newer than the current release. To resume publication, rerun failed jobs in the original publishing run.",
-  );
-  const names = new Set(packages.map((p) => p.manifest.name));
-  // Construct every change before writing, so malformed metadata cannot leave a partial bump.
-  const changes = new Map<string, string>();
-  for (const { path, manifest } of packages) {
-    manifest.version = version;
-    for (const field of [
-      "dependencies",
-      "peerDependencies",
-      "optionalDependencies",
-    ] as const) {
-      const dependencies = manifest[field];
-      for (const [name, pin] of Object.entries(dependencies ?? {})) {
-        if (names.has(name) && !pin.startsWith("workspace:"))
-          if (dependencies) dependencies[name] = version;
-      }
-    }
-    changes.set(path, JSON.stringify(manifest, null, 2) + "\n");
-    const readme = resolve(dirname(path), "README.md");
-    const content = await readFile(readme, "utf8");
-    changes.set(
-      readme,
-      content.replace(
-        /This package is part of Publisle `[^`]+`,[^\n]*\./u,
-        `This package is part of Publisle \`${version}\`, published under the npm \`beta\` tag.`,
+  // A completed GitHub release proves that registry consumer verification passed.
+  const previousPath = join(root, ".release/plan.json");
+  if (existsSync(previousPath)) {
+    const previous = await readReleasePlan(root);
+    const release = JSON.parse(
+      execFileSync(
+        "gh",
+        ["release", "view", previous.id, "--json", "isDraft"],
+        { cwd: root, encoding: "utf8" },
       ),
+    ) as { isDraft: boolean };
+    assert(
+      !release.isDraft,
+      "Resume the unfinished publication before preparing another release.",
     );
   }
-  const showcasePath = resolve(root, "showcase/fourier/package.json");
-  const showcase = JSON.parse(
-    await readFile(showcasePath, "utf8"),
-  ) as PackageManifest;
-  assert(showcase.dependencies);
-  for (const name of Object.keys(showcase.dependencies ?? {})) {
-    if (names.has(name))
-      showcase.dependencies[name] =
-        `file:.artifacts/${name.slice(1).replaceAll("/", "-")}-${version}.tgz`;
+  const temporary = await mkdtemp(join(tmpdir(), "publisle-plan-"));
+  try {
+    const cli = fileURLToPath(
+      new URL("../node_modules/@changesets/cli/bin.js", import.meta.url),
+    );
+    const output = join(temporary, "changesets.json");
+    execFileSync(process.execPath, [cli, "status", "--output", output], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    const status = JSON.parse(await readFile(output, "utf8")) as {
+      releases: {
+        name: string;
+        type: string;
+        oldVersion: string;
+        newVersion: string;
+      }[];
+    };
+    const pending = status.releases.filter((pkg) => pkg.type !== "none");
+    if (!pending.length) {
+      console.log("No pending Changesets; nothing to release.");
+      return null;
+    }
+    const versions = Object.fromEntries(
+      packages.map(({ manifest }) => [manifest.name, manifest.version]),
+    );
+    const releases = pending.map((pkg) => {
+      assert.equal(
+        versions[pkg.name],
+        pkg.oldVersion,
+        "Unexpected Changesets package.",
+      );
+      versions[pkg.name] = pkg.newVersion;
+      return {
+        name: pkg.name,
+        oldVersion: pkg.oldVersion,
+        version: pkg.newVersion,
+      };
+    });
+    const id = `npm-release-${process.env["GITHUB_RUN_ID"] ?? String(Date.now())}-${process.env["GITHUB_RUN_ATTEMPT"] ?? "1"}`;
+    const plan: ReleasePlan = { schemaVersion: 2, id, versions, releases };
+    validatePlan(
+      plan,
+      packages.map((pkg) => {
+        const version = versions[pkg.manifest.name];
+        assert(version);
+        return { manifest: { ...pkg.manifest, version } };
+      }),
+    );
+    execFileSync(process.execPath, [cli, "version"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    validatePlan(plan, await releasePackages(root));
+    for (const pkg of packages) {
+      const version = versions[pkg.manifest.name];
+      assert(version);
+      if (version === pkg.manifest.version) continue;
+      const readme = join(dirname(pkg.path), "README.md");
+      const content = await readFile(readme, "utf8");
+      await writeFile(
+        readme,
+        content.replace(
+          /^This package is part of Publisle[^\n]*\.$/mu,
+          `This package is part of Publisle, independently versioned at \`${version}\` and published under the npm \`beta\` tag.`,
+        ),
+      );
+    }
+    const showcasePath = join(root, "showcase/fourier/package.json");
+    const showcase = JSON.parse(
+      await readFile(showcasePath, "utf8"),
+    ) as PackageManifest;
+    for (const [name, version] of Object.entries(versions)) {
+      if (showcase.dependencies?.[name])
+        showcase.dependencies[name] =
+          `file:.artifacts/${name.slice(1).replaceAll("/", "-")}-${version}.tgz`;
+    }
+    await writeFile(showcasePath, JSON.stringify(showcase, null, 2) + "\n");
+    await mkdir(join(root, ".release"), { recursive: true });
+    await writeFile(previousPath, JSON.stringify(plan, null, 2) + "\n");
+    console.log(
+      `Prepared ${String(releases.length)} independently versioned packages (${id}).`,
+    );
+    return plan;
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
   }
-  changes.set(showcasePath, JSON.stringify(showcase, null, 2) + "\n");
-  const changelogPath = resolve(root, "CHANGELOG.md");
-  const changelog = await readFile(changelogPath, "utf8");
-  assert(changelog.includes("## Unreleased\n"));
-  changes.set(
-    changelogPath,
-    changelog.replace(
-      "## Unreleased\n",
-      `## Unreleased\n\n## ${version} — ${new Date().toISOString().slice(0, 10)}\n\nCoordinated release of all ${String(packages.length)} public packages under the npm\n\`beta\` tag. Contract version integers remain independent of package versions.\n`,
-    ),
-  );
-  for (const [path, content] of changes) await writeFile(path, content);
-  console.log(`Prepared ${String(packages.length)} packages at ${version}.`);
 }
 
 export async function reviewedTarballs(
   root: string,
   manifestPath: string,
-  version: string,
+  expectedCommit?: string,
 ) {
-  validateVersion(version);
   const stage = dirname(resolve(manifestPath));
   const report = JSON.parse(
     await readFile(manifestPath, "utf8"),
   ) as ReleaseManifest;
-  assert.equal(report.version, version);
+  assert.equal(report.schemaVersion, 2);
+  const plan = await readReleasePlan(root);
+  assert.equal(report.releaseId, plan.id);
+  assert.deepEqual(report.versions, plan.versions);
+  if (expectedCommit) assert.equal(report.sourceCommit, expectedCommit);
   assert.equal(report.status, "validated-packed-artifacts");
   assert.match(
     report.compiler.publishedImage ?? "",
@@ -180,14 +265,18 @@ export async function reviewedTarballs(
     .map((p) => p.manifest.name)
     .sort();
   assert.deepEqual(report.packages.map((p) => p.name).sort(), names);
+  const publishing = new Set(plan.releases.map((pkg) => pkg.name));
+  assert.equal(new Set(report.publicationOrder).size, publishing.size);
+  assert.deepEqual([...report.publicationOrder].sort(), [...publishing].sort());
   assert.deepEqual(
-    report.packages.map((p) => p.name),
+    report.packages.filter((p) => publishing.has(p.name)).map((p) => p.name),
     report.publicationOrder,
   );
   const seen = new Set<string>();
   const prepared = [];
   for (const pkg of report.packages) {
-    assert.equal(pkg.version, version);
+    assert.equal(pkg.version, report.versions[pkg.name]);
+    validateVersion(pkg.version);
     const path = resolve(stage, pkg.tarball);
     assert(
       relative(stage, path).startsWith(`tarballs${sep}`),
@@ -205,7 +294,7 @@ export async function reviewedTarballs(
       }),
     ) as PackageManifest;
     assert.equal(manifest.name, pkg.name);
-    assert.equal(manifest.version, version);
+    assert.equal(manifest.version, pkg.version);
     for (const dependencies of [
       manifest.dependencies,
       manifest.peerDependencies,
@@ -213,21 +302,23 @@ export async function reviewedTarballs(
     ]) {
       for (const [name, pin] of Object.entries(dependencies ?? {})) {
         if (names.includes(name)) {
-          assert.equal(
-            pin,
-            version,
-            `Incorrect internal pin: ${pkg.name} -> ${name}`,
+          const version = report.versions[name];
+          assert(
+            version && satisfies(version, pin),
+            `Incompatible internal range: ${pkg.name} -> ${name}`,
           );
-          assert(seen.has(name), `Dependency must publish first: ${name}`);
+          if (publishing.has(pkg.name) && publishing.has(name))
+            assert(seen.has(name), `Dependency must publish first: ${name}`);
         }
       }
     }
     seen.add(pkg.name);
-    prepared.push({
-      ...pkg,
-      path,
-      integrity: `sha512-${createHash("sha512").update(bytes).digest("base64")}`,
-    });
+    if (publishing.has(pkg.name))
+      prepared.push({
+        ...pkg,
+        path,
+        integrity: `sha512-${createHash("sha512").update(bytes).digest("base64")}`,
+      });
   }
   return { stage, packages: prepared };
 }
@@ -242,20 +333,20 @@ async function registryJson<T>(url: string): Promise<T | null> {
 export async function publishRelease(
   root: string,
   manifestPath: string,
-  version: string,
   publish: boolean,
+  expectedCommit?: string,
 ): Promise<void> {
   const { stage, packages } = await reviewedTarballs(
     root,
     manifestPath,
-    version,
+    expectedCommit,
   );
   const registry = "https://registry.npmjs.org";
   // Check the entire batch before publishing anything. Existing immutable versions
   // are accepted only if they are the same bytes retained by this workflow run.
   for (const pkg of packages) {
     const existing = await registryJson<RegistryVersion>(
-      `${registry}/${encodeURIComponent(pkg.name)}/${version}`,
+      `${registry}/${encodeURIComponent(pkg.name)}/${pkg.version}`,
     );
     if (existing)
       assert.equal(
@@ -285,7 +376,7 @@ export async function publishRelease(
   try {
     for (const pkg of packages) {
       const existing = await registryJson<RegistryVersion>(
-        `${registry}/${encodeURIComponent(pkg.name)}/${version}`,
+        `${registry}/${encodeURIComponent(pkg.name)}/${pkg.version}`,
       );
       if (existing)
         assert.equal(
@@ -294,7 +385,7 @@ export async function publishRelease(
           `Different bytes already published: ${pkg.name}`,
         );
       if (!existing && !accepted.includes(pkg.name)) {
-        console.log(`Publishing ${pkg.name}@${version}`);
+        console.log(`Publishing ${pkg.name}@${pkg.version}`);
         execFileSync(
           process.execPath,
           [
@@ -323,8 +414,8 @@ export async function publishRelease(
           versions: Record<string, RegistryVersion>;
           "dist-tags": Record<string, string>;
         }>(`${registry}/${encodeURIComponent(pkg.name)}`);
-        metadata = index?.versions[version];
-        if (metadata && index?.["dist-tags"]["beta"] === version) break;
+        metadata = index?.versions[pkg.version];
+        if (metadata && index?.["dist-tags"]["beta"] === pkg.version) break;
         metadata = undefined;
         await new Promise((ok) => setTimeout(ok, 5000));
       }
@@ -345,7 +436,7 @@ export async function publishRelease(
       );
       records.push({
         name: pkg.name,
-        version,
+        version: pkg.version,
         sha256: pkg.sha256,
         integrity: pkg.integrity,
         tarball: metadata.dist.tarball,
@@ -359,7 +450,7 @@ export async function publishRelease(
       resolve(stage, "publication-record.json"),
       JSON.stringify(
         {
-          version,
+          releaseId: (await readReleasePlan(root)).id,
           tag: "beta",
           sourceCommit: process.env["GITHUB_SHA"],
           verifiedAt: new Date().toISOString(),
@@ -373,7 +464,7 @@ export async function publishRelease(
   if (process.env["GITHUB_STEP_SUMMARY"])
     await appendFile(
       process.env["GITHUB_STEP_SUMMARY"],
-      `Published and verified **${String(records.length)} packages at ${version}** under the npm **beta** tag.\n`,
+      `Published and verified **${String(records.length)} independently versioned packages** under the npm **beta** tag.\n`,
     );
 }
 
@@ -382,15 +473,20 @@ if (
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const root = resolve(import.meta.dirname, "..");
-  const [command, version, manifestPath] = process.argv.slice(2);
-  assert(
-    version,
-    "Usage: node tools/npm-release.ts prepare|verify|publish VERSION [MANIFEST]",
-  );
-  if (command === "prepare") await prepareRelease(root, version);
+  const [command, manifestPath] = process.argv.slice(2);
+  if (command === "prepare") await prepareRelease(root);
+  else if (command === "source") await readReleasePlan(root);
   else {
-    assert(command === "verify" || command === "publish");
+    assert(
+      command === "verify" || command === "publish",
+      "Use prepare|source|verify|publish [MANIFEST].",
+    );
     assert(manifestPath);
-    await publishRelease(root, manifestPath, version, command === "publish");
+    await publishRelease(
+      root,
+      manifestPath,
+      command === "publish",
+      process.env["GITHUB_SHA"],
+    );
   }
 }

@@ -11,6 +11,6 @@
     "@publisle/core": "workspace:*",
     "@publisle/schema": "workspace:*",
     "@publisle/adapter-astro": "workspace:*",
-    "astro": "^6.0.0"
+    "astro": "^7.2.8"
   }
 }

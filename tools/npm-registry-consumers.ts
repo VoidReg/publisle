@@ -3,15 +3,24 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { npmCli, validateVersion } from "./npm-release.ts";
+import { npmCli, reviewedTarballs } from "./npm-release.ts";
 
 const root = resolve(import.meta.dirname, "..");
-const [version, stage] = process.argv.slice(2);
+const [manifestPath] = process.argv.slice(2);
 assert(
-  version && stage,
-  "Usage: node tools/npm-registry-consumers.ts VERSION ARTIFACT_STAGE",
+  manifestPath,
+  "Usage: node tools/npm-registry-consumers.ts RELEASE_MANIFEST",
 );
-validateVersion(version);
+const { stage } = await reviewedTarballs(
+  root,
+  manifestPath,
+  process.env["GITHUB_SHA"],
+);
+const report = JSON.parse(await readFile(manifestPath, "utf8")) as {
+  versions: Record<string, string>;
+  releaseId: string;
+};
+const { versions } = report;
 const sets = JSON.parse(
   await readFile(join(root, "packages/core-packages.json"), "utf8"),
 ) as { core: string[]; research: string[] };
@@ -28,7 +37,6 @@ const install = (cwd: string) =>
       npmCli(),
       "install",
       "--ignore-scripts",
-      "--legacy-peer-deps",
       "--no-audit",
       "--no-fund",
       "--engine-strict",
@@ -55,7 +63,14 @@ async function inspectLock(cwd: string, coreOnly: boolean): Promise<void> {
   };
   for (const [path, entry] of Object.entries(lock.packages)) {
     if (path.includes("node_modules/@publisle/")) {
-      assert.equal(entry.version, version);
+      const name = path.slice(
+        path.lastIndexOf("node_modules/") + "node_modules/".length,
+      );
+      assert.equal(
+        entry.version,
+        versions[name],
+        `Unexpected registry version of ${name}`,
+      );
       assert(entry.resolved?.startsWith("https://registry.npmjs.org/"));
       assert(entry.integrity);
     }
@@ -81,7 +96,7 @@ for (const research of [false, true]) {
         dependencies: Object.fromEntries(
           [...selected, ...(research ? sets.research : [])].map((name) => [
             name,
-            version,
+            versions[name],
           ]),
         ),
         devDependencies: { typescript: "6.0.3", "@types/node": "24.13.5" },
@@ -155,7 +170,11 @@ const manifest = JSON.parse(await readFile(showcasePath, "utf8")) as {
   dependencies: Record<string, string>;
 };
 for (const name of Object.keys(manifest.dependencies))
-  if (name.startsWith("@publisle/")) manifest.dependencies[name] = version;
+  if (name.startsWith("@publisle/")) {
+    const version = versions[name];
+    assert(version);
+    manifest.dependencies[name] = version;
+  }
 await writeFile(showcasePath, JSON.stringify(manifest, null, 2));
 await rm(join(showcase, "package-lock.json"), { force: true });
 install(showcase);
@@ -166,7 +185,8 @@ await writeFile(
   resolve(stage, "registry-consumers.json"),
   JSON.stringify(
     {
-      version,
+      releaseId: report.releaseId,
+      versions,
       sourceCommit: process.env["GITHUB_SHA"],
       verifiedAt: new Date().toISOString(),
       node: process.version,

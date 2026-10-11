@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Require Astro 7.2.8 or newer within Astro 7 in the Astro adapter and example,
+  resolving the reported Astro advisories and dropping Astro 6 support.
+- Prepare independently versioned npm releases with Changesets and compatible
+  internal dependency ranges. KaTeX remediation remains deferred.
+
 ## 0.1.0 — 2026-10-10
 
 All 23 public packages use `0.1.0` for the first beta release, published under

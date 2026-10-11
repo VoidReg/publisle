@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@publisle/schema": "workspace:*"
+    "@publisle/schema": "workspace:^"
   },
   "publishConfig": {
     "access": "public",

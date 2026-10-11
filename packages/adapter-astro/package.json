@@ -10,14 +10,14 @@
     "./runtime": "./src/runtime.ts"
   },
   "dependencies": {
-    "@publisle/adapter-core": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/adapter-core": "workspace:^",
+    "@publisle/schema": "workspace:^"
   },
   "peerDependencies": {
-    "astro": "^6.0.0"
+    "astro": "^7.2.8"
   },
   "devDependencies": {
-    "astro": "^6.0.0"
+    "astro": "^7.2.8"
   },
   "publishConfig": {
     "access": "public",

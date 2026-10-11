@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      release_plan:
+        description: Validate the committed independent release plan
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,6 +30,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:distribution
         env:
+          PUBLISLE_RELEASE_PLAN: ${{ inputs.release_plan && '.release/plan.json' || '' }}
           PUBLISLE_DISTRIBUTION_ARTIFACTS: ${{ runner.temp }}/distribution
       - name: Rehearse the full Fourier showcase from packed Core artifacts
         run: |

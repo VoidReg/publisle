@@ -28,7 +28,7 @@
     "citation-subset.json"
   ],
   "dependencies": {
-    "@publisle/schema": "workspace:*",
+    "@publisle/schema": "workspace:^",
     "ajv": "8.20.0"
   },
   "scripts": {

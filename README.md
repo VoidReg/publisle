@@ -17,7 +17,7 @@ interactive explanations. Author content as Markdown or typed JSON, validate it
 against a portable schema, and publish it through React or Svelte adapters.
 Your application keeps control of layout, navigation, routing, and page metadata.
 
-The tool is in beta. npm packages ship coordinated releases; contract version
+The tool is in beta. npm packages are versioned independently with Changesets; contract version
 integers evolve independently and remain frozen unless their wire contracts change.
 See the [beta standards](docs/standards/README.md) and [preparation-only contract tooling](docs/guides/contracts.md)
 for the implemented portable subset and its limitations.

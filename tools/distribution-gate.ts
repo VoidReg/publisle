@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { satisfies } from "semver";
+import { readReleasePlan, releasePackages } from "./npm-release.ts";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
@@ -51,7 +53,16 @@ const sets = JSON.parse(
 const packed = new Map<string, string>();
 const manifests = new Map<string, Manifest>();
 const releaseNames = new Set([...sets.core, ...sets.research]);
-let releaseVersion: string | undefined;
+const versions = Object.fromEntries(
+  (await releasePackages(root)).map(({ manifest }) => [
+    manifest.name,
+    manifest.version,
+  ]),
+);
+const plan = process.env["PUBLISLE_RELEASE_PLAN"]
+  ? await readReleasePlan(root)
+  : null;
+const publishing = new Set(plan?.releases.map((pkg) => pkg.name) ?? []);
 const tarballs = join(stage, "tarballs");
 await mkdir(tarballs);
 for (const group of ["packages", "blocks"]) {
@@ -80,12 +91,7 @@ for (const group of ["packages", "blocks"]) {
       "0.0.0",
       "Never release placeholder versions.",
     );
-    releaseVersion ??= manifest.version;
-    assert.equal(
-      manifest.version,
-      releaseVersion,
-      "Release versions must agree.",
-    );
+
     run("pnpm", ["pack", "--pack-destination", tarballs], directory);
     const tarball = join(
       tarballs,
@@ -151,10 +157,9 @@ for (const group of ["packages", "blocks"]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
         assert(!version.startsWith("workspace:"));
         if (releaseNames.has(name))
-          assert.equal(
-            version,
-            releaseVersion,
-            `Incorrect packed pin: ${artifact.name} -> ${name}`,
+          assert(
+            versions[name] && satisfies(versions[name], version),
+            `Incompatible packed range: ${artifact.name} -> ${name}`,
           );
       }
     }
@@ -166,6 +171,50 @@ assert.deepEqual(
   [...packed.keys()].sort(),
   [...sets.core, ...sets.research].sort(),
 );
+// Release consumers use the actual immutable registry bytes for unchanged packages.
+// Rebuilding unchanged sources would conceal incompatibility with installed users.
+if (plan) {
+  for (const [name, path] of packed) {
+    if (publishing.has(name)) continue;
+    const response = await fetch(
+      `https://registry.npmjs.org/${encodeURIComponent(name)}/${String(versions[name])}`,
+      { signal: AbortSignal.timeout(30_000) },
+    );
+    assert(response.ok, `Unchanged package must already exist on npm: ${name}`);
+    const metadata = (await response.json()) as {
+      dist: { tarball: string; integrity: string };
+    };
+    const download = await fetch(metadata.dist.tarball, {
+      signal: AbortSignal.timeout(60_000),
+    });
+    assert(download.ok);
+    const bytes = Buffer.from(await download.arrayBuffer());
+    assert.equal(
+      `sha512-${createHash("sha512").update(bytes).digest("base64")}`,
+      metadata.dist.integrity,
+    );
+    await writeFile(path, bytes);
+    manifests.set(
+      name,
+      JSON.parse(
+        run("tar", ["-xOf", path, "package/package.json"]),
+      ) as Manifest,
+    );
+  }
+}
+for (const [name, manifest] of manifests) {
+  assert.equal(manifest.version, versions[name]);
+  for (const [dependency, range] of Object.entries({
+    ...manifest.dependencies,
+    ...manifest.peerDependencies,
+  })) {
+    if (releaseNames.has(dependency))
+      assert(
+        versions[dependency] && satisfies(versions[dependency], range),
+        `Incompatible consumer graph: ${name} -> ${dependency}`,
+      );
+  }
+}
 // Derive dependency order from the packed runtime graph, including package peers.
 // Development-only CLI/plugin links are deliberately absent from this graph.
 const publicationOrder: string[] = [];
@@ -201,7 +250,6 @@ run(
   [
     "install",
     "--ignore-scripts",
-    "--legacy-peer-deps",
     "--no-audit",
     "--no-fund",
     ...selected.map((name) => {
@@ -298,7 +346,6 @@ run(
   [
     "install",
     "--ignore-scripts",
-    "--legacy-peer-deps",
     "--no-audit",
     "--no-fund",
     ...selected.map((name) => {
@@ -354,7 +401,6 @@ run(
   [
     "install",
     "--ignore-scripts",
-    "--legacy-peer-deps",
     "--no-audit",
     "--no-fund",
     ...[...selected, ...sets.research].map((name) => {
@@ -422,7 +468,11 @@ await writeFile(
   join(stage, "release-manifest.json"),
   JSON.stringify(
     {
-      version: releaseVersion,
+      schemaVersion: 2,
+      releaseId: plan?.id ?? null,
+      sourceCommit:
+        process.env["GITHUB_SHA"] ?? run("git", ["rev-parse", "HEAD"]).trim(),
+      versions,
       status: "validated-packed-artifacts",
       compiler: JSON.parse(
         await readFile(
@@ -430,7 +480,7 @@ await writeFile(
           "utf8",
         ),
       ) as unknown,
-      publicationOrder,
+      publicationOrder: publicationOrder.filter((name) => publishing.has(name)),
       contracts: contractBundle.contracts.map(({ id, digest, contract }) => ({
         id,
         digest,
@@ -442,7 +492,7 @@ await writeFile(
           assert(tarball);
           return {
             name,
-            version: releaseVersion,
+            version: versions[name],
             tarball: relative(stage, tarball),
             sha256: createHash("sha256")
               .update(await readFile(tarball))

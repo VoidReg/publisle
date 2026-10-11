@@ -7,10 +7,10 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@publisle/contracts": "workspace:*",
-    "@publisle/block-sdk": "workspace:*",
-    "@publisle/blocks-core": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/contracts": "workspace:^",
+    "@publisle/block-sdk": "workspace:^",
+    "@publisle/blocks-core": "workspace:^",
+    "@publisle/schema": "workspace:^"
   },
   "publishConfig": {
     "access": "public",

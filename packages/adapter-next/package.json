@@ -9,8 +9,8 @@
     "./client": "./src/client.ts"
   },
   "dependencies": {
-    "@publisle/adapter-core": "workspace:*",
-    "@publisle/schema": "workspace:*"
+    "@publisle/adapter-core": "workspace:^",
+    "@publisle/schema": "workspace:^"
   },
   "peerDependencies": {
     "react": "^19.0.0",
