@@ -60,6 +60,7 @@ jobs:
         with:
           args: >-
             --no-progress --max-retries 2 --offline
+            --root-dir '${{ github.workspace }}/sites/www/dist' --index-files index.html
             './sites/www/dist/**/*.html' --exclude-file .lycheeignore
           fail: true
       - uses: actions/upload-pages-artifact@v3
