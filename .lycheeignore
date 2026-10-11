@@ -1,0 +1,7 @@
+# Local/preview hosts resolved from committed HTML that lychee cannot reach.
+# Anchors within compiled publications are validated by the publisle pipeline.
+localhost
+127.0.0.1
+www.npmjs.com
+twitter.com
+x.com

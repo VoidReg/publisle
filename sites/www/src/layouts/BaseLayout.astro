@@ -1,0 +1,180 @@
+---
+import "@fontsource-variable/inter";
+import "@fontsource-variable/space-grotesk";
+import "@fontsource-variable/jetbrains-mono";
+import "@publisle/adapter-core/document.css";
+import "@publisle/adapter-core/katex.css";
+import "../styles/site.css";
+import { ClientRouter } from "astro:transitions";
+import ThemeToggle from "../components/ThemeToggle.svelte";
+import MobileNav from "../components/MobileNav.svelte";
+
+interface Props {
+  readonly title: string;
+  readonly description?: string;
+  readonly path?: string;
+  readonly ogType?: "website" | "article";
+  readonly noindex?: boolean;
+  readonly jsonLd?: readonly Record<string, unknown>[];
+}
+
+const {
+  title,
+  description = "Publisle compiles semantic documents into static HTML with typed interactive islands: Markdown or JSON in, portable publications out.",
+  path = "/",
+  ogType = "website",
+  noindex = false,
+  jsonLd,
+} = Astro.props;
+
+const site = Astro.site ?? new URL("https://publisle.xyz");
+const canonical = new URL(path, site).href;
+const ogImage = new URL("/og.png", site).href;
+const github = "https://github.com/VoidReg/publisle";
+
+const nav = [
+  { href: "/docs", label: "Docs" },
+  { href: "/examples", label: "Examples" },
+  { href: "/playground", label: "Playground" },
+];
+
+const current = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/" ? current === "/" : current.startsWith(href);
+const ldScripts = jsonLd ?? [];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="Publisle" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {
+      ldScripts.length > 0 && (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": ldScripts,
+          })}
+        />
+      )
+    }
+
+    <script is:inline>
+      // Apply the persisted theme before first paint (no flash).
+      try {
+        var stored = localStorage.getItem("publisle-theme");
+        if (stored === "light" || stored === "dark") {
+          document.documentElement.dataset.theme = stored;
+        }
+      } catch (error) {}
+    </script>
+    <ClientRouter />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-bg"
+    >
+      Skip to content
+    </a>
+    <header class="sticky top-0 z-40 border-b border-line bg-bg/90 backdrop-blur">
+      <div
+        class="relative mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-4"
+      >
+        <a href="/" class="flex items-center gap-2 font-display text-lg font-semibold">
+          <img
+            src="/brand/lockup-light.svg"
+            alt="Publisle"
+            class="brand-light h-6 w-auto sm:h-7"
+            width="112"
+            height="28"
+          />
+          <img
+            src="/brand/lockup-dark.svg"
+            alt=""
+            aria-hidden="true"
+            class="brand-dark h-6 w-auto sm:h-7"
+            width="112"
+            height="28"
+          />
+        </a>
+        <div class="flex items-center gap-1 sm:gap-2">
+          <nav
+            aria-label="Main"
+            class="hidden items-center gap-1 text-sm sm:flex"
+          >
+            {
+              nav.map((item) =>
+                isActive(item.href) ? (
+                  <span
+                    aria-current="page"
+                    class="rounded-md bg-surface px-3 py-1.5 font-medium text-accent"
+                  >
+                    {item.label}
+                  </span>
+                ) : (
+                  <a
+                    href={item.href}
+                    class="rounded-md px-3 py-1.5 text-muted transition hover:text-ink"
+                  >
+                    {item.label}
+                  </a>
+                ),
+              )
+            }
+            <a
+              href={github}
+              class="ml-1 rounded-md border border-line px-3 py-1.5 text-muted transition hover:border-accent hover:text-accent"
+              rel="me noopener"
+            >
+              GitHub
+            </a>
+          </nav>
+          <ThemeToggle client:load />
+          <MobileNav client:load />
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto w-full max-w-6xl flex-1 px-4">
+      <slot />
+    </main>
+
+    <footer class="border-t border-line">
+      <div
+        class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p>© 2026 Publisle · MIT License · beta</p>
+        <p class="flex gap-4">
+          <a href="/docs" class="hover:text-accent">Docs</a>
+          <a href={github + "/issues"} class="hover:text-accent">Issues</a>
+          <a href={github + "/releases"} class="hover:text-accent">Releases</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

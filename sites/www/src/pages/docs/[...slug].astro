@@ -1,0 +1,141 @@
+---
+import { getCollection } from "astro:content";
+import Article from "@publisle/adapter-astro/Article.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import DocsSidebar from "../../components/DocsSidebar.astro";
+import { docRawRoute, docRepoPath } from "../../lib/docs-source";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+
+const entries = await getCollection("docs");
+const sectionEntries = entries
+  .filter((item) => item.data.section === entry.data.section)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+const index = sectionEntries.findIndex((item) => item.id === entry.id);
+const previous = index > 0 ? sectionEntries[index - 1] : undefined;
+const next =
+  index >= 0 && index < sectionEntries.length - 1
+    ? sectionEntries[index + 1]
+    : undefined;
+
+// Section overview entries store README.md under the bare section id.
+const raw = docRawRoute(entry.id);
+const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${docRepoPath(entry.id)}`;
+const sectionLabel = entry.data.section === "guides" ? "Guides" : "Standards";
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: entry.data.title,
+    description: entry.data.description,
+    url: `https://publisle.xyz/docs/${entry.id}`,
+    isAccessibleForFree: true,
+    author: { "@type": "Organization", name: "VoidReg" },
+    publisher: { "@type": "Organization", name: "Publisle" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://publisle.xyz" },
+      { "@type": "ListItem", position: 2, name: "Docs", item: "https://publisle.xyz/docs" },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: sectionLabel,
+        item: `https://publisle.xyz/docs/${entry.data.section}`,
+      },
+      { "@type": "ListItem", position: 4, name: entry.data.title },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={`${entry.data.title} · Publisle Docs`}
+  description={entry.data.description}
+  path={`/docs/${entry.id}`}
+  ogType="article"
+  jsonLd={jsonLd}
+>
+  <div class="grid gap-10 py-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <details class="lg:hidden">
+      <summary
+        class="cursor-pointer rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium"
+      >
+        Browse {entry.data.section === "guides" ? "guides" : "standards"}
+      </summary>
+      <div class="mt-2">
+        <DocsSidebar entries={sectionEntries} section={entry.data.section} activeId={entry.id} />
+      </div>
+    </details>
+
+    <aside
+      aria-label="Documentation navigation"
+      class="hidden lg:sticky lg:top-20 lg:block lg:self-start"
+    >
+      <nav class="space-y-6 text-sm">
+        <div>
+          <p class="font-display font-semibold"><a href="/docs" class="hover:text-accent">Docs</a></p>
+          <p class="mt-2 text-muted">
+            <a href={`/docs/${entry.data.section}`} class="hover:text-accent">
+              {entry.data.section === "guides" ? "Guides" : "Standards"}
+            </a>
+          </p>
+          <div class="mt-2">
+            <DocsSidebar entries={sectionEntries} section={entry.data.section} activeId={entry.id} />
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <article class="min-w-0">
+      <nav aria-label="Breadcrumb" class="mb-3 text-sm text-muted">
+        <a href="/" class="hover:text-accent">Home</a>
+        <span aria-hidden="true"> / </span>
+        <a href="/docs" class="hover:text-accent">Docs</a>
+        <span aria-hidden="true"> / </span>
+        <a href={`/docs/${entry.data.section}`} class="hover:text-accent">{sectionLabel}</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page" class="text-ink">{entry.data.title}</span>
+      </nav>
+      <p class="mb-2 text-xs tracking-wide text-muted uppercase">
+        {entry.data.section === "guides" ? "Guide" : "Standard"} ·
+        <a href={raw} class="hover:text-accent">Markdown source</a> ·
+        <a href={githubSource} class="hover:text-accent">View on GitHub</a>
+      </p>
+      <div class="mt-6">
+        <Article publication={entry.data.publication} instanceId={`docs-${entry.id.replaceAll("/", "-")}`}/>
+      </div>
+
+      <nav aria-label="Adjacent pages" class="mt-12 flex justify-between gap-4 border-t border-line pt-6 text-sm">
+        {
+          previous ? (
+            <a href={`/docs/${previous.id}`} class="text-muted hover:text-accent">
+              ← {previous.data.title}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a href={`/docs/${next.id}`} class="text-right text-muted hover:text-accent">
+              {next.data.title} →
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </article>
+  </div>
+</BaseLayout>

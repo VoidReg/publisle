@@ -4,7 +4,7 @@ These documents define the implemented portable subset independently of SDK type
 
 ## Core and profiles
 
-The standard is split into a lean **Publisle Core** and optional named profiles. Core covers the portable document model, preparation, contracts/exchange, delivery, projections, composition, and the Markdown/JSON boundary — an adopter can validate, publish, and self-host with no TeX, citeproc, template, or container dependency. The **Research profile** ([publishing](publishing.md)) layers scholarly machinery on top and is never a Core dependency (see [core-packages.json](../../packages/core-packages.json) and the lint boundary).
+The standard is split into a lean **Publisle Core** and optional named profiles. Core covers the portable document model, preparation, contracts/exchange, delivery, projections, composition, and the Markdown/JSON boundary; an adopter can validate, publish, and self-host with no TeX, citeproc, template, or container dependency. The **Research profile** ([publishing](publishing.md)) layers scholarly machinery on top and is never a Core dependency (see [core-packages.json](../../packages/core-packages.json) and the lint boundary).
 
 | Set              | Contents                                                                                                                                                    |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |

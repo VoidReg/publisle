@@ -9,6 +9,7 @@
     "@publisle/blocks-technical",
     "@publisle/markdown",
     "@publisle/profiles",
+    "@publisle/playground",
     "@publisle/adapter-core",
     "@publisle/adapter-react",
     "@publisle/adapter-svelte",

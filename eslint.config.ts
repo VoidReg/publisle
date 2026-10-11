@@ -22,6 +22,8 @@ export default defineConfig(
       // Standalone packed-consumer project: not a workspace package, linted
       // with its own toolchain once its dependencies are installed.
       "showcase/**",
+      // Infrastructure scripts provisioned onto the VPS; no TS project.
+      "deploy/**",
       "examples/svelte/svelte.config.js",
       "examples/playground-svelte/svelte.config.js",
     ],
@@ -135,6 +137,7 @@ export default defineConfig(
       "packages/block-sdk/**/*.ts",
       "packages/core/**/*.ts",
       "packages/markdown/**/*.ts",
+      "packages/playground/**/*.ts",
       "packages/schema/src/prepared.ts",
       "examples/playground-*/**/*.ts",
       "examples/playground-*/**/*.tsx",

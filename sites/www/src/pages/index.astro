@@ -1,0 +1,216 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { coreBlockDefinitions } from "@publisle/blocks-core";
+
+const github = "https://github.com/VoidReg/publisle";
+const npmScope = "https://www.npmjs.com/org/publisle";
+
+const features = [
+  {
+    title: "Author in Markdown or JSON",
+    body: "Write in Markdown with GFM, math, and citations, or typed JSON when you need exact structure. Both compile to the same portable, validated document.",
+  },
+  {
+    title: "Validated against a portable schema",
+    body: "Every document validates against a versioned, frozen wire contract. Contract integers evolve independently of npm releases, so old artifacts stay readable.",
+  },
+  {
+    title: "Compiled to static HTML",
+    body: "The compiler emits self-contained publication fragments: accessible static HTML, deterministic block IDs, and print-ready structure. No runtime framework.",
+  },
+  {
+    title: "Typed interactive islands",
+    body: "Interactive blocks (schematics, visualizations, embeds) hydrate from typed island manifests with declared activation, and degrade to static fallbacks.",
+  },
+  {
+    title: "Host-owned rendering",
+    body: "Your application owns layout, navigation, routing, and metadata. Adapters for Astro, Next.js, React, Svelte, and Vue embed publications without taking over.",
+  },
+  {
+    title: "Scholarly profiles, opt-in",
+    body: "A lean core for everyone; an optional research profile adds citation resolution, journal templates (ACM, IEEE, Elsevier, Springer), and LaTeX/PDF export.",
+  },
+];
+
+const packages = coreBlockDefinitions.length >= 0
+  ? [
+      ["@publisle/core", "Document model, validation, static compilation"],
+      ["@publisle/markdown", "Markdown import and export codecs"],
+      ["@publisle/schema", "Portable document schema and diagnostics"],
+      ["@publisle/adapter-astro", "Astro content loader and article renderer"],
+      ["@publisle/adapter-svelte", "Svelte article components and runtime"],
+      ["@publisle/cli", "Build, validate, and export from the terminal"],
+    ]
+  : [];
+---
+
+<BaseLayout
+  title="Publisle · portable semantic articles, compiled"
+  description="Publisle turns Markdown or typed JSON into validated, portable documents, compiled into static HTML with typed interactive islands."
+>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify([
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "Publisle",
+        url: "https://publisle.xyz",
+        description:
+          "Portable semantic articles compiled into static HTML with typed interactive islands.",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Publisle",
+        url: "https://publisle.xyz",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Node.js 24+",
+        description:
+          "Publishing toolkit for technical articles, research papers, and interactive explanations: Markdown or JSON in, validated portable documents, static HTML out.",
+        license: "https://github.com/VoidReg/publisle/blob/main/LICENSE",
+        author: { "@type": "Organization", name: "VoidReg" },
+      },
+    ])}
+  />
+
+  <section class="py-16 sm:py-24">
+    <div class="mx-auto max-w-3xl text-center">
+      <p
+        class="mb-4 inline-block rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium tracking-wide text-muted uppercase"
+      >
+        Beta · v0.2 contracts frozen
+      </p>
+      <h1
+        class="text-balance font-display text-4xl font-bold sm:text-6xl"
+      >
+        Portable semantic articles,
+        <span class="text-accent">compiled to static HTML</span>
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-muted">
+        Publisle turns Markdown or typed JSON into validated, portable
+        documents, then compiles them into static content with optional
+        interactive islands. Your host keeps the layout; Publisle keeps the
+        semantics.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href="/docs"
+          class="rounded-lg bg-accent px-5 py-2.5 font-medium text-bg transition hover:opacity-90"
+        >
+          Read the docs
+        </a>
+        <a
+          href="/playground"
+          class="rounded-lg border border-line bg-surface px-5 py-2.5 font-medium transition hover:border-accent hover:text-accent"
+        >
+          Try the playground
+        </a>
+        <a
+          href={github}
+          class="rounded-lg px-5 py-2.5 text-muted transition hover:text-accent"
+          rel="me noopener"
+        >
+          Source on GitHub →
+        </a>
+      </div>
+      <p class="mt-4 text-sm text-muted">
+        These very docs are compiled by Publisle's own pipeline: the site is
+        the demo.
+      </p>
+    </div>
+  </section>
+
+  <section aria-label="Pipeline" class="pb-16">
+    <img
+      src="/publisle-system.svg"
+      alt="Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands."
+      width="1060"
+      height="750"
+      loading="lazy"
+      class="brand-light mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
+    />
+    <img
+      src="/publisle-system-dark.svg"
+      alt=""
+      aria-hidden="true"
+      width="1060"
+      height="750"
+      loading="lazy"
+      class="brand-dark mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
+    />
+  </section>
+
+  <section aria-labelledby="features" class="py-16">
+    <h2 id="features" class="font-display text-3xl font-semibold">
+      One document, every host
+    </h2>
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        features.map((feature) => (
+          <article class="rounded-xl border border-line bg-surface p-5">
+            <h3 class="font-display text-lg font-semibold">{feature.title}</h3>
+            <p class="mt-2 text-sm text-muted">{feature.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section aria-labelledby="quickstart" class="py-16">
+    <h2 id="quickstart" class="font-display text-3xl font-semibold">
+      Quickstart
+    </h2>
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+      <div>
+        <p class="text-muted">
+          Install the compiler and validate a document from the terminal:
+        </p>
+        <pre
+          class="mt-3 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>npm install -g @publisle/cli
+publisle build article.md --out dist/
+publisle export paper.md --to pdf --template ieee-journal</code></pre>
+      </div>
+      <div>
+        <p class="text-muted">Or compile in-process with the Astro adapter:</p>
+        <pre
+          class="mt-3 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>import &#123; publisleLoader &#125; from "@publisle/adapter-astro";
+
+export const collections = &#123;
+  articles: defineCollection(&#123;
+    loader: publisleLoader(
+      &#123; local: "./article.json" &#125;,
+      &#123; registry: createRegistry(coreBlockDefinitions) &#125;,
+    ),
+  &#125;),
+&#125;;</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="packages" class="py-16 pb-24">
+    <h2 id="packages" class="font-display text-3xl font-semibold">
+      Published packages
+    </h2>
+    <p class="mt-2 text-muted">
+      Independently versioned under the
+      <a class="text-accent hover:underline" href={npmScope}>@publisle</a>
+      npm scope. Core adopters never install research tooling.
+    </p>
+    <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        packages.map(([name, blurb]) => (
+          <li class="rounded-lg border border-line bg-surface p-4">
+            <a
+              href={`https://www.npmjs.com/package/${name}`}
+              class="font-mono text-sm font-medium text-accent hover:underline"
+            >
+              {name}
+            </a>
+            <p class="mt-1 text-sm text-muted">{blurb}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>

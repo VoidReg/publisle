@@ -1,0 +1,464 @@
+@import "tailwindcss";
+
+/* Package components are consumed through node_modules symlinks, which
+   Tailwind's automatic source detection ignores; register them explicitly. */
+@source "../../../../packages/playground/src";
+
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  /* No explicit choice yet: follow the OS. */
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
+/* Publisle brand (VoidReg): paper, ink, vermilion. WCAG-AAA pairings.
+   Layered resolution: light defaults → system preference (no explicit choice)
+   → explicit data-theme override persisted by the toggle. */
+:root {
+  color-scheme: light;
+  --bg: #fffdfa;
+  --surface: #fffdfa;
+  --surface-raised: #ffffff;
+  --text: #1a1513;
+  --text-muted: #574f4b;
+  --border: #e8e2dc;
+  --accent: #9b3214;
+  --focus: #c34016;
+  --input-bg: #ffffff;
+  --danger: #a22136;
+  --warning: #613e03;
+  font-family:
+    "Inter Variable",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #1a1513;
+    --surface: #26201e;
+    --surface-raised: #352f2c;
+    --text: #fffdfa;
+    --text-muted: #d3ccc6;
+    --border: #574f4b;
+    --accent: #ec8a6d;
+    --focus: #ec8a6d;
+    --input-bg: #211b19;
+    --danger: #fed4d4;
+    --warning: #f9dab4;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1513;
+  --surface: #26201e;
+  --surface-raised: #352f2c;
+  --text: #fffdfa;
+  --text-muted: #d3ccc6;
+  --border: #574f4b;
+  --accent: #ec8a6d;
+  --focus: #ec8a6d;
+  --input-bg: #211b19;
+  --danger: #fed4d4;
+  --warning: #f9dab4;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fffdfa;
+  --surface: #fffdfa;
+  --surface-raised: #ffffff;
+  --text: #1a1513;
+  --text-muted: #574f4b;
+  --border: #e8e2dc;
+  --accent: #9b3214;
+  --focus: #c34016;
+  --input-bg: #ffffff;
+  --danger: #a22136;
+  --warning: #613e03;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-focus: var(--focus);
+  --color-input: var(--input-bg);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display:
+    "Space Grotesk Variable", "Space Grotesk", "Inter Variable", Inter,
+    ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--bg);
+  }
+}
+
+/* Documentation/article typography. document.css is intentionally minimal
+   (hosts own styling); Tailwind preflight strips all default margins, so the
+   compiled publication needs this layer to read like a document. */
+@layer components {
+  .publisle-document {
+    @apply max-w-[72ch];
+  }
+
+  .publisle-document > :first-child {
+    margin-top: 0;
+  }
+
+  .publisle-document h1 {
+    @apply mb-4 mt-10 font-display text-3xl font-bold tracking-tight first:mt-0;
+  }
+
+  .publisle-document h2 {
+    @apply mb-3 mt-10 border-b border-line pb-1.5 font-display text-2xl font-semibold;
+  }
+
+  .publisle-document h3 {
+    @apply mb-2 mt-8 font-display text-xl font-semibold;
+  }
+
+  .publisle-document h4,
+  .publisle-document h5,
+  .publisle-document h6 {
+    @apply mb-2 mt-6 font-display text-lg font-semibold;
+  }
+
+  .publisle-document p {
+    @apply my-4 leading-7;
+  }
+
+  .publisle-document ul,
+  .publisle-document ol {
+    @apply my-4 space-y-1.5 leading-7;
+  }
+
+  .publisle-document ul {
+    @apply list-disc pl-6;
+  }
+
+  .publisle-document ol {
+    @apply list-decimal pl-6;
+  }
+
+  .publisle-document li > ul,
+  .publisle-document li > ol {
+    @apply my-1.5;
+  }
+
+  .publisle-document pre {
+    @apply my-5 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm leading-6;
+  }
+
+  .publisle-document :not(pre) > code {
+    @apply rounded border border-line bg-raised px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+
+  .publisle-document blockquote {
+    @apply my-5 border-l-4 border-accent/40 pl-4 text-muted;
+  }
+
+  .publisle-document table {
+    @apply my-5 block w-full max-w-full overflow-x-auto border-collapse text-sm;
+  }
+
+  .publisle-document th {
+    @apply border border-line bg-surface px-3 py-2 text-left font-semibold;
+  }
+
+  .publisle-document td {
+    @apply border border-line px-3 py-2 align-top;
+  }
+
+  .publisle-document hr {
+    @apply my-8 border-line;
+  }
+
+  .publisle-document a {
+    @apply text-accent underline decoration-accent/30 underline-offset-2 hover:decoration-accent;
+  }
+
+  .publisle-document img,
+  .publisle-document svg {
+    @apply h-auto max-w-full;
+  }
+
+  .publisle-document strong {
+    @apply font-semibold;
+  }
+
+  /* Keep anchored headings clear of the sticky header. */
+  .publisle-document [id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  /* Live schematic island (publisle:interactive-schematic). */
+  .publisle-schematic {
+    @apply my-4 flex flex-wrap items-center gap-4 rounded-lg border border-line bg-raised p-4;
+  }
+
+  .publisle-schematic output {
+    @apply rounded-md border border-accent/40 bg-surface px-4 py-2 font-mono text-xl text-accent;
+  }
+
+  .publisle-schematic__controls {
+    @apply flex gap-2;
+  }
+
+  .publisle-schematic__controls button {
+    @apply rounded-md border border-line bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent;
+  }
+
+  /* Math editor (from @publisle/playground). */
+  .math-editor {
+    @apply overflow-hidden rounded-lg border border-line bg-surface;
+  }
+
+  .math-editor__preview {
+    @apply flex min-h-16 items-center overflow-x-auto border-b border-line bg-raised px-4 py-3 text-lg;
+  }
+
+  .math-editor[data-display="true"] .math-editor__preview {
+    @apply min-h-28 justify-center py-6 text-center text-xl;
+  }
+
+  .math-editor__error {
+    @apply m-0 font-mono text-xs text-danger;
+  }
+
+  .math-editor__empty {
+    @apply m-0 text-sm text-muted;
+  }
+
+  .math-editor__source {
+    @apply relative font-mono text-sm leading-6;
+  }
+
+  .math-editor__highlight,
+  .math-editor__input {
+    @apply m-0 w-full border-0 bg-transparent p-3 font-mono text-sm leading-6;
+  }
+
+  .math-editor__highlight {
+    @apply pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words text-ink;
+  }
+
+  .math-editor__input {
+    @apply relative block resize-y text-transparent caret-accent outline-none selection:bg-accent/25;
+  }
+
+  .math-editor__toggle {
+    @apply m-2 rounded-md border border-line px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent;
+  }
+
+  .math-editor__tabs {
+    @apply flex gap-1 overflow-x-auto border-b border-line px-2 pt-2;
+  }
+
+  .math-editor__tab {
+    @apply -mb-px rounded-t-md border border-transparent px-2.5 py-1 text-xs whitespace-nowrap text-muted hover:text-ink;
+  }
+
+  .math-editor__tab.active {
+    @apply border-line border-b-transparent bg-raised text-accent;
+  }
+
+  .math-editor__snippets {
+    @apply flex flex-wrap gap-1.5 p-2;
+  }
+
+  .math-editor__snippet {
+    @apply min-w-9 rounded-md border border-line bg-raised px-2 py-1 font-mono text-sm hover:border-accent hover:text-accent;
+  }
+
+  .math-editor__fields {
+    @apply flex flex-wrap gap-4;
+  }
+
+  /* LaTeX token colors for the highlight overlay. */
+  .math-tok-command {
+    @apply font-semibold text-accent;
+  }
+
+  .math-tok-brace {
+    @apply text-muted;
+  }
+
+  .math-tok-script {
+    @apply text-warning;
+  }
+
+  .math-tok-number {
+    @apply text-sky-700 dark:text-sky-300;
+  }
+
+  /* Inline segment tint chips (editor-only decoration). */
+  .segment__chip {
+    @apply shrink-0 rounded border border-line bg-raised px-2 py-0.5 text-xs text-muted;
+  }
+
+  .segment--math {
+    @apply border-accent/40 bg-accent/10 text-accent;
+  }
+
+  .segment--code {
+    @apply border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-300;
+  }
+
+  .segment--citation {
+    @apply border-violet-600/40 bg-violet-600/10 text-violet-700 dark:text-violet-300;
+  }
+
+  .segment--xref {
+    @apply border-sky-600/40 bg-sky-600/10 text-sky-700 dark:text-sky-300;
+  }
+
+  .segment--footnote {
+    @apply border-amber-600/40 bg-amber-600/10 text-amber-700 dark:text-amber-300;
+  }
+
+  .block-editor.selected {
+    @apply ring-2 ring-accent/50;
+  }
+
+  .segment__editor {
+    @apply min-w-0 flex-1;
+  }
+}
+
+/* Theme-aware media swap for brand art (logo lockups, pipeline diagram).
+   Deliberately plain, unlayered CSS: it beats utility classes regardless of
+   source order, so refactors cannot drop the pairing again. */
+.brand-light {
+  display: block;
+}
+
+.brand-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-light {
+    display: none;
+  }
+
+  :root:not([data-theme="light"]) .brand-dark {
+    display: block;
+  }
+}
+
+:root[data-theme="dark"] .brand-light {
+  display: none;
+}
+
+:root[data-theme="dark"] .brand-dark {
+  display: block;
+}
+
+/* Playground editor primitives (promoted from the example hosts). */
+.block-editor {
+  @apply rounded-lg border border-line bg-surface p-4;
+}
+
+.block-editor__header {
+  @apply mb-3 flex items-center justify-between gap-2;
+}
+
+.block-editor__actions {
+  @apply flex gap-1;
+}
+
+.block-editor__actions button {
+  @apply rounded border border-line px-2 py-0.5 text-xs hover:border-accent hover:text-accent;
+}
+
+.block-editor__body {
+  @apply flex flex-col gap-3;
+}
+
+.field {
+  @apply flex flex-col gap-1 text-sm;
+}
+
+.field > select,
+.field > input,
+.field > textarea,
+.field--segments input {
+  @apply rounded border border-line bg-input px-2 py-1 font-mono text-xs;
+}
+
+/* Checkboxes sit inline with their label, without text-field chrome. */
+.field--check {
+  @apply w-fit flex-row items-center gap-2;
+}
+
+.field--check > input {
+  @apply size-4 shrink-0 rounded border-line bg-input p-0 accent-accent;
+}
+
+.fieldset-reset {
+  @apply m-0 border-0 p-0;
+}
+
+.segment {
+  @apply flex items-center gap-2;
+}
+
+.segment__label {
+  @apply w-28 shrink-0 text-xs text-muted;
+}
+
+.segment--add {
+  @apply mt-1;
+}
+
+.muted {
+  @apply text-muted;
+}
