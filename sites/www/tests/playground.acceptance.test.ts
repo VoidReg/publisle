@@ -154,3 +154,60 @@ it("renders all examples and remounts the counter after view and source changes"
     await page.close();
   }
 });
+
+it("contains Quickstart code on mobile and keeps the toolbar above the scrolling editor", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const page = await browser.newPage();
+  try {
+    for (const width of [320, 390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 740 });
+      await page.goto(`${baseUrl}/`);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(width);
+      const codePanels = page.locator(
+        "section[aria-labelledby='quickstart'] pre",
+      );
+      expect(await codePanels.count()).toBe(2);
+      for (const panel of await codePanels.all()) {
+        const bounds = await panel.boundingBox();
+        if (!bounds) throw new Error("Quickstart code is not visible");
+        expect(bounds.x).toBeGreaterThanOrEqual(0);
+        expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+        if (width <= 390) {
+          expect(
+            await panel.evaluate((element) => {
+              element.scrollLeft = 32;
+              return element.scrollLeft;
+            }),
+          ).toBeGreaterThan(0);
+        }
+      }
+      await page.goto(`${baseUrl}/playground/`);
+      await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+      const editor = page.getByRole("region", { name: "Document editor" });
+      await editor.scrollIntoViewIfNeeded();
+      const toolbar = page
+        .getByRole("tablist", { name: "Playground view" })
+        .locator("..");
+      const toolbarBounds = await toolbar.boundingBox();
+      const editorBounds = await editor.boundingBox();
+      if (!toolbarBounds || !editorBounds)
+        throw new Error("Missing playground layout");
+      expect(toolbarBounds.y + toolbarBounds.height).toBeLessThanOrEqual(
+        editorBounds.y,
+      );
+      await editor.evaluate((element) => {
+        element.scrollTop = 180;
+      });
+      expect(
+        await editor.evaluate((element) => element.scrollTop),
+      ).toBeGreaterThan(0);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(width);
+    }
+  } finally {
+    await page.close();
+  }
+});
