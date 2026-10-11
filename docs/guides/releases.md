@@ -176,7 +176,7 @@ intentionally requires pnpm for workspace commands.
 The local packed-artifact rehearsal on 2026-10-10 passed for all 23 tarballs and the
 isolated Core consumer and standalone Astro build. Both compiler platforms are
 verified locally against recipe 2 on the same day: amd64 natively, and arm64 with
-`linux/arm64` confirmed by `docker image inspect` and execution under QEMU —
+`linux/arm64` confirmed by `docker image inspect` and execution under QEMU,
 each passing the five-publisher smoke and the three PDF/UA fixture gates with
 veraPDF 1.28.2. Registry publication, credentials, clean-machine verification of
 each published platform image and the public showcase remain release/adoption

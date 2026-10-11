@@ -1,4 +1,4 @@
-# Publisle Research profile — scholarly and publishing contracts
+# Publisle Research profile: scholarly and publishing contracts
 
 **Status:** Normative for the Publisle Research profile (beta).
 **Profile version:** 1; requires Publisle Core document envelope 1 and supported pinned contract digests.
@@ -8,7 +8,7 @@ The profile layers on [Publisle Core](README.md); Core adopters need none of thi
 
 The Research profile collects the optional scholarly machinery: bibliography entries and citation checks, citation resolution and journal export, publisher template packages, the pinned compiler toolchain, and the research-paper/scholarly conformance profiles. The profile is optional. Its preparation inspections are policy checks, not requirements for every document; they do not select a citation style, page layout, font, or route. Export behavior follows the explicitly selected Research capabilities.
 
-Adopting the profile means installing `@publisle/research`, the `@publisle/template-*` packages, and — for PDF — a TeX toolchain tier (see the [engine tiers](../guides/journal-export.md)); none of it enters reader bundles. The [Core CLI](../../README.md) loads these commands through the optional `@publisle/cli-research` plugin and reports install guidance when it is absent.
+Adopting the profile means installing `@publisle/research`, the `@publisle/template-*` packages, and (for PDF) a TeX toolchain tier (see the [engine tiers](../guides/journal-export.md)); none of it enters reader bundles. The [Core CLI](../../README.md) loads these commands through the optional `@publisle/cli-research` plugin and reports install guidance when it is absent.
 
 ## Citations and sections
 
