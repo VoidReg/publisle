@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Playground from "../components/Playground.svelte";
+---
+
+<BaseLayout
+  title="Playground — Publisle"
+  description="Edit a portable Publisle document as blocks, Markdown, or JSON and watch the static compilation live."
+  path="/playground/"
+>
+  <div class="py-10">
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="font-display text-4xl font-bold">Playground</h1>
+        <p class="mt-2 max-w-2xl text-muted">
+          One document, three views. The preview is the same
+          <code>compilePublication</code> output the adapters ship — compiled in
+          your browser, nothing leaves the page.
+        </p>
+      </div>
+    </div>
+    <noscript>
+      <p class="rounded-lg border border-line bg-surface p-4 text-sm">
+        The playground needs JavaScript. The
+        <a class="text-accent hover:underline" href="/docs">documentation</a>
+        and <a class="text-accent hover:underline" href="/examples">examples</a>
+        work without it.
+      </p>
+    </noscript>
+    <Playground client:only="svelte" />
+  </div>
+</BaseLayout>

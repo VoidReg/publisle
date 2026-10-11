@@ -1,0 +1,104 @@
+---
+import { getCollection } from "astro:content";
+import Article from "@publisle/adapter-astro/Article.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+
+const entries = await getCollection("docs");
+const sectionEntries = entries
+  .filter((item) => item.data.section === entry.data.section)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+const index = sectionEntries.findIndex((item) => item.id === entry.id);
+const previous = index > 0 ? sectionEntries[index - 1] : undefined;
+const next =
+  index >= 0 && index < sectionEntries.length - 1
+    ? sectionEntries[index + 1]
+    : undefined;
+
+// Section overview entries store README.md under the bare section id.
+const repoPath =
+  entry.id === "standards" ? "standards/README.md" : `${entry.id}.md`;
+const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${repoPath}`;
+const rawSource = `https://raw.githubusercontent.com/VoidReg/publisle/main/docs/${repoPath}`;
+---
+
+<BaseLayout title={`${entry.data.title} — Publisle Docs`} path={`/docs/${entry.id}`}>
+  <div class="grid gap-10 py-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <aside aria-label="Documentation navigation" class="lg:sticky lg:top-20 lg:self-start">
+      <nav class="space-y-6 text-sm">
+        <div>
+          <p class="font-display font-semibold"><a href="/docs" class="hover:text-accent">Docs</a></p>
+          <p class="mt-2 text-muted">
+            <a href={`/docs/${entry.data.section}`} class="hover:text-accent">
+              {entry.data.section === "guides" ? "Guides" : "Standards"}
+            </a>
+          </p>
+          <ul class="mt-2 space-y-1">
+            {
+              sectionEntries.map((item) => (
+                <li>
+                  <a
+                    href={`/docs/${item.id}`}
+                    aria-current={item.id === entry.id ? "page" : undefined}
+                    class:list={[
+                      "block rounded px-2 py-1",
+                      item.id === entry.id
+                        ? "bg-surface font-medium text-accent"
+                        : "text-muted hover:text-ink",
+                    ]}
+                  >
+                    {item.data.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <article class="min-w-0">
+      <p class="mb-2 text-xs tracking-wide text-muted uppercase">
+        {entry.data.section === "guides" ? "Guide" : "Standard"} ·
+        <a href={rawSource} class="hover:text-accent">Markdown source</a> ·
+        <a href={githubSource} class="hover:text-accent">View on GitHub</a>
+      </p>
+      <h1 class="font-display text-3xl font-bold sm:text-4xl">
+        {entry.data.title}
+      </h1>
+      <div class="mt-6">
+        <Article publication={entry.data.publication} instanceId={`docs-${entry.id.replaceAll("/", "-")}`}/>
+      </div>
+
+      <nav aria-label="Adjacent pages" class="mt-12 flex justify-between gap-4 border-t border-line pt-6 text-sm">
+        {
+          previous ? (
+            <a href={`/docs/${previous.id}`} class="text-muted hover:text-accent">
+              ← {previous.data.title}
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          next ? (
+            <a href={`/docs/${next.id}`} class="text-right text-muted hover:text-accent">
+              {next.data.title} →
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </article>
+  </div>
+</BaseLayout>

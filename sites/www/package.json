@@ -1,0 +1,39 @@
+{
+  "name": "@publisle/www",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "generate:og": "node scripts/generate-og.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^8.0.3",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/svelte": "^9.0.1",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@publisle/adapter-astro": "workspace:*",
+    "@publisle/adapter-core": "workspace:*",
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/blocks-technical": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/markdown": "workspace:*",
+    "@publisle/playground": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.8",
+    "svelte": "^5.0.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "sharp": "^0.35.5",
+    "svelte-check": "^4.1.0",
+    "typescript": "^5.7.0"
+  }
+}

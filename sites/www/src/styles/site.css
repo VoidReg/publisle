@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Publisle brand (VoidReg): paper, ink, vermilion. WCAG-AAA pairings.
+   Layered resolution: light defaults → system preference (no explicit choice)
+   → explicit data-theme override persisted by the toggle. */
+:root {
+  color-scheme: light;
+  --bg: #fffdfa;
+  --surface: #fffdfa;
+  --surface-raised: #ffffff;
+  --text: #1a1513;
+  --text-muted: #574f4b;
+  --border: #e8e2dc;
+  --accent: #9b3214;
+  --focus: #c34016;
+  --input-bg: #ffffff;
+  --danger: #a22136;
+  --warning: #613e03;
+  font-family:
+    "Inter Variable",
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #1a1513;
+    --surface: #26201e;
+    --surface-raised: #352f2c;
+    --text: #fffdfa;
+    --text-muted: #d3ccc6;
+    --border: #574f4b;
+    --accent: #ec8a6d;
+    --focus: #ec8a6d;
+    --input-bg: #211b19;
+    --danger: #fed4d4;
+    --warning: #f9dab4;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1513;
+  --surface: #26201e;
+  --surface-raised: #352f2c;
+  --text: #fffdfa;
+  --text-muted: #d3ccc6;
+  --border: #574f4b;
+  --accent: #ec8a6d;
+  --focus: #ec8a6d;
+  --input-bg: #211b19;
+  --danger: #fed4d4;
+  --warning: #f9dab4;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fffdfa;
+  --surface: #fffdfa;
+  --surface-raised: #ffffff;
+  --text: #1a1513;
+  --text-muted: #574f4b;
+  --border: #e8e2dc;
+  --accent: #9b3214;
+  --focus: #c34016;
+  --input-bg: #ffffff;
+  --danger: #a22136;
+  --warning: #613e03;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-focus: var(--focus);
+  --color-input: var(--input-bg);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display:
+    "Space Grotesk Variable", "Space Grotesk", "Inter Variable", Inter,
+    ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--bg);
+  }
+}
+
+/* Playground editor primitives (promoted from the example hosts). */
+.block-editor {
+  @apply rounded-lg border border-line bg-surface p-4;
+}
+
+.block-editor__header {
+  @apply mb-3 flex items-center justify-between gap-2;
+}
+
+.block-editor__actions {
+  @apply flex gap-1;
+}
+
+.block-editor__actions button {
+  @apply rounded border border-line px-2 py-0.5 text-xs hover:border-accent hover:text-accent;
+}
+
+.block-editor__body {
+  @apply flex flex-col gap-3;
+}
+
+.field {
+  @apply flex flex-col gap-1 text-sm;
+}
+
+.field > select,
+.field > input,
+.field > textarea,
+.field--segments input {
+  @apply rounded border border-line bg-input px-2 py-1 font-mono text-xs;
+}
+
+.fieldset-reset {
+  @apply m-0 border-0 p-0;
+}
+
+.segment {
+  @apply flex items-center gap-2;
+}
+
+.segment__label {
+  @apply w-28 shrink-0 text-xs text-muted;
+}
+
+.segment--add {
+  @apply mt-1;
+}
+
+.muted {
+  @apply text-muted;
+}

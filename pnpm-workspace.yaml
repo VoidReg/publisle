@@ -2,6 +2,7 @@ packages:
   - packages/*
   - blocks/*
   - examples/*
+  - sites/*
 
 allowBuilds:
   esbuild: true
