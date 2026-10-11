@@ -101,7 +101,12 @@ Edit this document and see the result beside it. Your draft saves on this device
       }
     } catch { storageAvailable = false; }
     const example = playgroundExamples.find((item) => item.id === new URLSearchParams(location.search).get("example"));
-    if (example) loadExample(example);
+    if (example) {
+      loadExample(example);
+      const url = new URL(location.href);
+      url.searchParams.delete("example");
+      history.replaceState(history.state, "", url);
+    }
     draftReady = true;
     return () => { unsubscribe(); clearTimeout(sourceTimer); };
   });

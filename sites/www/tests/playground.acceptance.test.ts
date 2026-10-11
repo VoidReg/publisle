@@ -153,8 +153,12 @@ it("saves source and block edits across modes, reloads, and navigation", async (
     viewport: { width: 1280, height: 900 },
   });
   try {
-    await page.goto(`${baseUrl}/playground/`);
+    await page.goto(`${baseUrl}/playground/?example=full-article`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    expect(new URL(page.url()).searchParams.has("example")).toBe(false);
+    expect(
+      await page.getByRole("region", { name: "Compiled preview" }).innerText(),
+    ).toContain("Measuring a Clocked Counter");
     await page.getByRole("tab", { name: /^markdown$/i }).click();
     const source = page.getByRole("textbox", { name: "Markdown source" });
     const authored =
