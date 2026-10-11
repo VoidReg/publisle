@@ -111,25 +111,24 @@ the block definition attach the live counter on the declared activation.
       "Captions, alternative text, and header rows as document data.",
     markdown: String.raw`# Figures and tables
 
-:::figure{src="https://publisle.xyz/favicon.svg" alt="Publisle brand mark"}
-::caption
+::::figure{src="/favicon.svg" alt="Publisle brand mark"}
+:::caption
 Figures carry alternative text and captions as first-class document data.
 :::
-:::
+::::
 
 ## Tables keep header structure
 
-:::table{headerRows="1"}
+::::table{headerRows="1"}
 | Block | Preserves |
 | --- | --- |
 | Headings | Labels and reading order |
 | Figures | Alternative text and captions |
 | Tables | Header rows and captions |
-:::
-::caption
+:::caption
 Table captions travel with the data model, not the styling.
 :::
-:::
+::::
 `,
   },
   {
@@ -172,25 +171,25 @@ A divider closes the tour.
       "Mermaid diagrams and external embeds, both with static fallbacks.",
     markdown: `# Diagrams and embeds
 
-:::diagram{engine="mermaid" alt="Document flows to portable, then to static HTML"}
+::::diagram{engine="mermaid" alt="Document flows to portable, then to static HTML"}
 \`\`\`mermaid
 graph TD
   A[Document] --> B[Portable]
   B --> C[Static HTML]
 \`\`\`
-::caption
+:::caption
 Diagram source is portable; each host renders it with its own engine.
 :::
-::fallback
+:::fallback
 Document, Portable, and Static HTML, connected in order.
 :::
-:::
+::::
 
-:::embed{provider="youtube" resource="dQw4w9WgXcQ" title="Embedded video"}
-::fallback
+::::embed{provider="youtube" resource="dQw4w9WgXcQ" title="Embedded video"}
+:::fallback
 The embed ships a static fallback for print and no-JS readers.
 :::
-:::
+::::
 `,
   },
   {
@@ -256,17 +255,16 @@ The island above renders as its authored fallback in print and PDF targets.
 
 ## Recorded runs
 
-:::table{headerRows="1"}
+::::table{headerRows="1"}
 | Run | Edges | Final value |
 | --- | --- | --- |
 | Cold start | 0 | 0 |
 | After burst | 5 | 5 |
 | After reset | 3 | 3 |
-:::
-::caption
+:::caption
 Three runs of the counter under the model of Section Model.
 :::
-:::
+::::
 
 ## Summary
 
