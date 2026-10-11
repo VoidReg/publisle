@@ -1,0 +1,68 @@
+{
+  "name": "@publisle/playground",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": false,
+  "svelte": "./src/index.ts",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./BlockEditor.svelte": {
+      "svelte": "./src/BlockEditor.svelte",
+      "default": "./src/BlockEditor.svelte"
+    },
+    "./JsonField.svelte": {
+      "svelte": "./src/JsonField.svelte",
+      "default": "./src/JsonField.svelte"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@publisle/blocks-core": "workspace:^",
+    "@publisle/core": "workspace:^",
+    "@publisle/markdown": "workspace:^",
+    "@publisle/schema": "workspace:^"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./BlockEditor.svelte": {
+        "types": "./dist/BlockEditor.svelte.d.ts",
+        "svelte": "./dist/BlockEditor.svelte",
+        "default": "./dist/BlockEditor.svelte"
+      },
+      "./JsonField.svelte": {
+        "types": "./dist/JsonField.svelte.d.ts",
+        "svelte": "./dist/JsonField.svelte",
+        "default": "./dist/JsonField.svelte"
+      }
+    },
+    "types": "./dist/index.d.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VoidReg/publisle.git",
+    "directory": "packages/playground"
+  },
+  "homepage": "https://publisle.xyz"
+}
