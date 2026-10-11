@@ -2,7 +2,7 @@
   // Playground shell: Edit/Preview view switcher, searchable block palette,
   // source views, and the compiled preview. One component owns the shared
   // editor state; loaded only on /playground.
-  import { mount as svelteMount, unmount as svelteUnmount } from "svelte";
+  import { onMount, mount as svelteMount, unmount as svelteUnmount } from "svelte";
   import {
     blockCategories,
     blockDescriptions,
@@ -46,7 +46,7 @@
 
   const STARTER_MARKDOWN = `# Hello, Publisle
 
-Edit this document on the left; switch to Preview to see the compilation.
+Edit this document and see the result beside it. Your draft saves on this device.
 
 ## Blocks
 
@@ -55,32 +55,95 @@ Edit this document on the left; switch to Preview to see the compilation.
 - Press Ctrl+K to add blocks from the searchable palette
 `;
 
-  let editor = $state(new DocumentEditor(undefined, registry));
+  const editor = new DocumentEditor(undefined, registry);
   editor.importMarkdown(STARTER_MARKDOWN);
 
   let version = $state(0);
-  editor.subscribe(() => {
-    version += 1;
-  });
 
-  function initialView(): "edit" | "preview" {
-    try {
-      const stored = localStorage.getItem("publisle-view");
-      return stored === "preview" ? "preview" : "edit";
-    } catch {
-      return "edit";
-    }
-  }
-
-  let view = $state<"edit" | "preview">(initialView());
+  let view = $state<"edit" | "preview">("edit");
   let mode = $state<"blocks" | "markdown" | "json">("blocks");
   let markdownText = $state(STARTER_MARKDOWN);
   let jsonText = $state("");
+  let markdownInvalid = false;
+  let jsonInvalid = false;
+  let markdownDocument = editor.toJson();
+  let jsonDocument = "";
   let notice = $state<string | undefined>(undefined);
   let health = $state<ApiHealth | undefined>(undefined);
   let selectedId = $state<string | undefined>(undefined);
   let paletteOpen = $state(false);
   let previewEl = $state<HTMLDivElement | null>(null);
+
+  let draftReady = $state(false);
+  let storageAvailable = $state(true);
+  let sourcePending = false;
+  let sourceTimer: ReturnType<typeof setTimeout> | undefined;
+  const DRAFT_KEY = "publisle-draft-v1";
+
+  onMount(() => {
+    const unsubscribe = editor.subscribe(() => { version += 1; });
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.version === 1 && typeof draft.document === "string") {
+          editor.fromJson(draft.document);
+          markdownText = typeof draft.markdown === "string" ? draft.markdown : editor.exportMarkdown().markdown ?? "";
+          jsonText = typeof draft.json === "string" ? draft.json : editor.toJson();
+          markdownInvalid = draft.markdownInvalid === true;
+          jsonInvalid = draft.jsonInvalid === true;
+          markdownDocument = typeof draft.markdownDocument === "string" ? draft.markdownDocument : "";
+          jsonDocument = typeof draft.jsonDocument === "string" ? draft.jsonDocument : "";
+          if (["blocks", "markdown", "json"].includes(draft.mode)) mode = draft.mode;
+          if (mode === "markdown") applyMarkdown();
+          if (mode === "json") applyJson();
+        }
+      }
+    } catch { storageAvailable = false; }
+    const example = playgroundExamples.find((item) => item.id === new URLSearchParams(location.search).get("example"));
+    if (example) loadExample(example);
+    draftReady = true;
+    return () => { unsubscribe(); clearTimeout(sourceTimer); };
+  });
+
+  $effect(() => {
+    void version;
+    if (!draftReady) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        version: 1, document: editor.toJson(), mode,
+        markdown: markdownText, json: jsonText, markdownInvalid, jsonInvalid, markdownDocument, jsonDocument,
+      }));
+    } catch { storageAvailable = false; }
+  });
+
+  function flushSource(): void {
+    clearTimeout(sourceTimer);
+    if (!sourcePending) return;
+    sourcePending = false;
+    if (mode === "markdown") applyMarkdown();
+    if (mode === "json") applyJson();
+  }
+
+  function scheduleSource(): void {
+    sourcePending = true;
+    clearTimeout(sourceTimer);
+    sourceTimer = setTimeout(flushSource, 200);
+  }
+
+  function changeMode(next: "blocks" | "markdown" | "json"): void {
+    if (next === mode) return;
+    flushSource();
+    if (next === "markdown" && !markdownInvalid && markdownDocument !== editor.toJson()) {
+      markdownText = editor.exportMarkdown().markdown ?? "";
+      markdownDocument = editor.toJson();
+    }
+    if (next === "json" && !jsonInvalid && jsonDocument !== editor.toJson()) {
+      jsonText = editor.toJson();
+      jsonDocument = editor.toJson();
+    }
+    mode = next;
+  }
 
   // Attach the island runtime to the compiled preview; re-runs (disposing the
   // previous attachment) whenever the compilation changes.
@@ -142,12 +205,13 @@ Edit this document on the left; switch to Preview to see the compilation.
     }
   });
 
-  function persistView(next: "edit" | "preview"): void {
+  function setView(next: "edit" | "preview"): void {
     view = next;
-    localStorage.setItem("publisle-view", next);
+    flushSource();
   }
 
   function addBlock(type: string): void {
+    changeMode("blocks");
     const selectedIndex = blocks.findIndex(
       (block) => block.id === selectedId,
     );
@@ -165,14 +229,10 @@ Edit this document on the left; switch to Preview to see the compilation.
     version += 1;
   }
 
-  function showMarkdown(): void {
-    markdownText = editor.exportMarkdown().markdown ?? "";
-    mode = "markdown";
-    notice = undefined;
-  }
-
   function applyMarkdown(): void {
     const result = editor.importMarkdown(markdownText);
+    markdownInvalid = result.diagnostics.some((item) => item.level === "error");
+    markdownDocument = editor.toJson();
     notice =
       result.diagnostics.length > 0
         ? result.diagnostics
@@ -182,14 +242,10 @@ Edit this document on the left; switch to Preview to see the compilation.
     version += 1;
   }
 
-  function showJson(): void {
-    jsonText = editor.toJson();
-    mode = "json";
-    notice = undefined;
-  }
-
   function applyJson(): void {
     const result = editor.fromJson(jsonText);
+    jsonInvalid = result.diagnostics.some((item) => item.level === "error");
+    jsonDocument = editor.toJson();
     notice =
       result.diagnostics.length > 0
         ? result.diagnostics
@@ -200,9 +256,13 @@ Edit this document on the left; switch to Preview to see the compilation.
   }
 
   function loadExample(example: PlaygroundExample): void {
+    clearTimeout(sourceTimer);
+    sourcePending = false;
     editor.importMarkdown(example.markdown);
     markdownText = example.markdown;
     jsonText = editor.toJson();
+    markdownInvalid = jsonInvalid = false;
+    markdownDocument = jsonDocument = editor.toJson();
     selectedId = undefined;
     notice = `Loaded "${example.title}".`;
     view = "edit";
@@ -210,16 +270,17 @@ Edit this document on the left; switch to Preview to see the compilation.
   }
 
   function reset(): void {
-    editor = new DocumentEditor(undefined, registry);
+    clearTimeout(sourceTimer);
+    sourcePending = false;
     editor.importMarkdown(STARTER_MARKDOWN);
-    editor.subscribe(() => {
-      version += 1;
-    });
     markdownText = STARTER_MARKDOWN;
+    jsonText = editor.toJson();
+    markdownInvalid = jsonInvalid = false;
+    markdownDocument = jsonDocument = editor.toJson();
     selectedId = undefined;
     mode = "blocks";
     notice = undefined;
-    persistView("edit");
+    setView("edit");
     version += 1;
   }
 
@@ -243,11 +304,11 @@ Edit this document on the left; switch to Preview to see the compilation.
     }
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      persistView(view === "edit" ? "preview" : "edit");
+      setView(view === "edit" ? "preview" : "edit");
       return;
     }
     if (event.key === "Escape" && !paletteOpen && view === "preview") {
-      persistView("edit");
+      setView("edit");
     }
   }
 
@@ -267,7 +328,7 @@ Edit this document on the left; switch to Preview to see the compilation.
     class="-mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg px-2 py-2"
   >
     <div
-      class="flex overflow-hidden rounded-lg border border-line"
+      class="flex overflow-hidden rounded-lg border border-line lg:hidden"
       role="tablist"
       aria-label="Playground view"
     >
@@ -278,7 +339,7 @@ Edit this document on the left; switch to Preview to see the compilation.
         class="px-4 py-1.5 text-sm {view === 'edit'
           ? 'bg-surface font-medium text-accent'
           : 'text-muted hover:text-ink'}"
-        onclick={() => persistView("edit")}
+        onclick={() => setView("edit")}
       >
         Edit
       </button>
@@ -289,13 +350,13 @@ Edit this document on the left; switch to Preview to see the compilation.
         class="px-4 py-1.5 text-sm {view === 'preview'
           ? 'bg-surface font-medium text-accent'
           : 'text-muted hover:text-ink'}"
-        onclick={() => persistView("preview")}
+        onclick={() => setView("preview")}
       >
         Preview{#if compiled.warnings > 0}&nbsp;· {compiled.warnings}{/if}
       </button>
     </div>
 
-    {#if view === "edit"}
+    <div class={view === "preview" ? "hidden lg:contents" : "contents"}>
       <div
         class="flex overflow-hidden rounded-lg border border-line"
         role="tablist"
@@ -309,11 +370,7 @@ Edit this document on the left; switch to Preview to see the compilation.
             class="px-3 py-1.5 text-sm capitalize {mode === entry
               ? 'bg-surface font-medium text-accent'
               : 'text-muted hover:text-ink'}"
-            onclick={() => {
-              if (entry === "markdown") showMarkdown();
-              else if (entry === "json") showJson();
-              else mode = "blocks";
-            }}
+            onclick={() => changeMode(entry as "blocks" | "markdown" | "json")}
           >
             {entry}
           </button>
@@ -328,24 +385,10 @@ Edit this document on the left; switch to Preview to see the compilation.
         >
           + Add block
         </button>
-      {:else if mode === "markdown"}
-        <button
-          type="button"
-          class="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-bg hover:opacity-90"
-          onclick={applyMarkdown}
-        >
-          Import Markdown
-        </button>
       {:else}
-        <button
-          type="button"
-          class="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-bg hover:opacity-90"
-          onclick={applyJson}
-        >
-          Import JSON
-        </button>
+        <span class="text-xs text-muted">Updates as you type</span>
       {/if}
-    {/if}
+    </div>
 
     <button
       type="button"
@@ -387,10 +430,13 @@ Edit this document on the left; switch to Preview to see the compilation.
     </p>
   {/if}
 
-  {#if view === "edit" && mode === "blocks"}
+  <details
+    class="rounded-xl border border-line bg-surface p-3"
+  >
+    <summary class="cursor-pointer text-sm font-medium">Load an example · {playgroundExamples.length} documents</summary>
     <section
       aria-label="Example documents"
-      class="rounded-xl border border-line bg-surface p-3"
+      class="pt-3"
     >
       <p class="mb-2 text-xs font-medium tracking-wide text-muted uppercase">
         Load an example
@@ -410,13 +456,14 @@ Edit this document on the left; switch to Preview to see the compilation.
         {/each}
       </div>
     </section>
-  {/if}
+  </details>
 
-  {#if view === "edit"}
+  <div class="grid min-w-0 gap-4 lg:grid-cols-2">
     <section
       aria-label="Document editor"
-      class="max-h-[75vh] space-y-4 overflow-y-auto rounded-xl border border-line bg-surface p-4"
+      class="min-w-0 max-h-[75vh] space-y-4 overflow-y-auto rounded-xl border border-line bg-surface p-3 sm:p-4 {view === 'preview' ? 'hidden lg:block' : ''}"
     >
+      <h2 class="font-display text-lg font-semibold">Editor</h2>
       {#if mode === "blocks"}
         {#if blocks.length === 0}
           <p class="text-sm text-muted">
@@ -456,6 +503,7 @@ Edit this document on the left; switch to Preview to see the compilation.
           aria-label="Markdown source"
           spellcheck="false"
           bind:value={markdownText}
+          oninput={scheduleSource}
         ></textarea>
       {:else}
         <textarea
@@ -463,18 +511,16 @@ Edit this document on the left; switch to Preview to see the compilation.
           aria-label="Document JSON"
           spellcheck="false"
           bind:value={jsonText}
+          oninput={scheduleSource}
         ></textarea>
       {/if}
     </section>
-  {:else}
     <section
       aria-label="Compiled preview"
-      class="max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-6"
+      class="publication-wide min-w-0 max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 sm:p-6 {view === 'edit' ? 'hidden lg:block' : ''}"
     >
-      <p class="mb-4 text-xs text-muted">
-        Live output of <code>compilePublication</code> · interactive islands
-        run for real (schematic: Clock and Reset)
-      </p>
+      <h2 class="mb-2 font-display text-lg font-semibold">Live preview</h2>
+      <p class="mb-4 text-xs text-muted">Your compiled article, with working interactive blocks.</p>
       {#if compiled.error}
         <p class="whitespace-pre-wrap rounded-lg border border-danger bg-surface px-3 py-2 font-mono text-xs">
           {compiled.error}
@@ -485,8 +531,9 @@ Edit this document on the left; switch to Preview to see the compilation.
         </div>
       {/if}
     </section>
-  {/if}
+  </div>
 
+  <p class="text-xs text-muted" role="status">{storageAvailable ? "Draft saved automatically on this device." : "Browser storage unavailable. Copy your source to keep it."}</p>
   <p class="hidden text-xs text-muted sm:block">
     <kbd class="rounded border border-line bg-raised px-1 font-mono">Ctrl+K</kbd>
     add block ·

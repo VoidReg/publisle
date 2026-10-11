@@ -167,12 +167,13 @@
                     />
                   </div>
                 {:else}
-                  <input
-                    type="text"
+                  <textarea
+                    rows={segment.kind === "text" ? 3 : 2}
+                    aria-label={`${spec.label}: ${segment.label} ${segment.index + 1}`}
                     value={segment.value}
                     placeholder={segment.placeholder ?? ""}
                     class={segmentTint(segment.kind)}
-                    onchange={(event) =>
+                    oninput={(event) =>
                       onUpdate(block.id, {
                         ...data,
                         [spec.key]: setSegmentText(
@@ -181,7 +182,7 @@
                           event.currentTarget.value,
                         ),
                       })}
-                  />
+                  ></textarea>
                 {/if}
                 <button
                   type="button"
@@ -251,7 +252,7 @@
             {spec.label}
             <select
               value={plainValue(spec)}
-              onchange={(event) => applyPlain(spec, event.currentTarget.value)}
+              oninput={(event) => applyPlain(spec, event.currentTarget.value)}
             >
               {#each spec.options ?? [] as option (option.value)}
                 <option value={option.value}>{option.label}</option>
@@ -264,7 +265,7 @@
             <textarea
               rows={spec.rows ?? 3}
               value={flowValue(spec)}
-              onchange={(event) =>
+              oninput={(event) =>
                 onUpdate(block.id, {
                   ...data,
                   [spec.key]: applyFlow(spec, event.currentTarget.value),
@@ -278,7 +279,7 @@
             <textarea
               rows={spec.rows ?? 3}
               value={plainValue(spec)}
-              onchange={(event) => applyPlain(spec, event.currentTarget.value)}
+              oninput={(event) => applyPlain(spec, event.currentTarget.value)}
             ></textarea>
             {#if spec.hint}<small class="muted">{spec.hint}</small>{/if}
           </label>
@@ -289,7 +290,7 @@
               type={spec.kind === "number" ? "number" : "text"}
               value={plainValue(spec)}
               placeholder={spec.placeholder ?? ""}
-              onchange={(event) => applyPlain(spec, event.currentTarget.value)}
+              oninput={(event) => applyPlain(spec, event.currentTarget.value)}
             />
             {#if spec.hint}<small class="muted">{spec.hint}</small>{/if}
           </label>

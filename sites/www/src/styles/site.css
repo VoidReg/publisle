@@ -26,7 +26,7 @@
   --surface-raised: #ffffff;
   --text: #1a1513;
   --text-muted: #574f4b;
-  --border: #e8e2dc;
+  --border: #ad9b90;
   --accent: #9b3214;
   --focus: #c34016;
   --input-bg: #ffffff;
@@ -83,7 +83,7 @@
   --surface-raised: #ffffff;
   --text: #1a1513;
   --text-muted: #574f4b;
-  --border: #e8e2dc;
+  --border: #ad9b90;
   --accent: #9b3214;
   --focus: #c34016;
   --input-bg: #ffffff;
@@ -434,7 +434,8 @@
 .field > select,
 .field > input,
 .field > textarea,
-.field--segments input {
+.field--segments input,
+.field--segments textarea {
   @apply rounded border border-line bg-input px-2 py-1 font-mono text-xs;
 }
 
@@ -465,4 +466,59 @@
 
 .muted {
   @apply text-muted;
+}
+
+/* Fill publication cards while documentation keeps its reading measure. */
+.publication-wide .publisle-document {
+  width: 100%;
+  max-width: none;
+  max-inline-size: none;
+}
+
+main p a {
+  text-decoration-line: underline;
+  text-underline-offset: 0.2em;
+}
+
+.block-editor__header {
+  flex-wrap: wrap;
+}
+.block-editor__actions {
+  flex-wrap: wrap;
+}
+.field,
+.segment,
+.segment__editor {
+  min-width: 0;
+}
+.field > input,
+.field > textarea,
+.field > select {
+  width: 100%;
+  min-width: 0;
+}
+.segment > input,
+.segment > textarea {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+.segment__chip {
+  max-width: 7rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+@media (max-width: 639px) {
+  .block-editor {
+    padding: 0.75rem;
+  }
+  .segment {
+    flex-wrap: wrap;
+  }
+  .segment > input,
+  .segment > textarea,
+  .segment__editor {
+    flex-basis: 100%;
+    order: 1;
+  }
 }

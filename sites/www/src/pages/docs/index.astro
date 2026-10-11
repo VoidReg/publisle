@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import DocsSearch from "../../components/DocsSearch.svelte";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 const entries = await getCollection("docs");
@@ -26,6 +27,8 @@ const entryHref = (id: string) => `/docs/${id === "standards" ? "standards" : id
       content pipeline, and rendered by the production compiler. The
       documentation is the demo.
     </p>
+
+    <DocsSearch client:load />
 
     <section aria-labelledby="guides" class="mt-12">
       <h2 id="guides" class="font-display text-2xl font-semibold">Guides</h2>

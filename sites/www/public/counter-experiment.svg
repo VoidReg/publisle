@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="208" viewBox="0 0 640 208" role="img" aria-labelledby="title desc">
+  <title id="title">A counter advances on Clock and returns to zero on Reset</title>
+  <desc id="desc">Starting at zero, the first clock produces one and the second produces two. Reset returns the counter to zero.</desc>
+  <rect width="640" height="208" rx="16" fill="#fffdfa"/>
+  <g fill="#1a1513" font-family="system-ui,sans-serif" text-anchor="middle">
+    <text x="320" y="32" font-size="18" font-weight="600">One event, one state change</text>
+    <g fill="#ffffff" stroke="#ad9b90" stroke-width="2">
+      <rect x="24" y="68" width="104" height="68" rx="10"/>
+      <rect x="188" y="68" width="104" height="68" rx="10"/>
+      <rect x="352" y="68" width="104" height="68" rx="10"/>
+      <rect x="516" y="68" width="100" height="68" rx="10"/>
+    </g>
+    <g font-size="32" font-weight="600"><text x="76" y="114">0</text><text x="240" y="114">1</text><text x="404" y="114">2</text><text x="566" y="114">0</text></g>
+    <g font-size="14" fill="#9b3214"><text x="158" y="83">Clock</text><text x="322" y="83">Clock</text><text x="486" y="83">Reset</text></g>
+    <g stroke="#9b3214" stroke-width="2" fill="none"><path d="M138 104h40l-7-6m7 6-7 6"/><path d="M302 104h40l-7-6m7 6-7 6"/><path d="M466 104h40l-7-6m7 6-7 6"/></g>
+    <text x="320" y="180" font-size="14">Repeat the sequence in the interactive example below.</text>
+  </g>
+</svg>
