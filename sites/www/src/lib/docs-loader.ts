@@ -55,7 +55,10 @@ function resolveTarget(rawTarget: string, context: LinkContext): string | null {
   if (!pathPart) return null;
   const base = dirname(context.file);
   const absolute = resolve(base, pathPart);
-  const repoPath = relative(context.docsDir, absolute).replaceAll("\\", "/");
+  const repoPath = relative(dirname(context.docsDir), absolute).replaceAll(
+    "\\",
+    "/",
+  );
   if (repoPath.startsWith("..")) return null; // outside the repo checkout
   return anchor ? `${repoPath}#${anchor}` : repoPath;
 }
@@ -73,22 +76,23 @@ function rewriteLink(rawTarget: string, context: LinkContext): string {
   const [pathPart, anchor = ""] = repoPath.split("#");
   const suffix = anchor ? `#${anchor}` : "";
 
-  if (pathPart.endsWith(".md")) {
-    if (context.knownFiles.has(pathPart)) {
-      const route = pathPart
+  if (pathPart.startsWith("docs/") && pathPart.endsWith(".md")) {
+    const docPath = pathPart.slice("docs/".length);
+    if (context.knownFiles.has(docPath)) {
+      const route = docPath
         .replace(/(^|\/)README\.md$/u, "")
         .replace(/\.md$/u, "");
       return `${context.routePrefix}/${route}${suffix}`;
     }
-    return `${REPO_BLOB}/docs/${pathPart}${suffix}`;
+    return `${REPO_BLOB}/${pathPart}${suffix}`;
   }
   if (ASSET_EXTENSIONS.has(extname(pathPart))) {
-    return `${REPO_RAW}/docs/${pathPart}`;
+    return `${REPO_RAW}/${pathPart}${suffix}`;
   }
-  return `${REPO_BLOB}/docs/${pathPart}`;
+  return `${REPO_BLOB}/${pathPart}${suffix}`;
 }
 
-function rewriteLinks(markdown: string, context: LinkContext): string {
+export function rewriteLinks(markdown: string, context: LinkContext): string {
   return markdown.replace(
     /\]\(([^()\s]+)\)/gu,
     (_whole, target: string) => `](${rewriteLink(target, context)})`,

@@ -294,6 +294,51 @@ describe("independent npm releases", () => {
     await rm(join(root, "blocks/core"), { recursive: true });
     await expect(prepareRelease(root)).rejects.toThrow("disagree");
   });
+  it.each([false, true])(
+    "checks historical release completion when the publish set grows (draft: %s)",
+    async (isDraft) => {
+      const { root } = await fixture("patch", "workspace:^");
+      const previous: ReleasePlan = {
+        schemaVersion: 2,
+        id: "npm-release-previous-1",
+        versions: { "@publisle/schema": "0.1.0" },
+        releases: [
+          { name: "@publisle/schema", oldVersion: "0.0.9", version: "0.1.0" },
+        ],
+      };
+      await mkdir(join(root, ".release"));
+      await writeFile(
+        join(root, ".release/plan.json"),
+        JSON.stringify(previous),
+      );
+      const bin = join(root, "bin");
+      await mkdir(bin);
+      const gh = join(bin, "gh");
+      await writeFile(
+        gh,
+        `#!${process.execPath}\nprocess.stdout.write(JSON.stringify({isDraft:${String(isDraft)}}));\n`,
+      );
+      await chmod(gh, 0o755);
+      vi.stubEnv("PATH", `${bin}:${process.env["PATH"] ?? ""}`);
+      if (isDraft) {
+        await expect(prepareRelease(root)).rejects.toThrow(
+          "Resume the unfinished publication",
+        );
+        expect(await readFile(join(root, ".release/plan.json"), "utf8")).toBe(
+          JSON.stringify(previous),
+        );
+      } else {
+        const plan = await prepareRelease(root);
+        expect(plan?.versions).toEqual({
+          "@publisle/schema": "0.1.1",
+          "@publisle/blocks-core": "0.1.0",
+        });
+        expect(plan?.releases).toEqual([
+          { name: "@publisle/schema", oldVersion: "0.1.0", version: "0.1.1" },
+        ]);
+      }
+    },
+  );
   it("validates mixed versions and returns only the publication subset", async () => {
     const { root, manifestPath } = await artifacts(true);
     const result = await reviewedTarballs(root, manifestPath, "abc");

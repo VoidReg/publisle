@@ -2,7 +2,6 @@
   // Playground shell: Edit/Preview view switcher, searchable block palette,
   // source views, and the compiled preview. One component owns the shared
   // editor state; loaded only on /playground.
-  import { tick } from "svelte";
   import { mount as svelteMount, unmount as svelteUnmount } from "svelte";
   import {
     blockCategories,
@@ -34,7 +33,7 @@
         Promise.resolve({ default: SchematicIsland }),
     },
     mount: (module: unknown, target: HTMLElement, props: unknown): unknown =>
-      svelteMount(module as never, {
+      svelteMount((module as { default: typeof SchematicIsland }).default, {
         target,
         props: props as Record<string, unknown>,
       }),
@@ -126,7 +125,7 @@ Edit this document on the left; switch to Preview to see the compilation.
           manifest: undefined,
         };
       }
-      const artifact = compilePublication(result.document, { registry });
+      const artifact = compilePublication(result.document);
       return {
         html: artifact.html,
         warnings: artifact.diagnostics.length,

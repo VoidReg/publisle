@@ -1,7 +1,6 @@
 name: Site
 
-# Builds and deploys publisle.xyz (GitHub Pages). Runs on main only when the
-# site, its content sources, or the packages it compiles against change.
+# Validate site changes in pull requests; deploy main to GitHub Pages.
 on:
   push:
     branches: [main]
@@ -13,6 +12,16 @@ on:
       - "packages/adapter-core/**"
       - ".github/workflows/site.yml"
       - "pnpm-lock.yaml"
+  pull_request:
+    paths:
+      - "sites/www/**"
+      - "docs/**"
+      - "packages/playground/**"
+      - "packages/adapter-astro/**"
+      - "packages/adapter-core/**"
+      - ".github/workflows/site.yml"
+      - "vitest.acceptance.config.ts"
+      - "pnpm-lock.yaml"
   workflow_dispatch:
 
 permissions:
@@ -21,7 +30,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -42,18 +51,25 @@ jobs:
         run: pnpm --filter @publisle/www check
       - name: Build
         run: pnpm --filter @publisle/www build
+      - name: Install browser
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Playground browser regression
+        run: pnpm exec vitest run --config vitest.acceptance.config.ts sites/www/tests/playground.acceptance.test.ts
       - name: Link check (internal links must resolve; known-flaky hosts ignored)
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
             --no-progress --max-retries 2 --offline
+            --root-dir '${{ github.workspace }}/sites/www/dist' --index-files index.html
             './sites/www/dist/**/*.html' --exclude-file .lycheeignore
           fail: true
       - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
         with:
           path: sites/www/dist
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:

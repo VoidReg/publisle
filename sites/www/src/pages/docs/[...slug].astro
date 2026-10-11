@@ -30,6 +30,7 @@ const next =
 const raw = docRawRoute(entry.id);
 const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${docRepoPath(entry.id)}`;
 const sectionLabel = entry.data.section === "guides" ? "Guides" : "Standards";
+const sectionHref = entry.data.section === "guides" ? "/docs#guides" : "/docs/standards";
 const jsonLd = [
   {
     "@context": "https://schema.org",
@@ -51,7 +52,7 @@ const jsonLd = [
         "@type": "ListItem",
         position: 3,
         name: sectionLabel,
-        item: `https://publisle.xyz/docs/${entry.data.section}`,
+        item: `https://publisle.xyz${sectionHref}`,
       },
       { "@type": "ListItem", position: 4, name: entry.data.title },
     ],
@@ -86,7 +87,7 @@ const jsonLd = [
         <div>
           <p class="font-display font-semibold"><a href="/docs" class="hover:text-accent">Docs</a></p>
           <p class="mt-2 text-muted">
-            <a href={`/docs/${entry.data.section}`} class="hover:text-accent">
+            <a href={sectionHref} class="hover:text-accent">
               {entry.data.section === "guides" ? "Guides" : "Standards"}
             </a>
           </p>
@@ -103,7 +104,7 @@ const jsonLd = [
         <span aria-hidden="true"> / </span>
         <a href="/docs" class="hover:text-accent">Docs</a>
         <span aria-hidden="true"> / </span>
-        <a href={`/docs/${entry.data.section}`} class="hover:text-accent">{sectionLabel}</a>
+        <a href={sectionHref} class="hover:text-accent">{sectionLabel}</a>
         <span aria-hidden="true"> / </span>
         <span aria-current="page" class="text-ink">{entry.data.title}</span>
       </nav>

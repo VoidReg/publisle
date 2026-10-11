@@ -139,7 +139,18 @@ export async function prepareRelease(
   // A completed GitHub release proves that registry consumer verification passed.
   const previousPath = join(root, ".release/plan.json");
   if (existsSync(previousPath)) {
-    const previous = await readReleasePlan(root);
+    const previous = JSON.parse(
+      await readFile(previousPath, "utf8"),
+    ) as ReleasePlan;
+    // The completed batch describes its own source snapshot. New packages may
+    // have joined the publish set since then; current-source validation applies
+    // to the new plan below, not this historical completion check.
+    validatePlan(
+      previous,
+      Object.entries(previous.versions).map(([name, version]) => ({
+        manifest: { name, version },
+      })),
+    );
     const release = JSON.parse(
       execFileSync(
         "gh",
