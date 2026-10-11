@@ -1,54 +1,62 @@
 # Distribution and release checklist
 
-Publisle is in beta. All 23 publishable packages ship at one coordinated version
-under the npm `beta` tag. Frozen contract version integers are independent of
-that version. Development and CI use Node.js ≥24 and pnpm
-11.x (currently pinned to 11.17.0). Publishing starts only when a maintainer
-manually activates the release workflow.
+Publisle packages have independent numeric `0.x.y` versions and publish under
+npm's `beta` tag. Contract version integers and compiler image recipes evolve
+independently. Development and CI use Node.js ≥24 and pnpm 11.17.0.
 
-## Release all npm packages from GitHub
+## Release pending npm package changes from GitHub
 
-1. Merge the changes to `main` and describe them under `Unreleased` in the
-   [changelog](../../CHANGELOG.md). Update contract revisions and the compiler
-   release record first if those independently versioned artifacts changed.
-2. Open **Actions → Release npm packages → Run workflow**, select `main`, and
-   enter the next coordinated beta version, for example `0.1.1` or `0.2.0`.
-   Versions must increase. The current beta policy accepts numeric `0.x.y`
-   versions other than the placeholder `0.0.0`.
-3. Follow **Validate and publish npm packages**, which the preparation workflow
-   starts automatically. Its URL is linked in the preparation run summary.
+1. Run `pnpm changeset`, select the changed packages, choose their bump levels,
+   and describe the changes. Commit the generated Changeset with the implementation.
+   During `0.x`, use a minor bump for breaking compatibility and a patch for
+   compatible fixes. Private examples are not released.
+2. Merge to `main`. Open **Actions → Release npm packages → Run workflow** and
+   select `main`. There is no shared version input: Changesets calculates each
+   package's next version and any necessary dependent releases. An empty plan
+   exits without committing or publishing.
+3. Follow **Validate and publish npm packages**, automatically dispatched against
+   the preparation commit. Publication remains explicitly initiated by step 2.
 
-The [preparation workflow](../../.github/workflows/npm-release.yml) updates all
-public package versions, exact internal dependency pins, package READMEs,
-Fourier showcase tarball references and the changelog. It refreshes the pnpm
-lockfile and commits the release metadata to `main`. Private root and example
-package versions and contract integers are not npm release versions.
-The showcase rehearsal regenerates its npm lockfile from the actual tarballs;
-the resulting lock and hashes are retained as distribution evidence.
+The [preparation workflow](../../.github/workflows/npm-release.yml) consumes pending
+Changesets, updates package versions and changelogs, package READMEs, showcase
+references, and the pnpm lockfile. It commits `.release/plan.json`, containing
+schema version 2, a unique batch ID, the complete package/version map, and the
+publication subset with old/new versions. Internal `workspace:^` dependencies
+become compatible npm ranges rather than requiring one shared exact version.
+A dependency update within an existing compatible range does not itself require
+republishing its consumers; incompatible ranges require dependent releases.
 
-The [publication workflow](../../.github/workflows/npm-publish.yml) runs on that
-new commit so npm provenance identifies the source containing the version bump.
-It requires the existing Check, Research export and Distribution gates to pass,
-then publishes the exact validated tarballs in dependency order. It verifies
-every public package index, `beta` tag, integrity value and downloaded SHA-256,
-then installs fresh registry-only Core and Research consumers, checks strict
-declarations and CLI isolation, and builds the complete Fourier showcase.
-Finally it creates `vVERSION` and a GitHub prerelease containing the tarballs,
-contract bundle and publication/consumer verification records. Overlapping
-publication runs are serialized.
+The [publication workflow](../../.github/workflows/npm-publish.yml) requires Check,
+Research export, and Distribution to pass. Release distribution tests combine the
+candidate tarballs with downloaded, integrity-checked npm tarballs for unchanged
+packages. Rebuilding unchanged packages cannot substitute for testing the actual
+published dependency graph. The workflow publishes only the planned subset in
+dependency order and verifies each package's own version, `beta` tag, integrity,
+and downloaded bytes. Fresh registry-only Core, Research, and showcase consumers
+then verify the resulting version map, declarations, CLI isolation, and Astro
+build with normal peer dependency validation.
 
-The workflow does not overwrite npm versions. It checks the entire batch for
-conflicts before uploading anything. If npm publishing or post-publication
-verification fails, use **Re-run failed jobs** on the original publication run.
-This preserves the original Distribution artifacts and restores the upload
-progress record. Already published versions are skipped only when their bytes
-match those artifacts. Do not rerun all jobs or rebuild artifacts after a partial
-publish: packed bytes can differ between builds, and npm versions are immutable.
-If preparation dispatch fails after its commit was pushed, run the publication
-workflow directly on `main` with that version and its full commit SHA; the
-workflow rejects any mismatch between the selected source and expected commit.
-If validation fails before publication, fix the source and dispatch a new
-publication run with the prepared version and the new full commit SHA.
+After successful verification, it creates tags such as
+`@publisle/adapter-astro@0.2.0` and a GitHub prerelease named for the
+`npm-release-RUN-ATTEMPT` batch. Evidence includes the validated tarballs, version
+map, contract bundle, publication record, and consumer report. Preparation and
+publication runs share a concurrency group. A new preparation is refused until
+the preceding batch has a completed, non-draft GitHub release.
+
+If publication fails, use **Re-run failed jobs** on its original run. Retained
+artifacts and upload progress allow matching published versions to be skipped;
+conflicting immutable versions fail the entire preflight before any upload.
+Do not rebuild artifacts after partial publication. If dispatch fails after the
+preparation commit was pushed, run `npm-publish.yml` on `main` with the full
+prepared commit SHA as `expected_commit`. If validation fails before any upload,
+fix the source and dispatch publication against the corrected commit. Never
+change planned versions or replace tarballs after an upload has been accepted.
+
+The first independent batch migrates 22 packages' dependency metadata:
+`adapter-astro` to `0.2.0` with Astro ≥7.2.8 within version 7, and the other 21
+packages with internal dependencies to `0.1.1`. `schema` remains at `0.1.0`.
+This is a one-time migration, not a requirement to release every package together.
+KaTeX security remediation remains deferred; its alerts are not dismissed.
 
 ### One-time npm authentication setup
 
@@ -109,22 +117,25 @@ deployment are available.
 
 The Distribution workflow retains the tarballs, dependency lock, source document,
 and executable consumer so failures can be reproduced. After all consumer checks
-pass, `release-manifest.json` records the coordinated version, dependency-derived
-publication order, SHA-256 of each exact tarball, built-in contract identities and
+pass, `release-manifest.json` records schema version 2, the complete package/version
+map, source commit, release batch ID and publication subset, SHA-256 of each exact
+tarball, built-in contract identities and
 digests, and current compiler release metadata. `contract-bundle.json` contains
 the corresponding offline contracts exported by the installed Core tarballs.
-The gate rejects placeholder or mixed package versions and incorrect
-internal dependency pins. This report proves packed-artifact validation;
+The gate accepts mixed package versions and rejects placeholder versions or
+incompatible internal dependency ranges. Ordinary distribution checks pack all
+local packages; release validation uses the committed plan and registry artifacts
+for unchanged packages. This report proves packed-artifact validation;
 publication and compiler registry availability remain separate checks. Set
 `PUBLISLE_DISTRIBUTION_ARTIFACTS` locally to choose the retained directory. From its
-`consumer/` directory, run `npm ci --ignore-scripts --legacy-peer-deps`,
+`consumer/` directory, run `npm ci --ignore-scripts`,
 then `node consumer.ts` and
 `node node_modules/@publisle/cli/dist/bin.js validate source.json`.
 
 ## Publish set and dependency order
 
-Publish all packages at the same chosen beta version. Within each tier, publish
-dependencies before consumers. A dependency order is:
+Publish only the planned packages, each at its own version. Within each tier,
+publish dependencies before consumers. A dependency order is:
 
 1. Core: `schema`, `contracts`, `core`, `block-sdk`, `blocks-core`,
    `blocks-technical`, `markdown`, `profiles`, `adapter-core`, the five framework
@@ -142,7 +153,7 @@ intentionally requires pnpm for workspace commands.
 
 ## Release rehearsal and operator checklist
 
-- Review the next coordinated beta version, lockfile and changelog;
+- Review the package-specific release plan, lockfile and changelogs;
   review compatibility and any changed contract digests. Never publish `0.0.0`.
 - Record the shipped contract version integers in the changelog. They are
   protocol revisions, independent of the npm version, and are never renumbered
