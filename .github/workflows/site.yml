@@ -1,0 +1,64 @@
+name: Site
+
+# Builds and deploys publisle.xyz (GitHub Pages). Runs on main only when the
+# site, its content sources, or the packages it compiles against change.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sites/www/**"
+      - "docs/**"
+      - "packages/playground/**"
+      - "packages/adapter-astro/**"
+      - "packages/adapter-core/**"
+      - ".github/workflows/site.yml"
+      - "pnpm-lock.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Check
+        run: pnpm --filter @publisle/www check
+      - name: Build
+        run: pnpm --filter @publisle/www build
+      - name: Link check (internal links must resolve; known-flaky hosts ignored)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress --max-retries 2 --offline
+            './sites/www/dist/**/*.html' --exclude-file .lycheeignore
+          fail: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sites/www/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
