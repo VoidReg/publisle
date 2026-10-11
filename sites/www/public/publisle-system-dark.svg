@@ -84,7 +84,7 @@
   <rect class="panel" x="20" y="20" width="1020" height="490" rx="16" />
   <text class="heading" x="48" y="58">Authoring / server / build</text>
   <rect class="panel" x="20" y="550" width="1020" height="180" rx="16" />
-  <text class="heading" x="48" y="582">Reader application — host-owned</text>
+  <text class="heading" x="48" y="582">Reader application: host-owned</text>
 
   <path class="edge" d="M 260 136 H 336" />
   <text class="edge-label" x="300" y="90">import / parse</text>

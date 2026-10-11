@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Package components are consumed through node_modules symlinks, which
-   Tailwind's automatic source detection ignores — register them explicitly. */
+   Tailwind's automatic source detection ignores; register them explicitly. */
 @source "../../../../packages/playground/src";
 
 @custom-variant dark {
@@ -240,11 +240,11 @@
   }
 
   .math-editor__preview {
-    @apply overflow-x-auto border-b border-line bg-raised px-4 py-3 text-lg;
+    @apply flex min-h-16 items-center overflow-x-auto border-b border-line bg-raised px-4 py-3 text-lg;
   }
 
   .math-editor[data-display="true"] .math-editor__preview {
-    @apply py-6 text-center text-xl;
+    @apply min-h-28 justify-center py-6 text-center text-xl;
   }
 
   .math-editor__error {

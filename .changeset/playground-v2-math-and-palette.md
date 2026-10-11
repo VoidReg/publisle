@@ -11,4 +11,5 @@ with selection wrapping and caret placement, `tokenizeMath`/`highlightMath`
 for syntax-highlight overlays, and `MathEditor`/`MathBlockEditor` Svelte
 components with live KaTeX preview. `BlockEditor` gains a selection ring,
 duplicate action, per-kind segment tint chips, and inline math segments that
-expand into a compact math editor.
+expand into a compact math editor. Palette labels are glyphs (α, ∑, ⎧⎨⎩) and
+`□` argument guides render as `\square` in the preview instead of erroring.

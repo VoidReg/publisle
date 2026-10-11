@@ -63,7 +63,9 @@
     const trimmed = value.trim();
     if (trimmed === "") return { html: "", error: "" };
     try {
-      const html = katex.renderToString(trimmed, {
+      // Render fill-me guides as visible squares instead of KaTeX errors.
+      const source = trimmed.replaceAll("□", "\\square ");
+      const html = katex.renderToString(source, {
         displayMode: display,
         throwOnError: true,
         strict: "ignore",

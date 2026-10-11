@@ -19,7 +19,7 @@ export interface DocSource {
   readonly repoPath: string;
 }
 
-/** repo/docs — resolves from the package working directory at build/dev time,
+/** repo/docs, resolved from the package working directory at build/dev time,
  * with the module-relative path as a fallback for direct Node usage. */
 function resolveDocsRoot(): string {
   const candidates = [

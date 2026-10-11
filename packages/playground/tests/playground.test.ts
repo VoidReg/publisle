@@ -21,6 +21,22 @@ describe("math palette data", () => {
     }
   });
 
+  it("labels are glyphs, not English words", () => {
+    // Palette buttons show the symbol itself; short operator words (lim,
+    // max, Aa) are allowed, but spelled-out names like "alpha" are not.
+    for (const tab of MATH_PALETTE_TABS) {
+      for (const snippet of tab.snippets) {
+        const glyphLike =
+          /\P{ASCII}/u.test(snippet.label) ||
+          /^[A-Za-z]{1,4}$/u.test(snippet.label);
+        expect(
+          glyphLike,
+          `label ${JSON.stringify(snippet.label)} (${snippet.name}) is not a glyph`,
+        ).toBe(true);
+      }
+    }
+  });
+
   it("tab ids are unique", () => {
     const ids = MATH_PALETTE_TABS.map((tab) => tab.id);
     expect(new Set(ids).size).toBe(ids.length);

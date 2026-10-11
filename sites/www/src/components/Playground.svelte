@@ -57,6 +57,13 @@ Edit this document on the left; switch to Preview to see the compilation.
   let selectedId = $state<string | undefined>(undefined);
   let paletteOpen = $state(false);
 
+  // $state does not deep-proxy the DocumentEditor class instance, so the
+  // block list must read `version` to re-render on editor mutations.
+  const blocks = $derived.by(() => {
+    void version;
+    return editor.document.blocks;
+  });
+
   const types = blockTypes();
   const labels = blockLabels();
   const descriptions = blockDescriptions();
@@ -106,14 +113,13 @@ Edit this document on the left; switch to Preview to see the compilation.
   }
 
   function addBlock(type: string): void {
-    const blocks = editor.document.blocks;
     const selectedIndex = blocks.findIndex(
       (block) => block.id === selectedId,
     );
     const insertAt =
       selectedIndex >= 0 ? selectedIndex + 1 : blocks.length;
     editor.addBlock(type, insertAt);
-    selectedId = blocks[insertAt]?.id;
+    selectedId = editor.document.blocks[insertAt]?.id;
     view = "edit";
     notice = undefined;
   }
@@ -212,7 +218,9 @@ Edit this document on the left; switch to Preview to see the compilation.
 <svelte:window onkeydown={onWindowKeydown} />
 
 <div class="flex h-full min-h-[70vh] flex-col gap-4">
-  <div class="flex flex-wrap items-center gap-2">
+  <div
+    class="sticky top-16 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg/95 px-2 py-2 backdrop-blur"
+  >
     <div
       class="flex overflow-hidden rounded-lg border border-line"
       role="tablist"
@@ -337,10 +345,10 @@ Edit this document on the left; switch to Preview to see the compilation.
   {#if view === "edit"}
     <section
       aria-label="Document editor"
-      class="max-h-[75vh] space-y-3 overflow-y-auto rounded-xl border border-line bg-surface p-4"
+      class="max-h-[75vh] space-y-4 overflow-y-auto rounded-xl border border-line bg-surface p-4"
     >
       {#if mode === "blocks"}
-        {#if editor.document.blocks.length === 0}
+        {#if blocks.length === 0}
           <p class="text-sm text-muted">
             No blocks. Press <kbd
               class="rounded border border-line bg-raised px-1 font-mono text-xs"
@@ -348,7 +356,7 @@ Edit this document on the left; switch to Preview to see the compilation.
             > or use “Add block”.
           </p>
         {:else}
-          {#each editor.document.blocks as block (block.id)}
+          {#each blocks as block (block.id)}
             {#if block.type === "publisle:math"}
               <MathBlockEditor
                 {block}

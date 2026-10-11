@@ -130,14 +130,14 @@
         aria-label="Search blocks"
         class="w-full border-b border-line bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted"
       />
-      <div class="max-h-[50vh] overflow-y-auto p-2">
+      <div class="grid max-h-[50vh] gap-y-1 overflow-y-auto p-2 sm:grid-cols-2">
         {#if flat.length === 0}
           <p class="px-2 py-6 text-center text-sm text-muted">
             No blocks match “{query}”.
           </p>
         {:else}
           {#each filtered as group (group.id)}
-            <p class="px-2 pb-1 pt-3 text-xs font-medium tracking-wide text-muted uppercase">
+            <p class="col-span-full px-2 pb-1 pt-3 text-xs font-medium tracking-wide text-muted uppercase">
               {group.label}
             </p>
             {#each group.entries as entry (entry.type)}
@@ -145,15 +145,12 @@
               <button
                 type="button"
                 data-active={flatIndex === active}
-                class="flex w-full items-baseline gap-3 rounded-lg px-3 py-2 text-left {flatIndex === active
+                class="flex w-full items-baseline gap-2 rounded-lg px-3 py-1.5 text-left {flatIndex === active
                   ? 'bg-surface ring-1 ring-accent/50'
                   : 'hover:bg-surface'}"
                 onclick={() => insert(entry.type)}
                 onmousemove={() => (active = flatIndex)}
               >
-                <span class="shrink-0 font-mono text-[10px] text-muted">
-                  ↑↓
-                </span>
                 <span class="min-w-0">
                   <span class="block text-sm font-medium">{entry.label}</span>
                   <span class="block truncate text-xs text-muted">

@@ -5,7 +5,7 @@ import { createRegistry } from "@publisle/core";
 import { docSources } from "./lib/docs-source";
 
 // The site's own documentation is loaded through Publisle's Markdown pipeline
-// and rendered with the production compiler — docs are the demo.
+// and rendered with the production compiler: docs are the demo.
 export const collections = {
   docs: defineCollection({
     loader: publisleDocsLoader(docSources(), {
