@@ -34,7 +34,10 @@ jobs:
           </fontconfig>
           XML
           sudo fc-cache -f
-      - run: pnpm cli setup compiler --build
+      # Validate the immutable compiler that the npm packages actually ship.
+      # Compiler builds have their own release workflow and verification gates.
+      - name: Install the published compiler pinned by the packages
+        run: pnpm cli setup compiler
       - name: Install checksum-pinned veraPDF
         run: |
           python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
