@@ -1,5 +1,11 @@
 # @publisle/playground
 
+## 0.2.1
+
+### Patch Changes
+
+- c984751: Use labeled multiline fields for inline segments and update the document as their text is edited.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "id": "npm-release-38179105740-1",
+  "id": "npm-release-38182495585-1",
   "versions": {
     "@publisle/adapter-astro": "0.2.0",
     "@publisle/adapter-core": "0.1.1",
@@ -14,7 +14,7 @@
     "@publisle/contracts": "0.1.1",
     "@publisle/core": "0.1.1",
     "@publisle/markdown": "0.1.1",
-    "@publisle/playground": "0.2.0",
+    "@publisle/playground": "0.2.1",
     "@publisle/profiles": "0.1.1",
     "@publisle/research": "0.1.1",
     "@publisle/schema": "0.1.0",
@@ -30,8 +30,8 @@
   "releases": [
     {
       "name": "@publisle/playground",
-      "oldVersion": "0.1.0",
-      "version": "0.2.0"
+      "oldVersion": "0.2.0",
+      "version": "0.2.1"
     }
   ]
 }
