@@ -264,7 +264,7 @@ Edit this document on the left; switch to Preview to see the compilation.
 
 <div class="flex h-full min-h-[70vh] flex-col gap-4">
   <div
-    class="sticky top-16 z-20 -mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg/95 px-2 py-2 backdrop-blur"
+    class="-mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg px-2 py-2"
   >
     <div
       class="flex overflow-hidden rounded-lg border border-line"

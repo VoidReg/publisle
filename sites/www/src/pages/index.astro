@@ -162,19 +162,19 @@ const packages = coreBlockDefinitions.length >= 0
       Quickstart
     </h2>
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
-      <div>
+      <div class="min-w-0">
         <p class="text-muted">
           Install the compiler and validate a document from the terminal:
         </p>
         <pre
-          class="mt-3 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>npm install -g @publisle/cli
+          class="mt-3 max-w-full overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>npm install -g @publisle/cli
 publisle build article.md --out dist/
 publisle export paper.md --to pdf --template ieee-journal</code></pre>
       </div>
-      <div>
+      <div class="min-w-0">
         <p class="text-muted">Or compile in-process with the Astro adapter:</p>
         <pre
-          class="mt-3 overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>import &#123; publisleLoader &#125; from "@publisle/adapter-astro";
+          class="mt-3 max-w-full overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>import &#123; publisleLoader &#125; from "@publisle/adapter-astro";
 
 export const collections = &#123;
   articles: defineCollection(&#123;
