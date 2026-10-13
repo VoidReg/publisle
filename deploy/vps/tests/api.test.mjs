@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Admission } from "../queue.mjs";
@@ -10,6 +10,7 @@ import { imageDestination, isPublicAddress, fetchImages } from "../images.mjs";
 import {
   createApi,
   checkReadiness,
+  cgroupSubtreePopulated,
   clientAddress,
   trustedProxyCheck,
 } from "../server.mjs";
@@ -243,6 +244,61 @@ test("client identity takes the rightmost untrusted forwarded hop", () => {
   assert.equal(trustedProxyCheck([])("172.18.0.5"), false);
   assert.equal(trustedProxyCheck(["172.16.0.0/12"])("172.31.255.255"), true);
   assert.equal(trustedProxyCheck(["172.16.0.0/12"])("172.32.0.1"), false);
+});
+
+test("readiness detects the delegated user-manager subtree", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "pdf-cgroup-test-"));
+  try {
+    const joinRelative = (...parts) => join(directory, ...parts);
+    await mkdir(joinRelative("user@999.service", "init.scope"), {
+      recursive: true,
+    });
+    await mkdir(
+      joinRelative("user@999.service", "app.slice", "docker.service"),
+      {
+        recursive: true,
+      },
+    );
+    // Nothing populated anywhere yet.
+    assert.equal(
+      await cgroupSubtreePopulated(joinRelative("user@999.service")),
+      false,
+    );
+    // Systemd places the manager in init.scope and the daemon deeper.
+    await writeFile(
+      joinRelative("user@999.service", "init.scope", "cgroup.procs"),
+      "6906\n",
+    );
+    assert.equal(
+      await cgroupSubtreePopulated(joinRelative("user@999.service")),
+      true,
+    );
+    await writeFile(
+      joinRelative("user@999.service", "init.scope", "cgroup.procs"),
+      "",
+    );
+    assert.equal(
+      await cgroupSubtreePopulated(joinRelative("user@999.service")),
+      false,
+    );
+    await writeFile(
+      joinRelative(
+        "user@999.service",
+        "app.slice",
+        "docker.service",
+        "cgroup.procs",
+      ),
+      "8001\n8002\n",
+    );
+    assert.equal(
+      await cgroupSubtreePopulated(joinRelative("user@999.service")),
+      true,
+    );
+    // Missing trees are simply unpopulated, never a crash.
+    assert.equal(await cgroupSubtreePopulated(joinRelative("absent")), false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test("API serves binary and legacy PDFs, CORS, capability and error states", async () => {

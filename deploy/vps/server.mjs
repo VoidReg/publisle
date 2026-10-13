@@ -1,6 +1,13 @@
 import { createServer } from "node:http";
 import { isIP } from "node:net";
-import { mkdtemp, writeFile, rm, readFile, chmod } from "node:fs/promises";
+import {
+  mkdtemp,
+  writeFile,
+  rm,
+  readFile,
+  chmod,
+  readdir,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -111,6 +118,32 @@ async function convertImages(image, directory, signal) {
   return converted;
 }
 
+// Systemd delegates user-manager processes into child scopes (init.scope,
+// app.slice), leaving the service cgroup's own procs file empty. Population is
+// therefore checked across the delegated subtree.
+export async function cgroupSubtreePopulated(directory) {
+  let procs = "";
+  try {
+    procs = await readFile(join(directory, "cgroup.procs"), "utf8");
+  } catch {
+    procs = "";
+  }
+  if (procs.trim().length > 0) return true;
+  let entries = [];
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+  for (const entry of entries)
+    if (
+      entry.isDirectory() &&
+      (await cgroupSubtreePopulated(join(directory, entry.name)))
+    )
+      return true;
+  return false;
+}
+
 export async function checkReadiness(image, allowUnverified = false) {
   if (!/^sha256:[a-f0-9]{64}$/.test(image ?? "")) return false;
   try {
@@ -155,7 +188,7 @@ export async function checkReadiness(image, allowUnverified = false) {
       readFile(`${base}/memory.max`, "utf8"),
       readFile(`${base}/memory.swap.max`, "utf8"),
       readFile(`${base}/cpu.max`, "utf8"),
-      readFile(`${base}/user@${process.getuid()}.service/cgroup.procs`, "utf8"),
+      cgroupSubtreePopulated(`${base}/user@${process.getuid()}.service`),
     ]);
     const [quota, period] = cpu.trim().split(/\s+/).map(Number);
     const info = JSON.parse(
@@ -171,7 +204,7 @@ export async function checkReadiness(image, allowUnverified = false) {
       Number(swap.trim()) === 0 &&
       quota > 0 &&
       quota / period <= 0.5 &&
-      runtime.trim().length > 0 &&
+      runtime === true &&
       info.CgroupVersion === "2" &&
       info.CgroupDriver === "systemd" &&
       info.SecurityOptions?.some((value) => value.includes("rootless")) === true
