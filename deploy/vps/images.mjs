@@ -202,7 +202,7 @@ export async function fetchImages(
     const file = `image-${assets.length}.input`;
     await writeFile(join(directory, file), result.bytes, {
       flag: "wx",
-      mode: 0o600,
+      mode: 0o644,
     });
     assets.push({ source, file, mime: result.mime });
   }

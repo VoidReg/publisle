@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { isIP } from "node:net";
-import { mkdtemp, writeFile, rm, readFile } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, readFile, chmod } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -32,7 +32,7 @@ async function convertImages(image, directory, signal) {
     await writeFile(
       join(directory, asset.file),
       output.subarray(line + 1, line + 1 + asset.bytes),
-      { flag: "wx", mode: 0o600 },
+      { flag: "wx", mode: 0o644 },
     );
     converted.push({ source: asset.source, file: asset.file });
     offset = line + 1 + asset.bytes;
@@ -114,13 +114,17 @@ export async function compileJob(request, signal, options) {
   const directory = await mkdtemp(
     join(options.jobDirectory ?? tmpdir(), "publisle-pdf-"),
   );
+  // Workers run with all capabilities dropped, so container-root cannot read
+  // owner-only files on rootful daemons. The 0700 job-directory parent still
+  // gates access; the mounted job directory itself must stay traversable.
+  await chmod(directory, 0o755);
   const deadline = AbortSignal.any([signal, AbortSignal.timeout(LIMITS.jobMs)]);
   const started = performance.now();
   let resultCode = "ok";
   try {
     await writeFile(join(directory, "request.json"), JSON.stringify(request), {
       flag: "wx",
-      mode: 0o600,
+      mode: 0o644,
     });
     const prepared = JSON.parse(
       (await runWorker(options.image, directory, "prepare", deadline)).toString(
@@ -142,14 +146,14 @@ export async function compileJob(request, signal, options) {
     await writeFile(
       join(directory, "prepared.json"),
       JSON.stringify({ document: prepared.document, assets }),
-      { flag: "wx", mode: 0o600 },
+      { flag: "wx", mode: 0o644 },
     );
     if (assets.length) {
       const converted = await convertImages(options.image, directory, deadline);
       await writeFile(
         join(directory, "prepared.json"),
         JSON.stringify({ document: prepared.document, assets: converted }),
-        { mode: 0o600 },
+        { mode: 0o644 },
       );
     }
     const output = await runWorker(
