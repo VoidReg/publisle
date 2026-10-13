@@ -43,7 +43,6 @@ if (process.argv.includes("--inside")) {
     ready: true,
     image,
     assetBase: "https://publisle.xyz/",
-    trustProxy: true,
     limits: { attempts: 50, queueSize: 2, queueMs: 30000, quotaMs: 600000 },
   });
   api.server.listen(0, "127.0.0.1");

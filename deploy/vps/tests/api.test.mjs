@@ -7,7 +7,12 @@ import { join } from "node:path";
 import { Admission } from "../queue.mjs";
 import { LIMITS, validateRequest } from "../limits.mjs";
 import { imageDestination, isPublicAddress, fetchImages } from "../images.mjs";
-import { createApi, checkReadiness } from "../server.mjs";
+import {
+  createApi,
+  checkReadiness,
+  clientAddress,
+  trustedProxyCheck,
+} from "../server.mjs";
 import { workerArguments } from "../worker.mjs";
 
 test("request contract restricts templates, engines and metadata", () => {
@@ -175,6 +180,69 @@ test("worker sandbox is immutable, bounded and has no network", async () => {
     assert.ok(args.includes(flag));
   assert.throws(() => workerArguments("latest", "test", "/tmp/job", "compile"));
   assert.equal(await checkReadiness("latest"), false);
+});
+
+test("client identity takes the rightmost untrusted forwarded hop", () => {
+  const isTrusted = trustedProxyCheck(["172.16.0.0/12", "fd00::1", "junk"]);
+  assert.equal(
+    clientAddress("203.0.113.7", undefined, isTrusted),
+    "203.0.113.7",
+  );
+  // A direct (untrusted) peer ignores forged forwarding headers entirely.
+  assert.equal(
+    clientAddress("203.0.113.7", "198.51.100.9", isTrusted),
+    "203.0.113.7",
+  );
+  assert.equal(
+    clientAddress("172.18.0.5", "198.51.100.9, 172.18.0.5", isTrusted),
+    "198.51.100.9",
+  );
+  // An undeclared intermediate hop is treated as the client (conservative);
+  // declaring every proxy hop restores the original visitor address.
+  assert.equal(
+    clientAddress("172.18.0.5", "203.0.113.1, 10.0.0.1", isTrusted),
+    "10.0.0.1",
+  );
+  assert.equal(
+    clientAddress(
+      "172.18.0.5",
+      "203.0.113.1, 10.0.0.1",
+      trustedProxyCheck(["172.16.0.0/12", "10.0.0.0/8"]),
+    ),
+    "203.0.113.1",
+  );
+  // Mapped peers normalize before the trust decision.
+  assert.equal(
+    clientAddress("::ffff:172.18.0.5", "198.51.100.9", isTrusted),
+    "198.51.100.9",
+  );
+  assert.equal(
+    clientAddress("::ffff:198.51.100.9", "203.0.113.1", isTrusted),
+    "198.51.100.9",
+  );
+  // Invalid entries are skipped, never adopted; a fully trusted chain falls
+  // back to the peer so limits cannot be bypassed.
+  assert.equal(
+    clientAddress("172.18.0.5", "not-an-address, 198.51.100.9", isTrusted),
+    "198.51.100.9",
+  );
+  assert.equal(
+    clientAddress(
+      "172.18.0.5",
+      "10.0.0.1, 172.18.0.5",
+      trustedProxyCheck(["172.16.0.0/12", "10.0.0.0/8"]),
+    ),
+    "172.18.0.5",
+  );
+  assert.equal(
+    clientAddress("fd00::1", "198.51.100.9", isTrusted),
+    "198.51.100.9",
+  );
+  assert.equal(trustedProxyCheck([])("127.0.0.1"), true);
+  assert.equal(trustedProxyCheck([])("::ffff:127.0.0.1"), true);
+  assert.equal(trustedProxyCheck([])("172.18.0.5"), false);
+  assert.equal(trustedProxyCheck(["172.16.0.0/12"])("172.31.255.255"), true);
+  assert.equal(trustedProxyCheck(["172.16.0.0/12"])("172.32.0.1"), false);
 });
 
 test("API serves binary and legacy PDFs, CORS, capability and error states", async () => {

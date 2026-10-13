@@ -24,13 +24,25 @@ if ! command -v node >/dev/null 2>&1 || ! node -e 'process.exit(Number(process.v
 fi
 node --version
 
-echo "==> Caddy (official repo)"
-if ! command -v caddy >/dev/null 2>&1; then
-  apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
-  apt-get update -qq
-  apt-get install -y -qq caddy
+echo "==> Edge reverse proxy"
+# A shared VPS may already serve 80/443 with another proxy (for example a
+# Dockerized nginx). Caddy is installed only when it already owns the edge or
+# the ports are free; otherwise integrate the API host into the existing proxy
+# manually and skip this section.
+EDGES_FREE=1
+if ss -ltn | awk '{print $4}' | grep -qE ':(80|443)$'; then EDGES_FREE=0; fi
+if command -v caddy >/dev/null 2>&1 || [[ "$EDGES_FREE" == 1 ]]; then
+  if ! command -v caddy >/dev/null 2>&1; then
+    apt-get install -y -qq debian-keyring debian-archive-keyring apt-transport-https
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+    apt-get update -qq
+    apt-get install -y -qq caddy
+  fi
+  caddy --version
+else
+  echo "Ports 80/443 already serve an existing edge without Caddy; skipping Caddy installation."
+  echo "Proxy api.publisle.xyz to 127.0.0.1:8787 (or PDF_BIND) with 256KiB request bodies and >=220s response timeout."
 fi
 
 echo "==> Rootless runtime prerequisites"
@@ -83,23 +95,25 @@ ENV
   chmod 0640 /etc/publisle-api.env
 fi
 
-echo "==> Caddy configuration"
-install -d /etc/caddy/conf.d
-# Keep other hosted services and existing firewall rules intact.
-if ! grep -q 'api\.publisle\.xyz' /etc/caddy/Caddyfile 2>/dev/null; then
-  install -m 0644 "$SCRIPT_DIR/Caddyfile" /etc/caddy/conf.d/publisle-api.caddy
-  if ! grep -q '^import /etc/caddy/conf.d/\*.caddy' /etc/caddy/Caddyfile; then
-    echo 'import /etc/caddy/conf.d/*.caddy' >> /etc/caddy/Caddyfile
+if command -v caddy >/dev/null 2>&1; then
+  echo "==> Caddy configuration"
+  install -d /etc/caddy/conf.d
+  # Keep other hosted services and existing firewall rules intact.
+  if ! grep -q 'api\.publisle\.xyz' /etc/caddy/Caddyfile 2>/dev/null; then
+    install -m 0644 "$SCRIPT_DIR/Caddyfile" /etc/caddy/conf.d/publisle-api.caddy
+    if ! grep -q '^import /etc/caddy/conf.d/\*.caddy' /etc/caddy/Caddyfile; then
+      echo 'import /etc/caddy/conf.d/*.caddy' >> /etc/caddy/Caddyfile
+    fi
+  else
+    echo "Existing API host found; review its proxy and timeouts against the supplied Caddyfile."
   fi
-else
-  echo "Existing API host found; review its proxy and timeouts against the supplied Caddyfile."
+  caddy validate --config /etc/caddy/Caddyfile
 fi
-caddy validate --config /etc/caddy/Caddyfile
 
 echo "==> Start disabled API"
 systemctl daemon-reload
 systemctl enable --now publisle-api.service
-systemctl reload caddy
+if command -v caddy >/dev/null 2>&1; then systemctl reload caddy; fi
 curl -fsS http://127.0.0.1:8787/health
 echo
 echo "==> Load the worker image into publisle's rootless runtime, verify aggregate limits, then configure PDF_WORKER_IMAGE. PDF remains disabled on first installation."

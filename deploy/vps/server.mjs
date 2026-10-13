@@ -13,6 +13,77 @@ import { runWorker } from "./worker.mjs";
 
 const execute = promisify(execFile);
 
+const loopback = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+// Dual-stack sockets present IPv4 peers in mapped form; normalize so exact and
+// CIDR trust checks apply to one canonical spelling.
+export function normalizeAddress(address) {
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/u.exec(address ?? "");
+  return mapped ? mapped[1] : (address ?? "");
+}
+
+function ipv4Value(address) {
+  const octets = address.split(".");
+  if (octets.length !== 4) return undefined;
+  let value = 0;
+  for (const octet of octets) {
+    if (!/^\d{1,3}$/u.test(octet)) return undefined;
+    const number = Number(octet);
+    if (number > 255) return undefined;
+    value = value * 256 + number;
+  }
+  return value;
+}
+
+// Trust is explicit: exact IP entries (any family) plus IPv4 CIDR ranges, which
+// cover Docker bridge networks. Unparsable entries are ignored, never trusted.
+export function trustedProxyCheck(entries) {
+  const exact = new Set(loopback);
+  const ranges = [];
+  for (const entry of entries ?? []) {
+    const [base, bits] = String(entry).split("/");
+    if (isIP(base) === 6) exact.add(base);
+    else if (isIP(base) === 4) {
+      const size = bits === undefined ? 32 : Number(bits);
+      const network = ipv4Value(base);
+      if (
+        network === undefined ||
+        !Number.isInteger(size) ||
+        size < 0 ||
+        size > 32
+      )
+        continue;
+      const mask = size === 0 ? 0 : (0xffffffff << (32 - size)) >>> 0;
+      ranges.push({ network: (network & mask) >>> 0, mask });
+    }
+  }
+  return (address) => {
+    const normalized = normalizeAddress(address);
+    if (exact.has(normalized)) return true;
+    const value = isIP(normalized) === 4 ? ipv4Value(normalized) : undefined;
+    return (
+      value !== undefined &&
+      ranges.some(({ network, mask }) => (value & mask) >>> 0 === network)
+    );
+  };
+}
+
+// The client is the rightmost untrusted X-Forwarded-For entry; a direct peer is
+// used when it is not itself a trusted proxy. Invalid entries are skipped, and
+// an all-trusted chain falls back to the peer so limits cannot be bypassed by
+// header forgery.
+export function clientAddress(peer, forwarded, isTrusted) {
+  const normalized = normalizeAddress(peer) || "unknown";
+  if (!isTrusted(normalized)) return normalized;
+  if (typeof forwarded === "string")
+    for (const part of forwarded.split(",").reverse()) {
+      const candidate = normalizeAddress(part.trim());
+      if (candidate && isIP(candidate) !== 0 && !isTrusted(candidate))
+        return candidate;
+    }
+  return normalized;
+}
+
 async function convertImages(image, directory, signal) {
   const output = await runWorker(image, directory, "images", signal);
   const converted = [];
@@ -196,6 +267,7 @@ export async function compileJob(request, signal, options) {
 
 export function createApi(options = {}) {
   const admission = new Admission(options.limits ?? LIMITS);
+  const isTrustedProxy = trustedProxyCheck(options.trustedProxies);
   const allowedOrigins = new Set(options.origins ?? ["https://publisle.xyz"]);
   let ready = options.ready ?? false;
   const controllers = new Set();
@@ -309,18 +381,11 @@ export function createApi(options = {}) {
               "Editor source exceeds 256 KiB.",
               413,
             );
-          let ip = request.socket.remoteAddress ?? "unknown";
-          if (
-            options.trustProxy &&
-            ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(ip)
-          ) {
-            const forwarded = request.headers["x-forwarded-for"];
-            const address =
-              typeof forwarded === "string"
-                ? forwarded.split(",").at(-1)?.trim()
-                : undefined;
-            if (address && isIP(address)) ip = address;
-          }
+          let ip = clientAddress(
+            request.socket.remoteAddress,
+            request.headers["x-forwarded-for"],
+            isTrustedProxy,
+          );
           release = await admission.acquire(ip, controller.signal);
           const chunks = [];
           let size = 0;
@@ -414,16 +479,22 @@ if (
   const enabled = process.env.PDF_ENABLED === "true";
   const image = process.env.PDF_WORKER_IMAGE;
   const localQa = process.env.PDF_LOCAL_QA === "true";
+  const bind = process.env.PDF_BIND ?? "127.0.0.1";
+  if (isIP(bind) === 0)
+    throw new Error("PDF_BIND must be an IP address for the API listener.");
   const options = {
     image,
     assetBase: process.env.PDF_ASSET_BASE ?? "https://publisle.xyz/",
     jobDirectory: process.env.PDF_JOB_DIRECTORY,
-    trustProxy: true,
+    trustedProxies: (process.env.PDF_TRUST_PROXY ?? "")
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean),
     origins: (process.env.PDF_ORIGINS ?? "https://publisle.xyz").split(","),
     ready: enabled && (await checkReadiness(image, localQa)),
   };
   const api = createApi(options);
-  api.server.listen(Number(process.env.PORT ?? 8787), "127.0.0.1", () =>
+  api.server.listen(Number(process.env.PORT ?? 8787), bind, () =>
     console.log(`Publisle API ready (PDF: ${options.ready})`),
   );
   const timer = setInterval(() => {

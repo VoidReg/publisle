@@ -115,6 +115,18 @@ PDF_ORIGINS=https://publisle.xyz
 PDF_ASSET_BASE=https://publisle.xyz/
 ```
 
+When the public edge is another reverse proxy that cannot reach loopback (for
+example a Dockerized nginx), also set `PDF_BIND` to an RFC1918 address on this
+host, such as the Docker bridge gateway, and declare that proxy in
+`PDF_TRUST_PROXY` (comma-separated IPs or IPv4 CIDRs). The API then serves on
+`PDF_BIND` instead of loopback and derives the client identity for its
+per-IP admission limits from the rightmost untrusted `X-Forwarded-For` entry.
+Forward the original visitor address (`proxy_set_header X-Forwarded-For
+$proxy_add_x_forwarded_for;`), keep body caps at 256 KiB and response timeouts
+at or above 220 seconds, and never expose `PDF_BIND` to the public internet.
+The installer skips Caddy when 80/443 already serve a non-Caddy edge; integrate
+the API host into that proxy manually.
+
 Preserve the installer's `HOME`, `XDG_RUNTIME_DIR` and `DOCKER_HOST` values.
 Restart `publisle-api` and verify `/health` reports `services.pdf=true`. Readiness
 checks the report, image availability, rootless runtime, cgroup v2 and aggregate
