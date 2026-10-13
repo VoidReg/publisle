@@ -206,7 +206,10 @@ export async function checkReadiness(image, allowUnverified = false) {
       quota / period <= 0.5 &&
       runtime === true &&
       info.CgroupVersion === "2" &&
-      info.CgroupDriver === "systemd" &&
+      // Both rootless cgroup drivers keep containers inside the delegated
+      // daemon subtree; the populated-subtree check above is what actually
+      // proves slice containment.
+      ["systemd", "cgroupfs", "none"].includes(info.CgroupDriver) === true &&
       info.SecurityOptions?.some((value) => value.includes("rootless")) === true
     );
   } catch {

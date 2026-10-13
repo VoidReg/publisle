@@ -64,6 +64,12 @@ if ! awk -F: '$1 == "publisle" { found=1 } END { exit !found }' /etc/subuid; the
   usermod --add-subuids "$SUBID_START-$((SUBID_START + 65535))" --add-subgids "$SUBID_START-$((SUBID_START + 65535))" publisle
 fi
 install -m 0644 "$SCRIPT_DIR/publisle-pdf.slice" /etc/systemd/system/publisle-pdf.slice
+# Rootless containers are placed by runc directly inside the delegated daemon
+# subtree; the systemd cgroup driver would require polkit grants for the
+# daemon's non-login scope creation on stricter distributions.
+install -d -o publisle -g publisle -m 0755 /var/lib/publisle-runtime/.config/docker
+install -o publisle -g publisle -m 0644 /dev/null /var/lib/publisle-runtime/.config/docker/daemon.json
+printf '%s\n' '{"exec-opts": ["native.cgroupdriver=cgroupfs"]}' > /var/lib/publisle-runtime/.config/docker/daemon.json
 install -d "/etc/systemd/system/user@$SERVICE_UID.service.d"
 cat > "/etc/systemd/system/user@$SERVICE_UID.service.d/publisle-pdf.conf" <<'UNIT'
 [Service]
