@@ -59,6 +59,18 @@ export function renderLatexArticle(
     cjk: context.fonts?.["cjk"] ?? "FandolSong",
     math: context.fonts?.["math"] ?? "TeX Gyre Termes Math",
   };
+  // Loading an unused CJK family materializes large font tables in LuaTeX.
+  // Include generated citation text as well as authored content in this check.
+  const scriptText = JSON.stringify([
+    article,
+    context.bibliography,
+    context.citations,
+  ]);
+  const needsCjk = /[\p{Script=Han}\u3000-\u303f\uff00-\uffef]/u.test(
+    scriptText,
+  );
+  const needsArabic =
+    profile.direction === "rtl" || /\p{Script=Arabic}/u.test(scriptText);
   for (const font of Object.values(fonts))
     if (!/^[\p{L}\p{N} .-]+$/u.test(font))
       throw new Error(
@@ -283,8 +295,8 @@ export function renderLatexArticle(
 \\setmathfont{${fonts.math}}
 \\usepackage[bidi=basic]{babel}
 ${profile.direction === "rtl" ? "\\babelprovide[import]{english}\n\\babelprovide[import,main]{arabic}" : "\\babelprovide[import,main]{english}\n\\babelprovide[import]{arabic}"}
-\\babelfont[arabic]{rm}{${fonts.arabic}}
-\\newfontfamily\\cjkfont{${fonts.cjk}}
+${needsArabic ? `\\babelfont[arabic]{rm}{${fonts.arabic}}` : ""}
+${needsCjk ? `\\newfontfamily\\cjkfont{${fonts.cjk}}` : ""}
 `
       : "\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n";
   const authors = article.authors.map((name) => text(name)).join(", ");
@@ -333,7 +345,7 @@ ${profile.preamble ?? ""}
 ${profile.frontmatter ? profile.frontmatter(abstract.join("\n\n"), article, text) : `\\maketitle\n\\begin{abstract}\n${abstract.join("\n\n")}\n\\end{abstract}`}
 ${profile.keywords?.(article.subjects ?? [], text) ?? ""}
 ${body.join("\n\n")}
-${profile.bibliographyStyle ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}`}
+${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : "") : `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}`}
 \\end{document}
 `;
   return {

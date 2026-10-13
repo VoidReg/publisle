@@ -163,8 +163,20 @@ export function attachPublication(
     dispose() {
       if (disposed) return;
       disposed = true;
-      for (const controller of controllers) controller.destroy();
-      if (attachments.get(root)?.handle === handle) attachments.delete(root);
+      const errors: unknown[] = [];
+      try {
+        for (const controller of controllers) {
+          try {
+            controller.destroy();
+          } catch (error) {
+            errors.push(error);
+          }
+        }
+      } finally {
+        if (attachments.get(root)?.handle === handle) attachments.delete(root);
+      }
+      if (errors.length)
+        throw new AggregateError(errors, "Publication cleanup failed.");
     },
   };
   attachments.set(root, { key: artifact.identity, handle });

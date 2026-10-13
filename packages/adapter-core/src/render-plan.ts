@@ -74,7 +74,10 @@ function renderMath(
 }
 
 function safeUrl(url: string): string | undefined {
-  const normalized = url.trim().toLowerCase();
+  // Conservative superset of browser URL preprocessing, shared with Python.
+  // Browsers remove embedded TAB/LF/CR before identifying a scheme.
+  // eslint-disable-next-line no-control-regex -- deliberately remove URL control characters
+  const normalized = url.replace(/[\u0000-\u0020]/gu, "").toLowerCase();
   return /^(?:javascript|vbscript|data):/u.test(normalized) ? undefined : url;
 }
 

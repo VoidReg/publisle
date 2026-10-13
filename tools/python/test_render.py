@@ -18,6 +18,14 @@ def normalize_mathml(mathml_string):
 
 
 class IndependentRendering(unittest.TestCase):
+    def test_shared_adversarial_urls(self):
+        fixtures = json.loads((ROOT / "packages/contracts/fixtures/unsafe-urls.json").read_text())
+        for item in fixtures:
+            with self.subTest(url=item["url"]):
+                source = {"schemaVersion": 1, "blocks": [{"id": "url", "type": "publisle:paragraph", "schemaVersion": 1, "data": {"content": [{"type": "link", "url": item["url"], "children": [{"type": "text", "value": "Link"}]}]}}]}
+                result = render_document(source)
+                self.assertEqual('href=""' not in result["html"], item["safe"])
+
     def test_shared_portable_fixture(self):
         source = json.loads((ROOT / "packages/contracts/fixtures/static-rendering.json").read_text())
         result = render_document(source, "one")

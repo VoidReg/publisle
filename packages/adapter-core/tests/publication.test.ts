@@ -308,6 +308,52 @@ describe("publication artifact", () => {
     ).toBe("hydrate");
   });
 
+  it("disposes every island after multiple host failures and permits reattachment", async () => {
+    const publication = compilePublication(preparedArticle());
+    const island = publication.islands[0]!;
+    const root = new ElementStub();
+    root.append(islandTree(island.key));
+    root.append(islandTree(island.key));
+    const mount = vi.fn(() => ({}));
+    const unmount = vi.fn(() => {
+      throw new Error("host cleanup failed");
+    });
+    const environment = {
+      implementations: {
+        "publisle:interactive-schematic": () => Promise.resolve({}),
+      },
+      mount,
+      unmount,
+    };
+    const handle = attachPublication(
+      root as unknown as HTMLElement,
+      publication,
+      environment,
+    );
+    for (const section of root.children)
+      section.listeners.get("click")?.({
+        target: section.children[2],
+      } as unknown as Event);
+    await vi.waitFor(() => expect(mount).toHaveBeenCalledTimes(2));
+    expect(() => handle.dispose()).toThrow(AggregateError);
+    expect(unmount).toHaveBeenCalledTimes(2);
+    expect(
+      root.children.every(
+        (section) =>
+          section.children[0]?.hidden === false &&
+          section.children[1]?.hidden === true,
+      ),
+    ).toBe(true);
+    expect(() => handle.dispose()).not.toThrow();
+    const replacement = attachPublication(
+      root as unknown as HTMLElement,
+      publication,
+      environment,
+    );
+    expect(replacement).not.toBe(handle);
+    replacement.dispose();
+  });
+
   it("retries a rejected shared implementation only on a new activation", async () => {
     const publication = compilePublication(preparedArticle());
     const island = publication.islands[0];

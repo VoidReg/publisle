@@ -54,6 +54,61 @@ class ElementStub {
 }
 
 describe("createIslandController", () => {
+  it("retries failed visible activation only after viewport re-entry", async () => {
+    let notify: IntersectionObserverCallback = () => undefined;
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          notify = callback;
+        }
+        observe() {
+          /* test controls visibility */
+        }
+        disconnect = disconnect;
+      },
+    );
+    try {
+      const root = new ElementStub();
+      const fallback = new ElementStub();
+      const load = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockResolvedValue({});
+      const mount = vi.fn(() => ({}));
+      const controller = createIslandController({
+        root: root as unknown as HTMLElement,
+        fallback: fallback as unknown as HTMLElement,
+        activation: "visible",
+        props: {},
+        load,
+        mount,
+        unmount: vi.fn(),
+      });
+      const visible = (value: boolean) =>
+        notify(
+          [{ isIntersecting: value } as IntersectionObserverEntry],
+          {} as IntersectionObserver,
+        );
+      visible(true);
+      await vi.waitFor(() =>
+        expect(fallback.attrs.get("data-publisle-status")).toBe("failed"),
+      );
+      expect(disconnect).not.toHaveBeenCalled();
+      visible(true);
+      visible(true);
+      expect(load).toHaveBeenCalledOnce();
+      visible(false);
+      visible(true);
+      await vi.waitFor(() => expect(mount).toHaveBeenCalledOnce());
+      expect(disconnect).toHaveBeenCalledOnce();
+      controller.destroy();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("coalesces overlapping activation and destroys a mounted instance only once", async () => {
     const root = new ElementStub();
     const fallback = new ElementStub();

@@ -99,25 +99,59 @@ function publicationAttributes(
   return result;
 }
 
-function readAttributes(source: string): Map<string, string> {
-  const attributes = new Map<string, string>();
-  const pattern =
-    /([^\s=/><]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/gu;
-  for (const match of source.matchAll(pattern)) {
-    const name = match[1];
-    if (!name) continue;
-    const value = match[2] ?? match[3] ?? match[4] ?? "";
-    attributes.set(name, value);
-  }
-  return attributes;
+interface AttributeToken {
+  readonly name: string;
+  readonly value: string;
+  readonly start: number;
+  readonly end: number;
 }
 
-function writeAttributes(attributes: ReadonlyMap<string, string>): string {
-  let result = "";
-  for (const [name, value] of attributes) {
-    result += ` ${name}="${escapeAttribute(value)}"`;
+// Only changed placement references are decoded. These are emitted by our
+// serializer, which uses the five XML entities; numeric references are supported
+// as well. All unrelated authored HTML remains byte-for-byte unchanged.
+function decodeReference(value: string): string {
+  const entities: Record<string, string> = {
+    amp: "&",
+    quot: '"',
+    apos: "'",
+    lt: "<",
+    gt: ">",
+  };
+  return value.replace(
+    /&(#x[0-9a-f]+|#[0-9]+|amp|quot|apos|lt|gt);/giu,
+    (source, entity: string) => {
+      if (!entity.startsWith("#"))
+        return entities[entity.toLowerCase()] ?? source;
+      const point =
+        entity[1]?.toLowerCase() === "x"
+          ? Number.parseInt(entity.slice(2), 16)
+          : Number(entity.slice(1));
+      return point > 0 &&
+        point <= 0x10ffff &&
+        !(point >= 0xd800 && point <= 0xdfff)
+        ? String.fromCodePoint(point)
+        : "\uFFFD";
+    },
+  );
+}
+
+function readAttributes(tag: string): AttributeToken[] {
+  if (!/^<[A-Za-z]/u.test(tag)) return [];
+  const nameEnd = tag.search(/[\s/>]/u);
+  if (nameEnd < 0) return [];
+  const tokens: AttributeToken[] = [];
+  const pattern =
+    /([^\s=/><]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/gu;
+  const source = tag.slice(nameEnd, tag.endsWith("/>") ? -2 : -1);
+  for (const match of source.matchAll(pattern)) {
+    tokens.push({
+      name: (match[1] ?? "").toLowerCase(),
+      value: match[2] ?? match[3] ?? match[4] ?? "",
+      start: nameEnd + match.index,
+      end: nameEnd + match.index + match[0].length,
+    });
   }
-  return result;
+  return tokens;
 }
 
 /** Assign placement ids from recorded attributes. This walks tags, not document text. */
@@ -125,33 +159,53 @@ export function instantiateHtml(html: string, instanceId: string): string {
   if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/u.test(instanceId))
     throw new Error("Placement ID must be a bounded safe host identifier.");
   const generated = new Set<string>();
-  for (let offset = 0; offset < html.length;) {
-    const start = html.indexOf("<", offset);
-    if (start < 0) break;
-    const end = tagEnd(html, start);
-    const tag = html.slice(start, end + 1);
-    const id = /\bdata-publisle-id="([^"]*)"/u.exec(tag)?.[1];
-    if (id !== undefined) generated.add(id);
-    offset = end + 1;
+  for (const { tag } of htmlTags(html)) {
+    const rawId = readAttributes(tag).find(
+      (token) => token.name === "data-publisle-id",
+    )?.value;
+    if (rawId !== undefined) generated.add(decodeReference(rawId));
   }
   let result = "";
-  let index = 0;
-  while (index < html.length) {
-    const start = html.indexOf("<", index);
-    if (start === -1) {
-      result += html.slice(index);
-      break;
-    }
-    result += html.slice(index, start);
+  let offset = 0;
+  for (const { start, end, tag } of htmlTags(html)) {
+    result +=
+      html.slice(offset, start) + rewriteTag(tag, instanceId, generated);
+    offset = end + 1;
+  }
+  return result + html.slice(offset);
+}
+
+function* htmlTags(
+  html: string,
+): Generator<{ start: number; end: number; tag: string }> {
+  let offset = 0;
+  while (offset < html.length) {
+    const start = html.indexOf("<", offset);
+    if (start < 0) return;
     const end = tagEnd(html, start);
     const tag = html.slice(start, end + 1);
-    result += rewriteTag(tag, instanceId, generated);
-    index = end + 1;
+    yield { start, end, tag };
+    offset = end + 1;
+    const raw = /^<(script|style|textarea|title)(?:\s|>)/iu.exec(tag)?.[1];
+    if (raw) {
+      const closing = new RegExp(`</${raw}\\s*>`, "giu");
+      closing.lastIndex = offset;
+      const match = closing.exec(html);
+      if (!match) return;
+      offset = match.index;
+    }
   }
-  return result;
 }
 
 function tagEnd(html: string, start: number): number {
+  if (html.startsWith("<![CDATA[", start)) {
+    const end = html.indexOf("]]>", start + 9);
+    return end < 0 ? html.length - 1 : end + 2;
+  }
+  if (html.startsWith("<!--", start)) {
+    const end = html.indexOf("-->", start + 4);
+    return end < 0 ? html.length - 1 : end + 2;
+  }
   let quote = "";
   for (let index = start + 1; index < html.length; index += 1) {
     const character = html[index] ?? "";
@@ -175,18 +229,15 @@ function rewriteTag(
 ): string {
   if (!tag.startsWith("<") || tag.startsWith("</") || tag.startsWith("<!"))
     return tag;
-  const nameEnd = tag.search(/[\s/>]/u);
-  const tagName = tag.slice(1, nameEnd === -1 ? undefined : nameEnd);
-  const attributeSource = tag.slice(
-    tagName.length + 1,
-    tag.endsWith("/>") ? -2 : -1,
+  const tokens = readAttributes(tag);
+  const attributes = new Map(
+    tokens.map((token) => [token.name, decodeReference(token.value)]),
   );
-  const attributes = readAttributes(attributeSource);
+  const changes = new Map<string, string>();
   const localId = attributes.get("data-publisle-id");
-  if (localId !== undefined) attributes.set("id", `${instanceId}-${localId}`);
+  if (localId !== undefined) changes.set("id", `${instanceId}-${localId}`);
   const localRef = attributes.get("data-publisle-ref");
-  if (localRef !== undefined)
-    attributes.set("href", `#${instanceId}-${localRef}`);
+  if (localRef !== undefined) changes.set("href", `#${instanceId}-${localRef}`);
   for (const name of [
     "aria-labelledby",
     "aria-describedby",
@@ -202,20 +253,43 @@ function rewriteTag(
     "form",
   ]) {
     const value = attributes.get(name);
-    if (value !== undefined)
-      attributes.set(
-        name,
-        value
-          .split(/\s+/u)
-          .map((id) => (generated.has(id) ? `${instanceId}-${id}` : id))
-          .join(" "),
-      );
+    if (value !== undefined) {
+      const rewritten = value
+        .split(/\s+/u)
+        .map((id) => (generated.has(id) ? `${instanceId}-${id}` : id))
+        .join(" ");
+      if (rewritten !== value) changes.set(name, rewritten);
+    }
   }
   for (const name of ["href", "xlink:href"]) {
     const value = attributes.get(name);
-    if (value?.startsWith("#") && generated.has(value.slice(1)))
-      attributes.set(name, `#${instanceId}-${value.slice(1)}`);
+    if (
+      !changes.has(name) &&
+      value?.startsWith("#") &&
+      generated.has(value.slice(1))
+    )
+      changes.set(name, `#${instanceId}-${value.slice(1)}`);
   }
-  const closing = tag.endsWith("/>") ? " />" : ">";
-  return `<${tagName}${writeAttributes(attributes)}${closing}`;
+  let result = "";
+  let offset = 0;
+  for (const token of tokens) {
+    const value = changes.get(token.name);
+    if (value === undefined) continue;
+    result +=
+      tag.slice(offset, token.start) +
+      `${token.name}="${escapeAttribute(value)}"`;
+    offset = token.end;
+  }
+  result += tag.slice(offset);
+  const added = [...changes].filter(([name]) => !attributes.has(name));
+  if (added.length) {
+    const end = result.length - (result.endsWith("/>") ? 2 : 1);
+    result =
+      result.slice(0, end) +
+      added
+        .map(([name, value]) => ` ${name}="${escapeAttribute(value)}"`)
+        .join("") +
+      result.slice(end);
+  }
+  return result;
 }
