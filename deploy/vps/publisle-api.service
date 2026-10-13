@@ -21,7 +21,9 @@ RestartSec=2
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=true
+# /run/user must stay visible for the rootless Docker socket; write access to
+# home directories is not required.
+ProtectHome=read-only
 PrivateTmp=true
 PrivateDevices=true
 ProtectKernelTunables=true

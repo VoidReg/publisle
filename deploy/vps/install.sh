@@ -114,6 +114,7 @@ echo "==> Start disabled API"
 systemctl daemon-reload
 systemctl enable --now publisle-api.service
 if command -v caddy >/dev/null 2>&1; then systemctl reload caddy; fi
-curl -fsS http://127.0.0.1:8787/health
+# The service needs a moment to bind; retry the readiness endpoint.
+curl -fsS --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8787/health
 echo
 echo "==> Load the worker image into publisle's rootless runtime, verify aggregate limits, then configure PDF_WORKER_IMAGE. PDF remains disabled on first installation."
