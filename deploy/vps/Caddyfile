@@ -3,12 +3,19 @@
 api.publisle.xyz {
 	encode zstd gzip
 
-	# Basic abuse guard; tighten with rate limits when PDF lands.
+	# Admission, quotas and streaming body limits are enforced by the API.
+	request_body {
+		max_size 256KiB
+	}
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
-	reverse_proxy 127.0.0.1:8787
+	reverse_proxy 127.0.0.1:8787 {
+		transport http {
+			response_header_timeout 220s
+		}
+	}
 }

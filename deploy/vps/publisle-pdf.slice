@@ -1,0 +1,9 @@
+[Unit]
+Description=Aggregate budget for Publisle PDF API, runtime and compilation
+
+[Slice]
+CPUQuota=50%
+MemoryAccounting=true
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=160

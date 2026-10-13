@@ -33,6 +33,8 @@ jobs:
 
       - run: pnpm test:python
 
+      - run: pnpm test:pdf-service
+
       - run: pnpm test:conformance:renderer
 
       - run: pnpm exec playwright-core install --with-deps chromium

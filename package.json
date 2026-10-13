@@ -30,6 +30,7 @@
     "generate:citations": "node tools/generate-citation-corpus.ts --write && prettier --write packages/contracts/fixtures/citations.json",
     "check:citations": "node tools/generate-citation-corpus.ts",
     "test:python": "python3 -B -m unittest discover -s tools/python -v",
+    "test:pdf-service": "node --test deploy/vps/tests/*.test.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:research": "vitest run --config vitest.research.config.ts",
     "test:pdf-ua": "vitest run --config vitest.pdf-ua.config.ts",

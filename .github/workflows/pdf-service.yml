@@ -1,0 +1,50 @@
+name: Internal website PDF service
+
+on:
+  pull_request:
+    paths:
+      - "deploy/vps/**"
+      - "packages/pdf-service/**"
+      - "packages/research/**"
+      - "packages/template-*/**"
+      - "sites/www/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/pdf-service.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
+      - run: pnpm --filter @publisle/pdf-service build
+      - run: docker build -f deploy/vps/worker.Dockerfile -t publisle-pdf-worker:local .
+      - run: pnpm exec playwright-core install --with-deps chromium
+      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - name: Exercise compiler layouts, PDF objects, accessibility and website downloads
+        shell: bash
+        run: |
+          export PDF_TEST_WORKER_IMAGE="$(docker image inspect publisle-pdf-worker:local --format '{{.Id}}')"
+          export PDF_TEST_VERAPDF="$RUNNER_TEMP/verapdf/verapdf"
+          export PDF_TEST_ARTIFACTS="$RUNNER_TEMP/pdf-service-artifacts"
+          export PUBLISLE_BROWSER_PATH="$(node --input-type=module -e 'import {chromium} from "playwright-core"; console.log(chromium.executablePath())')"
+          node --test --test-concurrency=1 deploy/vps/tests/*.test.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: internal-pdf-service-validation
+          path: ${{ runner.temp }}/pdf-service-artifacts
+          if-no-files-found: ignore

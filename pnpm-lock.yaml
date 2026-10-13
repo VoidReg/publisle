@@ -935,6 +935,50 @@ importers:
         specifier: ^4.0.4
         version: 4.0.4
 
+  packages/pdf-service:
+    dependencies:
+      '@publisle/blocks-core':
+        specifier: workspace:*
+        version: link:../../blocks/core
+      '@publisle/blocks-technical':
+        specifier: workspace:*
+        version: link:../../blocks/technical
+      '@publisle/core':
+        specifier: workspace:*
+        version: link:../core
+      '@publisle/markdown':
+        specifier: workspace:*
+        version: link:../markdown
+      '@publisle/research':
+        specifier: workspace:*
+        version: link:../research
+      '@publisle/schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@publisle/template-acm':
+        specifier: workspace:*
+        version: link:../template-acm
+      '@publisle/template-article':
+        specifier: workspace:*
+        version: link:../template-article
+      '@publisle/template-elsevier':
+        specifier: workspace:*
+        version: link:../template-elsevier
+      '@publisle/template-ieee':
+        specifier: workspace:*
+        version: link:../template-ieee
+      '@publisle/template-springer':
+        specifier: workspace:*
+        version: link:../template-springer
+      sharp:
+        specifier: 0.35.5
+        version: 0.35.5(@types/node@24.13.5)
+    devDependencies:
+      esbuild:
+        specifier: ^0.27.4
+        version: 0.27.7
+
+
   packages/playground:
     dependencies:
       '@publisle/blocks-core':

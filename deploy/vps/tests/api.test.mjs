@@ -1,0 +1,237 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { once } from "node:events";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Admission } from "../queue.mjs";
+import { LIMITS, validateRequest } from "../limits.mjs";
+import { imageDestination, isPublicAddress, fetchImages } from "../images.mjs";
+import { createApi, checkReadiness } from "../server.mjs";
+import { workerArguments } from "../worker.mjs";
+
+test("request contract restricts templates, engines and metadata", () => {
+  for (const value of [
+    null,
+    {},
+    { markdown: "x", document: {} },
+    { markdown: 5 },
+    { markdown: "x", template: "../../evil" },
+    { markdown: "x", template: "acm-journal", engine: "lualatex" },
+    { markdown: "x", data: { pdfUa: false } },
+  ])
+    assert.throws(() => validateRequest(value));
+  assert.equal(
+    validateRequest({ markdown: "x", template: "elsevier-author-date" }).style,
+    "author-date",
+  );
+  assert.equal(
+    validateRequest({ document: {}, template: "article-arabic" }).engine,
+    "lualatex",
+  );
+});
+
+test("SSRF guard rejects private, reserved, mapped and mixed DNS destinations", async () => {
+  for (const address of [
+    "127.0.0.1",
+    "10.1.1.1",
+    "169.254.169.254",
+    "100.64.1.1",
+    "192.168.1.1",
+    "198.18.0.1",
+    "224.0.0.1",
+    "::1",
+    "::ffff:127.0.0.1",
+    "fe80::1",
+    "fc00::1",
+    "2001:db8::1",
+    "2002:7f00:1::",
+    "garbage",
+  ])
+    assert.equal(isPublicAddress(address), false, address);
+  assert.equal(isPublicAddress("93.184.216.34"), true);
+  assert.equal(isPublicAddress("2606:4700::1111"), true);
+  const publicDns = async () => [{ address: "93.184.216.34", family: 4 }];
+  for (const source of [
+    "http://example.com/x",
+    "file:///etc/passwd",
+    "https://u:p@example.com/x",
+    "https://example.com:8443/x",
+    "https://2130706433/x",
+    "https://[::1]/x",
+  ])
+    await assert.rejects(
+      imageDestination(source, "https://publisle.xyz", publicDns),
+    );
+  await assert.rejects(
+    imageDestination(
+      "https://example.com/x",
+      "https://publisle.xyz",
+      async () => [
+        { address: "93.184.216.34", family: 4 },
+        { address: "10.0.0.1", family: 4 },
+      ],
+    ),
+  );
+  const checked = await imageDestination(
+    "/favicon.svg",
+    "https://publisle.xyz/",
+    publicDns,
+  );
+  assert.equal(checked.url.href, "https://publisle.xyz/favicon.svg");
+  assert.equal(checked.address, "93.184.216.34");
+});
+
+test("image acquisition revalidates redirects and deduplicates bounded files", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "pdf-images-test-"));
+  try {
+    let calls = 0;
+    const dependencies = {
+      resolve: async () => [{ address: "93.184.216.34", family: 4 }],
+      download: async () => {
+        calls++;
+        return { bytes: Buffer.from("png"), mime: "image/png" };
+      },
+    };
+    const assets = await fetchImages(
+      ["https://example.com/a", "https://example.com/a"],
+      directory,
+      new AbortController().signal,
+      "https://publisle.xyz",
+      dependencies,
+    );
+    assert.equal(calls, 1);
+    assert.equal(assets.length, 1);
+    assert.deepEqual(await readdir(directory), ["image-0.input"]);
+    await assert.rejects(
+      fetchImages(
+        ["https://example.com/a"],
+        directory,
+        new AbortController().signal,
+        "https://publisle.xyz",
+        {
+          ...dependencies,
+          download: async () => ({ location: "https://127.0.0.1/private" }),
+        },
+      ),
+    );
+    await assert.rejects(
+      fetchImages(
+        ["https://example.com/a"],
+        directory,
+        new AbortController().signal,
+        "https://publisle.xyz",
+        {
+          ...dependencies,
+          download: async () => ({
+            bytes: Buffer.alloc(LIMITS.imageBytes + 1),
+            mime: "image/png",
+          }),
+        },
+      ),
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("admission serializes work, bounds queue, releases cancellation and enforces quotas", async () => {
+  const gate = new Admission({ ...LIMITS, queueMs: 50 });
+  const signal = new AbortController().signal;
+  const first = await gate.acquire("a", signal);
+  await assert.rejects(gate.acquire("a", signal), { status: 429 });
+  const second = gate.acquire("b", signal);
+  const cancelled = new AbortController();
+  const third = gate.acquire("c", cancelled.signal);
+  await assert.rejects(gate.acquire("d", signal), { status: 429 });
+  cancelled.abort(new Error("cancelled"));
+  await assert.rejects(third, /cancelled/);
+  first();
+  const release = await second;
+  const timeout = gate.acquire("e", signal);
+  await assert.rejects(timeout, { status: 429 });
+  release();
+  for (let i = 1; i < LIMITS.attempts; i++) (await gate.acquire("a", signal))();
+  await assert.rejects(gate.acquire("a", signal), { status: 429 });
+  assert.equal(gate.pending.length, 0);
+  assert.equal(gate.active, false);
+});
+
+test("worker sandbox is immutable, bounded and has no network", async () => {
+  const args = workerArguments(
+    `sha256:${"a".repeat(64)}`,
+    "test",
+    "/tmp/job",
+    "compile",
+  );
+  for (const flag of [
+    "--network=none",
+    "--read-only",
+    "--cap-drop=ALL",
+    "--memory=448m",
+    "--memory-swap=448m",
+    "--cpus=0.5",
+  ])
+    assert.ok(args.includes(flag));
+  assert.throws(() => workerArguments("latest", "test", "/tmp/job", "compile"));
+  assert.equal(await checkReadiness("latest"), false);
+});
+
+test("API serves binary and legacy PDFs, CORS, capability and error states", async () => {
+  const pdf = Buffer.from("%PDF-1.7\nfixture");
+  const api = createApi({
+    ready: true,
+    compile: async () => ({ pdf, diagnostics: [] }),
+  });
+  api.server.listen(0, "127.0.0.1");
+  await once(api.server, "listening");
+  const base = `http://127.0.0.1:${api.server.address().port}`;
+  const send = (value, headers = {}) =>
+    fetch(`${base}/pdf/compile`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...headers },
+      body: JSON.stringify(value),
+    });
+  try {
+    assert.equal(
+      (await (await fetch(`${base}/health`)).json()).services.pdf,
+      true,
+    );
+    assert.equal(
+      (await (await fetch(`${base}/pdf/capabilities`)).json()).templates.length,
+      7,
+    );
+    const preflight = await fetch(`${base}/pdf/compile`, {
+      method: "OPTIONS",
+      headers: { origin: "https://publisle.xyz" },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(
+      preflight.headers.get("access-control-allow-origin"),
+      "https://publisle.xyz",
+    );
+    assert.equal(
+      (await send({ markdown: "x" }, { origin: "https://evil.example" }))
+        .status,
+      403,
+    );
+    const binary = await send({ markdown: "x" }, { accept: "application/pdf" });
+    assert.equal(binary.headers.get("content-type"), "application/pdf");
+    assert.equal(await binary.text(), pdf.toString());
+    const legacy = await send({ markdown: "x" });
+    assert.equal((await legacy.json()).pdfBase64, pdf.toString("base64"));
+    assert.equal((await send({})).status, 400);
+    assert.equal(
+      (await send({ markdown: "x" }, { "content-type": "text/plain" })).status,
+      415,
+    );
+    assert.equal(
+      (await send({ markdown: "x".repeat(LIMITS.requestBytes) })).status,
+      413,
+    );
+    api.setReady(false);
+    assert.equal((await send({ markdown: "x" })).status, 503);
+  } finally {
+    api.shutdown();
+  }
+});

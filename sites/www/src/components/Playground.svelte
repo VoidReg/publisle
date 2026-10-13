@@ -17,7 +17,7 @@
   import { attachArticle } from "@publisle/adapter-astro/runtime";
   import { prepare } from "@publisle/core";
   import { compilePublication, publicationReaderManifest } from "@publisle/adapter-core";
-  import { fetchHealth, PDF_ENABLED, type ApiHealth } from "../lib/api";
+  import { fetchHealth, fetchPdfTemplates, compilePdf, PDF_ENABLED, type ApiHealth, type PdfTemplate } from "../lib/api";
   import {
     playgroundExamples,
     type PlaygroundExample,
@@ -70,6 +70,53 @@ Edit this document and see the result beside it. Your draft saves on this device
   let jsonDocument = "";
   let notice = $state<string | undefined>(undefined);
   let health = $state<ApiHealth | undefined>(undefined);
+  let pdfTemplates = $state<readonly PdfTemplate[]>([]);
+  let pdfTemplate = $state("article");
+  let pdfEngine = $state<"pdflatex" | "lualatex">("lualatex");
+  let pdfTitle = $state("");
+  let pdfAuthors = $state("");
+  let pdfAffiliation = $state("");
+  let pdfCountry = $state("");
+  let pdfBusy = $state(false);
+  let pdfAbort: AbortController | undefined;
+  let pdfDownloadUrl: string | undefined;
+  const selectedPdfTemplate = $derived(pdfTemplates.find((item) => item.id === pdfTemplate));
+
+  function selectPdfTemplate(): void {
+    const selected = pdfTemplates.find((item) => item.id === pdfTemplate);
+    pdfEngine = selected?.engines[0] ?? "lualatex";
+  }
+
+  async function exportPdf(): Promise<void> {
+    flushSource();
+    if ((mode === "markdown" && markdownInvalid) || (mode === "json" && jsonInvalid)) {
+      notice = "Fix the invalid editor source before exporting.";
+      return;
+    }
+    if (pdfBusy) return;
+    const document = structuredClone(editor.document);
+    const title = pdfTitle.trim() || document.metadata?.title;
+    const authors = pdfAuthors.trim() ? pdfAuthors.split(";").map((name) => ({ name: name.trim(), ...(pdfAffiliation.trim() ? { affiliation: pdfAffiliation.trim() } : {}) })).filter((author) => author.name) : document.metadata?.authors;
+    if (!title || !authors?.length) { notice = "PDF export requires a title and at least one author. Enter them in PDF options or document metadata."; return; }
+    document.metadata = { ...document.metadata, title, authors };
+    pdfBusy = true;
+    notice = "Compiling PDF…";
+    pdfAbort = new AbortController();
+    try {
+      const result = await compilePdf({ document, template: pdfTemplate, engine: pdfEngine, ...(pdfCountry.trim() && pdfTemplate === "acm-journal" ? { data: { country: pdfCountry.trim() } } : {}) }, pdfAbort.signal);
+      if (!result.ok) { notice = result.message; return; }
+      if (pdfDownloadUrl) URL.revokeObjectURL(pdfDownloadUrl);
+      pdfDownloadUrl = URL.createObjectURL(result.value.pdf);
+      const link = window.document.createElement("a");
+      link.href = pdfDownloadUrl;
+      link.download = "publisle.pdf";
+      link.click();
+      notice = result.value.diagnostics.length ? `PDF downloaded. ${result.value.diagnostics.map((entry) => entry.message).join(" ")}` : "PDF downloaded.";
+      const downloadedUrl = pdfDownloadUrl;
+      setTimeout(() => { URL.revokeObjectURL(downloadedUrl); if (pdfDownloadUrl === downloadedUrl) pdfDownloadUrl = undefined; }, 1000);
+    } finally { pdfBusy = false; pdfAbort = undefined; }
+  }
+
   let selectedId = $state<string | undefined>(undefined);
   let paletteOpen = $state(false);
   let previewEl = $state<HTMLDivElement | null>(null);
@@ -108,7 +155,7 @@ Edit this document and see the result beside it. Your draft saves on this device
       history.replaceState(history.state, "", url);
     }
     draftReady = true;
-    return () => { unsubscribe(); clearTimeout(sourceTimer); };
+    return () => { unsubscribe(); clearTimeout(sourceTimer); pdfAbort?.abort(); if (pdfDownloadUrl) URL.revokeObjectURL(pdfDownloadUrl); };
   });
 
   $effect(() => {
@@ -331,6 +378,7 @@ Edit this document and see the result beside it. Your draft saves on this device
       void fetchHealth().then((result) => {
         if (result.ok) health = result.value;
       });
+      void fetchPdfTemplates().then((templates) => { pdfTemplates = templates; });
     }
   });
 </script>
@@ -414,6 +462,8 @@ Edit this document and see the result beside it. Your draft saves on this device
 
     <span class="ml-auto flex items-center gap-2 text-xs text-muted">
       {#if PDF_ENABLED}
+        <button type="button" class="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-bg disabled:opacity-50" disabled={pdfBusy || !health?.services?.pdf || !pdfTemplates.length} onclick={() => void exportPdf()}>{pdfBusy ? "Compiling…" : "Export PDF"}</button>
+        {#if pdfBusy}<button type="button" class="rounded-md border border-line px-3 py-1.5" onclick={() => pdfAbort?.abort()}>Cancel PDF</button>{/if}
         {#if health}
           <span class="rounded-full border border-line px-2 py-0.5">
             API {health.status}
@@ -434,6 +484,21 @@ Edit this document and see the result beside it. Your draft saves on this device
       {/if}
     </span>
   </div>
+
+  {#if PDF_ENABLED}
+    <details class="rounded-xl border border-line bg-surface p-3">
+      <summary class="cursor-pointer text-sm font-medium">PDF options</summary>
+      <div class="grid gap-3 pt-3 sm:grid-cols-2">
+        <div class="grid gap-1 text-sm"><label for="pdf-template">PDF layout</label><select id="pdf-template" class="rounded border border-line bg-bg p-2" bind:value={pdfTemplate} onchange={selectPdfTemplate} disabled={pdfBusy}>{#each pdfTemplates as template}<option value={template.id}>{template.label}</option>{/each}</select></div>
+        <div class="grid gap-1 text-sm"><label for="pdf-engine">PDF engine</label><select id="pdf-engine" class="rounded border border-line bg-bg p-2" bind:value={pdfEngine} disabled={pdfBusy}>{#each selectedPdfTemplate?.engines ?? [] as engine}<option value={engine}>{engine}</option>{/each}</select></div>
+        <label class="grid gap-1 text-sm">Paper title<input class="rounded border border-line bg-bg p-2" bind:value={pdfTitle} placeholder="Use document metadata" maxlength="500" /></label>
+        <label class="grid gap-1 text-sm">Authors (separated by semicolons)<input class="rounded border border-line bg-bg p-2" bind:value={pdfAuthors} placeholder="Use document metadata" maxlength="2000" /></label>
+        <label class="grid gap-1 text-sm">Affiliation for entered authors<input class="rounded border border-line bg-bg p-2" bind:value={pdfAffiliation} maxlength="500" /></label>
+        {#if pdfTemplate === "acm-journal"}<label class="grid gap-1 text-sm">Affiliation country<input class="rounded border border-line bg-bg p-2" bind:value={pdfCountry} maxlength="100" /></label>{/if}
+      </div>
+      <p class="pt-2 text-xs text-muted">The current document and its referenced public images are sent for compilation. Interactive blocks use readable fallbacks. Processing files are deleted after the request.</p>
+    </details>
+  {/if}
 
   {#if notice}
     <p
