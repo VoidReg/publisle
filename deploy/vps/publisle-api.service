@@ -1,5 +1,5 @@
 [Unit]
-Description=Publisle API stub (health + PDF endpoint contract)
+Description=Publisle website PDF API
 After=network-online.target
 Wants=network-online.target
 
@@ -8,22 +8,28 @@ Type=simple
 User=publisle
 Group=publisle
 WorkingDirectory=/opt/publisle-api
-ExecStart=/usr/bin/env node /opt/publisle-api/server.mjs
+Slice=publisle-pdf.slice
+ExecStart=/usr/bin/env node --jitless --max-old-space-size=48 /opt/publisle-api/server.mjs
+EnvironmentFile=-/etc/publisle-api.env
 Environment=NODE_ENV=production
 Environment=PORT=8787
-Environment=PDF_ENABLED=false
+Environment=PDF_JOB_DIRECTORY=/var/lib/publisle-pdf/jobs
+StateDirectory=publisle-pdf
+ExecStartPre=/usr/bin/env node --jitless --max-old-space-size=48 /opt/publisle-api/reap.mjs
 Restart=on-failure
 RestartSec=2
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=true
+# /run/user must stay visible for the rootless Docker socket; write access to
+# home directories is not required.
+ProtectHome=read-only
 PrivateTmp=true
 PrivateDevices=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-RestrictAddressFamilies=AF_INET AF_INET6
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictSUIDSGID=true
 LockPersonality=true
 MemoryDenyWriteExecute=true

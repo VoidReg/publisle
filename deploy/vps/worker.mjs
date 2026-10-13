@@ -1,0 +1,128 @@
+import { spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { randomUUID } from "node:crypto";
+import { LIMITS, ServiceError } from "./limits.mjs";
+
+const execute = promisify(execFile);
+export function workerArguments(image, name, directory, action) {
+  if (!/^sha256:[a-f0-9]{64}$/.test(image))
+    throw new Error("PDF_WORKER_IMAGE must be an immutable local image ID.");
+  const parent = process.env.PDF_CGROUP_PARENT;
+  if (parent && !/^[A-Za-z0-9-]+\.slice$/.test(parent))
+    throw new Error("Invalid worker cgroup parent.");
+  return [
+    "run",
+    ...(parent ? ["--cgroup-parent", parent] : []),
+    "--rm",
+    "--pull=never",
+    "--name",
+    name,
+    "--label",
+    "publisle.pdf=true",
+    "--log-driver=none",
+    "--network=none",
+    "--read-only",
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges",
+    "--pids-limit=64",
+    "--cpus=0.5",
+    "--memory=448m",
+    "--memory-swap=448m",
+    "--tmpfs",
+    "/tmp:rw,nosuid,nodev,noexec,size=128m,mode=1777",
+    "--ulimit",
+    "fsize=33554432:33554432",
+    "--ulimit",
+    "nofile=128:128",
+    "--mount",
+    `type=bind,source=${directory},target=/input,readonly`,
+    "--user",
+    "0:0",
+    image,
+    action,
+  ];
+}
+
+export async function runWorker(
+  image,
+  directory,
+  action,
+  signal,
+  onContainer = () => {},
+) {
+  signal.throwIfAborted();
+  const name = `publisle-pdf-${randomUUID()}`;
+  onContainer(name);
+  const chunks = [];
+  let size = 0;
+  let failure;
+  const maxBytes = action === "prepare" ? 1024 * 1024 : LIMITS.pdfBytes + 65536;
+  const cleanup = () =>
+    execute("docker", ["rm", "--force", name], { timeout: 5000 }).catch(
+      () => undefined,
+    );
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(
+        "docker",
+        workerArguments(image, name, directory, action),
+        { stdio: ["ignore", "pipe", "ignore"] },
+      );
+      const abort = () => {
+        child.kill("SIGKILL");
+        void cleanup();
+      };
+      signal.addEventListener("abort", abort, { once: true });
+      child.stdout.on("data", (chunk) => {
+        size += chunk.length;
+        if (size > maxBytes) {
+          failure = new ServiceError(
+            "output-limit",
+            "Compiler output exceeds its limit.",
+          );
+          abort();
+        } else chunks.push(chunk);
+      });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        signal.removeEventListener("abort", abort);
+        if (signal.aborted) {
+          reject(signal.reason);
+          return;
+        }
+        if (failure) {
+          reject(failure);
+          return;
+        }
+        const body = Buffer.concat(chunks);
+        if (code === 137) {
+          reject(
+            new ServiceError(
+              "resource-limit",
+              "This document exceeds the PDF service memory budget.",
+            ),
+          );
+          return;
+        }
+        if (code !== 0) {
+          let message = "PDF compilation failed within the service limits.";
+          let errorCode = "compilation-failed";
+          try {
+            const detail = JSON.parse(body.toString("utf8"));
+            message = String(detail.message).slice(0, 300);
+            errorCode = detail.code;
+          } catch {
+            /* bounded generic failure */
+          }
+          reject(new ServiceError(errorCode, message));
+          return;
+        }
+        resolve(body);
+      });
+    });
+    return result;
+  } finally {
+    await cleanup();
+    onContainer(undefined);
+  }
+}

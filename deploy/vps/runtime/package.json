@@ -1,0 +1,8 @@
+{
+  "name": "publisle-internal-pdf-image-runtime",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "sharp": "0.35.5"
+  }
+}

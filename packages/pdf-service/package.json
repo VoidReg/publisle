@@ -1,0 +1,26 @@
+{
+  "name": "@publisle/pdf-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.ts"
+  },
+  "dependencies": {
+    "@publisle/blocks-core": "workspace:*",
+    "@publisle/blocks-technical": "workspace:*",
+    "@publisle/core": "workspace:*",
+    "@publisle/markdown": "workspace:*",
+    "@publisle/research": "workspace:*",
+    "@publisle/schema": "workspace:*",
+    "@publisle/template-acm": "workspace:*",
+    "@publisle/template-article": "workspace:*",
+    "@publisle/template-elsevier": "workspace:*",
+    "@publisle/template-ieee": "workspace:*",
+    "@publisle/template-springer": "workspace:*",
+    "sharp": "0.35.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.4"
+  }
+}

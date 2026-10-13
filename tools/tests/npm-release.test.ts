@@ -17,10 +17,23 @@ import {
   publishRelease,
   reviewedTarballs,
   validateVersion,
+  releasePackages,
   type ReleasePlan,
 } from "../npm-release.ts";
 
 const temporary: string[] = [];
+it("keeps the internal website PDF service out of npm releases", async () => {
+  const root = new URL("../../", import.meta.url).pathname;
+  const manifest = JSON.parse(
+    await readFile(join(root, "packages/pdf-service/package.json"), "utf8"),
+  ) as { name: string; private: boolean; publishConfig?: unknown };
+  expect(manifest.private).toBe(true);
+  expect(manifest.publishConfig).toBeUndefined();
+  const releases = await releasePackages(root);
+  expect(releases.some((entry) => entry.manifest.name === manifest.name)).toBe(
+    false,
+  );
+});
 afterEach(async () => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();

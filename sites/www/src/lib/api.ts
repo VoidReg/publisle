@@ -1,7 +1,3 @@
-// Publisle API client (playground PDF + future services). The endpoint runs on
-// a separate host (api.publisle.xyz); until the PDF service ships, compilePdf
-// is feature-flagged and the client only reports health. Everything is typed so
-// enabling the service later is configuration, not restructuring.
 export const API_URL: string =
   (import.meta.env.PUBLIC_API_URL as string | undefined) ??
   "https://api.publisle.xyz";
@@ -48,44 +44,102 @@ export async function fetchHealth(
   }
 }
 
-export interface CompilePdfRequest {
-  readonly markdown: string;
-  readonly template: string;
-  readonly engine?: "pdflatex" | "lualatex";
+export interface PdfTemplate {
+  readonly id: string;
+  readonly label: string;
+  readonly engines: readonly ("pdflatex" | "lualatex")[];
+  readonly fields?: readonly string[];
 }
 
-export type CompilePdfResult = ApiResult<{ readonly pdfBase64: string }>;
+export async function fetchPdfTemplates(): Promise<readonly PdfTemplate[]> {
+  try {
+    const response = await fetch(`${API_URL}/pdf/capabilities`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { templates?: PdfTemplate[] };
+    return payload.templates ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export type CompilePdfRequest = {
+  readonly template: string;
+  readonly engine?: "pdflatex" | "lualatex";
+  readonly data?: { readonly country?: string };
+} & (
+  | {
+      readonly document: import("@publisle/schema").Document;
+      readonly markdown?: never;
+    }
+  | { readonly markdown: string; readonly document?: never }
+);
+
+export type CompilePdfResult = ApiResult<{
+  readonly pdf: Blob;
+  readonly diagnostics: readonly { code: string; message: string }[];
+}>;
 
 export async function compilePdf(
   request: CompilePdfRequest,
+  signal?: AbortSignal,
 ): Promise<CompilePdfResult> {
-  if (!PDF_ENABLED) {
+  if (!PDF_ENABLED)
     return { ok: false, message: "PDF export is not enabled yet." };
-  }
   try {
     const response = await fetch(`${API_URL}/pdf/compile`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        accept: "application/pdf",
+      },
       body: JSON.stringify(request),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(220000)])
+        : AbortSignal.timeout(220000),
     });
-    const payload = (await response.json()) as {
-      readonly ok?: boolean;
-      readonly pdfBase64?: string;
-      readonly message?: string;
-    };
-    if (!response.ok || !payload.ok || !payload.pdfBase64) {
+    if (!response.ok) {
+      const payload = (await response.json()) as { message?: string };
+      const retry = response.headers.get("retry-after");
       return {
         ok: false,
         message:
-          payload.message ?? `Compilation failed (${String(response.status)}).`,
+          (payload.message ??
+            `Compilation failed (${String(response.status)}).`) +
+          (retry ? ` Retry in ${retry} seconds.` : ""),
       };
     }
-    return { ok: true, value: { pdfBase64: payload.pdfBase64 } };
+    if (!response.headers.get("content-type")?.startsWith("application/pdf"))
+      return {
+        ok: false,
+        message: "The API returned an invalid PDF response.",
+      };
+    const pdf = await response.blob();
+    const bytes = new Uint8Array(await pdf.slice(0, 5).arrayBuffer());
+    if (new TextDecoder().decode(bytes) !== "%PDF-")
+      return { ok: false, message: "The API returned an invalid PDF." };
+    let diagnostics: { code: string; message: string }[] = [];
+    try {
+      const encoded = response.headers.get("x-publisle-diagnostics");
+      if (encoded)
+        diagnostics = JSON.parse(
+          new TextDecoder().decode(
+            Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0)),
+          ),
+        ) as { code: string; message: string }[];
+    } catch {
+      /* A missing warning header does not invalidate a PDF. */
+    }
+    return { ok: true, value: { pdf, diagnostics } };
   } catch (cause) {
     return {
       ok: false,
-      message:
-        cause instanceof Error ? cause.message : "Could not reach the API.",
+      message: signal?.aborted
+        ? "PDF export cancelled."
+        : cause instanceof Error && cause.name === "TimeoutError"
+          ? "PDF compilation exceeded its time limit."
+          : "Could not reach the PDF service.",
     };
   }
 }

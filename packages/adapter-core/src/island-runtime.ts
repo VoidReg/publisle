@@ -133,17 +133,19 @@ export function createIslandController(
     options.activation === "visible" &&
     "IntersectionObserver" in globalThis
   ) {
+    let wasVisible = false;
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.some(({ isIntersecting }) => isIntersecting);
-      if (visible) void activate();
-      else if (options.suspend) {
+      const entering = visible && !wasVisible;
+      wasVisible = visible;
+      if (entering) void activate();
+      else if (!visible && options.suspend) {
         generation += 1;
         abort?.abort();
         pending = undefined;
         scope.setAttribute?.("aria-busy", "false");
         release();
       }
-      if (visible && !options.suspend) observer.disconnect();
     });
     observer.observe(scope);
     cleanup = () => observer.disconnect();
@@ -191,9 +193,20 @@ export function createIslandController(
       destroyed = true;
       generation += 1;
       abort?.abort();
-      cleanup();
-      release();
-      scope.removeAttribute?.("aria-busy");
+      const errors: unknown[] = [];
+      for (const operation of [
+        cleanup,
+        release,
+        () => scope.removeAttribute?.("aria-busy"),
+      ]) {
+        try {
+          operation();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length)
+        throw new AggregateError(errors, "Island cleanup failed.");
     },
   };
 }

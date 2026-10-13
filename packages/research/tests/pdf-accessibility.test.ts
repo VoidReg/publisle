@@ -45,6 +45,37 @@ function fixture() {
 }
 
 describe("PDF accessibility source contract", () => {
+  it("loads shaping font families only for scripts present in the article", () => {
+    const input = fixture();
+    expect(createLatexPackage(input).files["manuscript.tex"]).not.toContain(
+      "\\newfontfamily\\cjkfont",
+    );
+    expect(createLatexPackage(input).files["manuscript.tex"]).not.toContain(
+      "\\babelfont[arabic]",
+    );
+    const multilingual = {
+      ...input,
+      blocks: [
+        ...input.blocks,
+        createBlock({
+          type: "publisle:paragraph",
+          data: { content: [{ type: "text", value: "中文 مرحبا" }] },
+        }),
+      ],
+    };
+    const tex = createLatexPackage(multilingual).files["manuscript.tex"];
+    expect(tex).toContain("\\newfontfamily\\cjkfont{FandolSong}");
+    expect(tex).toContain("\\babelfont[arabic]{rm}{PakType Naskh Basic}");
+  });
+  it("does not request an empty BibTeX bibliography for publisher documents", () => {
+    const input = { ...fixture(), blocks: [] };
+    for (const template of [ieee, acm, elsevier, springer]) {
+      const source = createLatexPackage(input, { template });
+      expect(source.files["manuscript.tex"]).not.toContain(
+        "\\bibliography{references}",
+      );
+    }
+  });
   it("requests UA-2 before the class, preserves language and alt, and scopes each table's headers", () => {
     const source = createLatexPackage(fixture());
     const tex = source.files["manuscript.tex"] ?? "";
