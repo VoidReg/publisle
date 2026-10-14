@@ -50,10 +50,14 @@ jobs:
       - name: Check
         run: pnpm --filter @publisle/www check
       - name: Build
-        run: pnpm --filter @publisle/www build
-        env:
-          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL || 'https://api.publisle.xyz' }}
-          PUBLIC_PDF_ENABLED: ${{ vars.PUBLIC_PDF_ENABLED || 'false' }}
+        run: |
+          # Write the public build configuration as a mode env file: process-env
+          # plumbing for import.meta.env replacement has proven unreliable on CI
+          # runners, while mode env files are core Vite behavior.
+          printf 'PUBLIC_API_URL=%s\nPUBLIC_PDF_ENABLED=%s\n' \
+            "${{ vars.PUBLIC_API_URL || 'https://api.publisle.xyz' }}" \
+            "${{ vars.PUBLIC_PDF_ENABLED || 'false' }}" > sites/www/.env.production
+          pnpm --filter @publisle/www build
       - name: Install browser
         run: pnpm exec playwright-core install --with-deps chromium
       - name: Playground browser regression
