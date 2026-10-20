@@ -70,111 +70,109 @@ describe("playground examples", () => {
     return { document, artifact: compilePublication(prepared) };
   }
 
-  it("preserves figure and table captions and accessible headers", () => {
-    const { document, artifact } = compileExample("figures-tables");
-    expect(document.blocks.map((block) => block.type)).toEqual([
+  it("the flagship example exists exactly once", () => {
+    expect(playgroundExamples.map((example) => example.id)).toEqual(["fft"]);
+    expect(new Set(playgroundExamples.map((e) => e.title)).size).toBe(
+      playgroundExamples.length,
+    );
+  });
+
+  it("carries every advertised block type in one document", () => {
+    const { document } = compileExample("fft");
+    const types = document.blocks.map((block) => block.type);
+    for (const type of [
       "publisle:heading",
+      "publisle:paragraph",
+      "publisle:math",
       "publisle:figure",
-      "publisle:heading",
       "publisle:table",
-    ]);
-    expect(document.blocks[1]?.data).toMatchObject({
-      src: "/favicon.svg",
-      alt: "Publisle brand mark",
+      "publisle:diagram",
+      "publisle:embed",
+      "publisle:callout",
+      "publisle:list",
+      "publisle:quote",
+      "publisle:code",
+      "publisle:footnote",
+      "publisle:bibliography",
+      "publisle:interactive-schematic",
+    ])
+      expect(types).toContain(type);
+  });
+
+  it("keeps colored LaTeX, labels, and cross-references in the compiled HTML", () => {
+    const { artifact } = compileExample("fft");
+    // KaTeX renders \textcolor as an inline color style.
+    expect(artifact.html).toContain("katex");
+    expect(artifact.html).toContain("color:");
+    expect(artifact.html).toContain('data-publisle-id="reference-eq:dft"');
+    expect(artifact.html).toContain(
+      'data-publisle-id="reference-fig:spectrum"',
+    );
+    expect(artifact.html).toContain('data-publisle-id="reference-tab:stages"');
+    expect(artifact.html).toContain('data-publisle-id="reference-sec:dft"');
+    expect(artifact.html).toContain('data-publisle-ref="reference-eq:dft"');
+    expect(artifact.html).toContain(
+      'data-publisle-ref="reference-fig:spectrum"',
+    );
+  });
+
+  it("keeps figure and table captions and accessible headers", () => {
+    const { document, artifact } = compileExample("fft");
+    const figure = document.blocks.find(
+      (block) => block.type === "publisle:figure",
+    );
+    expect(figure?.data).toMatchObject({
+      src: "/fft-spectrum.svg",
       caption: [{ type: "paragraph" }],
     });
-    expect(document.blocks[3]?.data).toMatchObject({
+    const table = document.blocks.find(
+      (block) => block.type === "publisle:table",
+    );
+    expect(table?.data).toMatchObject({
       headerRows: 1,
       caption: [{ type: "paragraph" }],
     });
     expect(artifact.html).toContain(
-      "<figcaption><p>Figures carry alternative text and captions as first-class document data.</p></figcaption>",
+      '<figcaption><span class="publisle-figure-number">Figure 1. </span><p>The magnitude spectrum of the sampled square wave.',
     );
-    expect(artifact.html).toContain(
-      "<figcaption><p>Table captions travel with the data model, not the styling.</p></figcaption>",
-    );
-    expect(artifact.html).toContain('<th scope="col">Block</th>');
-    expect(artifact.html).toContain('<th scope="col">Preserves</th>');
+    expect(artifact.html).toContain('<th scope="col">Block size</th>');
   });
 
   it("preserves diagram and embed fallback content", () => {
-    const { document, artifact } = compileExample("diagrams-embeds");
-    expect(document.blocks[1]?.data).toMatchObject({
-      source: "graph TD\n  A[Document] --> B[Portable]\n  B --> C[Static HTML]",
-      caption: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              value:
-                "Diagram source is portable; each host renders it with its own engine.",
-            },
-          ],
-        },
-      ],
-      fallback: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              value: "Document, Portable, and Static HTML, connected in order.",
-            },
-          ],
-        },
-      ],
-    });
-    expect(document.blocks[2]?.data).toMatchObject({
-      fallback: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              value:
-                "The embed ships a static fallback for print and no-JS readers.",
-            },
-          ],
-        },
-      ],
-    });
+    const { artifact } = compileExample("fft");
     expect(artifact.html).toContain(
-      "Document, Portable, and Static HTML, connected in order.",
+      "Samples in bit-reversed order pass through three butterfly stages",
+    );
+    // Website builds render the privacy-preserving YouTube iframe directly.
+    expect(artifact.html).toContain(
+      'iframe src="https://www.youtube-nocookie.com/embed/spUNpyF58BY"',
     );
   });
 
-  it("keeps the full article table caption attached to its table", () => {
-    const { document, artifact } = compileExample("full-article");
-    expect(
-      document.blocks.find((block) => block.type === "publisle:table")?.data,
-    ).toMatchObject({ headerRows: 1, caption: [{ type: "paragraph" }] });
+  it("publishes an interaction-activated FFT butterfly with fallback", () => {
+    const { artifact } = compileExample("fft");
+    expect(artifact.islands).toHaveLength(1);
+    expect(artifact.islands[0]).toMatchObject({
+      implementation: "publisle:interactive-schematic",
+      activation: "interaction",
+      mode: "mount",
+    });
     expect(artifact.html).toContain(
-      "<figcaption><p>Three runs of the counter under the model of Section Model.</p></figcaption>",
+      "Eight samples [1, 0, -1, 0, 1, 0, -1, 0] transform into a spectrum",
     );
+    expect(artifact.html).toContain(
+      "Explore Eight-point FFT butterfly</button>",
+    );
+    expect(artifact.html).toContain("data-publisle-activate");
   });
 
-  for (const id of ["interactive-schematic", "full-article"]) {
-    it(`publishes an interaction-activated counter with fallback: ${id}`, () => {
-      const { artifact } = compileExample(id);
-      expect(artifact.islands).toHaveLength(1);
-      expect(artifact.islands[0]).toMatchObject({
-        implementation: "publisle:interactive-schematic",
-        activation: "interaction",
-        mode: "mount",
-      });
-      expect(artifact.html).toContain("The counter starts at zero.");
-      expect(artifact.html).toContain("Explore Clocked counter</button>");
-      expect(artifact.html).toContain("data-publisle-activate");
+  it("keeps the FFT island payload as validated data pointing at its resource", () => {
+    const { document } = compileExample("fft");
+    const island = document.blocks.find(
+      (block) => block.type === "publisle:interactive-schematic",
+    );
+    expect(island?.data).toMatchObject({
+      payload: { source: "/fft-butterfly.json" },
     });
-  }
-
-  it("example ids and titles are unique", () => {
-    expect(new Set(playgroundExamples.map((e) => e.id)).size).toBe(
-      playgroundExamples.length,
-    );
-    expect(new Set(playgroundExamples.map((e) => e.title)).size).toBe(
-      playgroundExamples.length,
-    );
   });
 });

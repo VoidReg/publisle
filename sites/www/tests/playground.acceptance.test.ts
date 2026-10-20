@@ -77,7 +77,7 @@ afterAll(async () => {
   });
 });
 
-it("compiles all examples live and runs the interactive counter", async () => {
+it("compiles all examples live and runs the FFT butterfly", async () => {
   if (!browser) throw new Error("Browser not started");
   const page = await browser.newPage({
     viewport: { width: 1280, height: 900 },
@@ -90,7 +90,7 @@ it("compiles all examples live and runs the interactive counter", async () => {
   try {
     await page.goto(`${baseUrl}/playground/`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
-    await page.getByText(/Load an example ·/).click();
+    await page.getByText(/Example documents ·/).click();
     const preview = page.getByRole("region", { name: "Compiled preview" });
     const editor = page.getByRole("region", { name: "Document editor" });
     expect(await editor.isVisible()).toBe(true);
@@ -106,28 +106,32 @@ it("compiles all examples live and runs the interactive counter", async () => {
         .click();
       expect(await preview.innerText()).not.toContain(":::");
       expect(await preview.locator(".publisle-document").count()).toBe(1);
-      if (example.id === "figures-tables") {
-        expect(await preview.locator("figcaption").count()).toBe(2);
+      if (example.id === "fft") {
+        expect(await preview.locator("figcaption").count()).toBe(3);
         await preview
           .locator("img")
           .evaluate((image: HTMLImageElement) => image.decode());
-      }
-      if (["interactive-schematic", "full-article"].includes(example.id)) {
         await preview
-          .getByRole("button", { name: "Explore Clocked counter" })
+          .getByRole("button", { name: "Explore Eight-point FFT butterfly" })
           .focus();
         await page.keyboard.press("Enter");
-        await preview
-          .getByRole("button", { name: "Clock", exact: true })
-          .click();
-        expect(await preview.locator("output").innerText()).toBe("1");
+        await preview.getByRole("button", { name: "Step stage" }).click();
+        await expect
+          .poll(() => preview.locator(".publisle-fft__stage").innerText())
+          .toContain("After butterfly stage 1 of 3");
+        await preview.getByRole("button", { name: "Run all 3 stages" }).click();
+        await expect
+          .poll(() => preview.locator(".publisle-fft__stage").innerText())
+          .toContain("Output spectrum (DFT)");
         await preview
           .getByRole("button", { name: "Reset", exact: true })
           .click();
-        expect(await preview.locator("output").innerText()).toBe("0");
+        await expect
+          .poll(() => preview.locator(".publisle-fft__stage").innerText())
+          .toContain("Input, bit-reversed");
       }
     }
-    await page.getByRole("button", { name: /^Interactive schematic/ }).click();
+    await page.getByRole("button", { name: /^Fourier & FFT/ }).click();
     await page.getByRole("tab", { name: /^markdown$/i }).click();
     const source = page.getByRole("textbox", { name: "Markdown source" });
     await source.fill(`${await source.inputValue()}\nAn edited document.\n`);
@@ -135,12 +139,14 @@ it("compiles all examples live and runs the interactive counter", async () => {
       .poll(() => preview.innerText())
       .toContain("An edited document.");
     await preview
-      .getByRole("button", { name: "Explore Clocked counter" })
+      .getByRole("button", { name: "Explore Eight-point FFT butterfly" })
       .focus();
     await page.keyboard.press("Space");
-    await preview.getByRole("button", { name: "Clock", exact: true }).click();
-    expect(await preview.locator("output").innerText()).toBe("1");
-    expect(await preview.locator("output").count()).toBe(1);
+    await preview.getByRole("button", { name: "Step stage" }).click();
+    await expect
+      .poll(() => preview.locator(".publisle-fft__stage").innerText())
+      .toContain("After butterfly stage 1 of 3");
+    expect(await preview.locator(".publisle-fft__cell").count()).toBe(8);
     expect(errors).toEqual([]);
   } finally {
     await page.close();
@@ -153,12 +159,12 @@ it("saves source and block edits across modes, reloads, and navigation", async (
     viewport: { width: 1280, height: 900 },
   });
   try {
-    await page.goto(`${baseUrl}/playground/?example=full-article`);
+    await page.goto(`${baseUrl}/playground/?example=fft`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
     expect(new URL(page.url()).searchParams.has("example")).toBe(false);
     expect(
       await page.getByRole("region", { name: "Compiled preview" }).innerText(),
-    ).toContain("Measuring a Clocked Counter");
+    ).toContain("From Sums to Butterflies");
     await page.getByRole("tab", { name: /^markdown$/i }).click();
     const source = page.getByRole("textbox", { name: "Markdown source" });
     const authored =
@@ -240,21 +246,23 @@ it("persists theme through Astro navigation and searches documentation", async (
   }
 });
 
-it("activates the counter by touch after opening and restoring a tutorial", async () => {
+it("activates the FFT butterfly by touch after opening and restoring the tutorial", async () => {
   if (!browser) throw new Error("Browser not started");
   const context = await browser.newContext({ ...devices["Pixel 5"] });
   const page = await context.newPage();
   try {
-    await page.goto(`${baseUrl}/playground/?example=full-article`);
+    await page.goto(`${baseUrl}/playground/?example=fft`);
     for (let visit = 0; visit < 2; visit += 1) {
       await page.waitForSelector("astro-island[ssr]", { state: "detached" });
       await page.getByRole("tab", { name: /^Preview/ }).tap();
       const preview = page.getByRole("region", { name: "Compiled preview" });
       await preview
-        .getByRole("button", { name: "Explore Clocked counter" })
+        .getByRole("button", { name: "Explore Eight-point FFT butterfly" })
         .tap();
-      await preview.getByRole("button", { name: "Clock", exact: true }).tap();
-      expect(await preview.locator("output").innerText()).toBe("1");
+      await preview.getByRole("button", { name: "Step stage" }).tap();
+      await expect
+        .poll(() => preview.locator(".publisle-fft__stage").innerText())
+        .toContain("After butterfly stage 1 of 3");
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth),
       ).toBe(393);
@@ -295,8 +303,8 @@ it("contains Quickstart code on mobile and keeps the toolbar above the scrolling
       }
       await page.goto(`${baseUrl}/playground/`);
       await page.waitForSelector("astro-island[ssr]", { state: "detached" });
-      await page.getByText(/Load an example ·/).click();
-      await page.getByRole("button", { name: /^Full demo article/ }).click();
+      await page.getByText(/Example documents ·/).click();
+      await page.getByRole("button", { name: /^Fourier & FFT/ }).click();
       await page.getByRole("tab", { name: /^blocks$/i }).click();
       const editor = page.getByRole("region", { name: "Document editor" });
       await editor.scrollIntoViewIfNeeded();
@@ -326,12 +334,12 @@ it("contains Quickstart code on mobile and keeps the toolbar above the scrolling
         expect(await preview.isVisible()).toBe(true);
         expect(await editor.isVisible()).toBe(false);
         await preview
-          .getByRole("button", { name: "Explore Clocked counter" })
+          .getByRole("button", { name: "Explore Eight-point FFT butterfly" })
           .click();
-        await preview
-          .getByRole("button", { name: "Clock", exact: true })
-          .click();
-        expect(await preview.locator("output").innerText()).toBe("1");
+        await preview.getByRole("button", { name: "Step stage" }).click();
+        await expect
+          .poll(() => preview.locator(".publisle-fft__stage").innerText())
+          .toContain("After butterfly stage 1 of 3");
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth),
         ).toBe(width);

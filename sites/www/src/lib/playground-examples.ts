@@ -1,6 +1,9 @@
-// Curated playground documents that showcase Publisle capabilities in one
-// click. Every example must compile with the core registry without
-// error-level diagnostics (enforced by sites/www/tests/examples.test.ts).
+// The flagship playground document: one click demonstrates every capability
+// of the website — metadata, colored LaTeX, labeled equations with
+// cross-references, captioned figures and tables, diagrams and embeds with
+// static fallbacks, an interactive FFT butterfly island, code, task lists,
+// footnotes, and a bibliography. It must compile with the core registry
+// without error-level diagnostics (enforced by sites/www/tests/examples.test.ts).
 export interface PlaygroundExample {
   readonly id: string;
   readonly title: string;
@@ -8,15 +11,19 @@ export interface PlaygroundExample {
   readonly markdown: string;
 }
 
-const SCHEMATIC_DATA = {
+const FFT_ISLAND = {
   activation: "interaction",
   content: {
-    title: [{ type: "text", value: "Clocked counter" }],
+    title: [{ type: "text", value: "Eight-point FFT butterfly" }],
     description: [
       {
         type: "paragraph",
         content: [
-          { type: "text", value: "Observe the output on each clock edge." },
+          {
+            type: "text",
+            value:
+              "The square-wave samples [1, 0, -1, 0, 1, 0, -1, 0] enter on the left and leave as a spectrum with energy only in bins 2 and 6. Each stage combines pairs of values with a twiddle factor.",
+          },
         ],
       },
     ],
@@ -27,7 +34,7 @@ const SCHEMATIC_DATA = {
           {
             type: "text",
             value:
-              "Select Clock to advance it. Select Reset to return to zero.",
+              "Select Step stage to apply one butterfly stage and watch the values combine, or Run all stages to jump to the spectrum. Reset returns to the bit-reversed input.",
           },
         ],
       },
@@ -36,21 +43,35 @@ const SCHEMATIC_DATA = {
   fallback: [
     {
       type: "paragraph",
-      content: [{ type: "text", value: "The counter starts at zero." }],
+      content: [
+        {
+          type: "text",
+          value:
+            "Eight samples [1, 0, -1, 0, 1, 0, -1, 0] transform into a spectrum with magnitude 4 in bins 2 and 6 and magnitude 0 elsewhere.",
+        },
+      ],
     },
   ],
-  accessibility: { label: "Interactive clocked counter" },
-  payload: { source: "./counter.json" },
+  accessibility: { label: "Interactive eight-point FFT butterfly" },
+  payload: { source: "/fft-butterfly.json" },
 };
 
-const BIB_ENTRIES = [
+const FFT_BIBLIOGRAPHY = [
   {
-    id: "shannon1949",
+    id: "cooley1965",
     type: "article",
-    authors: ["Shannon, Claude E."],
-    title: "Communication in the Presence of Noise",
-    issued: "1949",
-    publisher: "Proceedings of the IRE",
+    authors: ["Cooley, James W.", "Tukey, John W."],
+    title: "An Algorithm for the Machine Calculation of Complex Fourier Series",
+    issued: "1965",
+    publisher: "Mathematics of Computation",
+  },
+  {
+    id: "gauss1805",
+    type: "article",
+    authors: ["Gauss, Carl Friedrich"],
+    title: "Nachlass: Theoria interpolationis methodo nova tractata",
+    issued: "1866",
+    publisher: "Werke, Band 3",
   },
 ];
 
@@ -58,324 +79,168 @@ const FENCE = "```";
 
 export const playgroundExamples: readonly PlaygroundExample[] = [
   {
-    id: "math-tour",
-    title: "Math tour",
+    id: "fft",
+    title: "Fourier & FFT",
     description:
-      "Inline and display math, fractions, matrices, and symbol palette output.",
-    markdown: String.raw`# A tour of Publisle math
-
-Inline math keeps its structure: Euler's identity $e^{i\pi} + 1 = 0$ sits inside
-this sentence without breaking the paragraph flow.
-
-## Display equations
-
-$$
-\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}
-$$
-
-## Matrices and symbols
-
-A rotation by angle $\theta$ in the plane:
-
-$$
-R(\theta) = \begin{pmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{pmatrix}
-$$
-
-Every palette symbol inserts real LaTeX: $\alpha$, $\nabla f$,
-$\int_0^1 x^2 \, dx$, and $\mathbb{R}^n$ all round-trip through the portable
-document.
-`,
-  },
-  {
-    id: "interactive-schematic",
-    title: "Interactive schematic",
-    description:
-      "A typed interactive island with activation policy and static fallback.",
-    markdown: `# Interactive islands, with fallbacks
-
-:::publisle{type="publisle:interactive-schematic" schemaVersion="1"}
-\`\`\`json
-${JSON.stringify(SCHEMATIC_DATA, null, 2)}
-\`\`\`
-:::
-
-The compiled artifact ships a manifest for the island plus the authored static
-fallback. Print, PDF, and no-JS readers receive the fallback text; hosts with
-the block definition attach the live counter on the declared activation.
-`,
-  },
-  {
-    id: "figures-tables",
-    title: "Figures and tables",
-    description:
-      "Captions, alternative text, and header rows as document data.",
-    markdown: String.raw`# Figures and tables
-
-::::figure{src="/favicon.svg" alt="Publisle brand mark"}
-:::caption
-Figures carry alternative text and captions as first-class document data.
-:::
-::::
-
-## Tables keep header structure
-
-::::table{headerRows="1"}
-| Block | Preserves |
-| --- | --- |
-| Headings | Labels and reading order |
-| Figures | Alternative text and captions |
-| Tables | Header rows and captions |
-:::caption
-Table captions travel with the data model, not the styling.
-:::
-::::
-`,
-  },
-  {
-    id: "callouts-structure",
-    title: "Callouts and structure",
-    description: "Callout variants, quotes, lists, code, and dividers.",
-    markdown: `# Structure and emphasis
-
-:::callout{variant="info" title="Note"}
-Callouts carry a variant, an optional title, and rich children.
-:::
-
-:::callout{variant="warning" title="Careful"}
-The variant is document data; each host styles it accessibly.
-:::
-
-> Block quotes stay quotable, with **inline emphasis** intact.
-
-- Lists keep their items
-- And their order
-- Even across edits
-
-1. Ordered lists work too
-2. With the same guarantees
-
-\`\`\`ts
-// Code samples keep their language hint.
-export const answer = 42;
-\`\`\`
-
+      "One article, every capability: colored math, cross-references, figures, tables, diagrams, embeds, an interactive FFT butterfly, code, citations, and print fallbacks.",
+    markdown: String.raw`---
+documentType: tutorial
+title: "The FFT: From Sums to Butterflies"
+description: "A worked tour of the discrete Fourier transform and the Cooley-Tukey butterfly, exercising every Publisle block in one document."
+language: en
+subjects:
+  - Signal processing
+  - Fourier analysis
+  - Algorithms
+license:
+  name: Creative Commons Attribution 4.0 International
+  identifier: CC-BY-4.0
+  url: https://creativecommons.org/licenses/by/4.0/
+extensions:
+  demo:features: "colored LaTeX, labels and cross-references, figures, tables, mermaid diagrams, embeds, interactive islands, code, task lists, footnotes, and citations"
 ---
 
-A divider closes the tour.
-`,
-  },
-  {
-    id: "diagrams-embeds",
-    title: "Diagrams and embeds",
-    description:
-      "Mermaid diagrams and external embeds, both with static fallbacks.",
-    markdown: `# Diagrams and embeds
+# The FFT: From Sums to Butterflies
 
-::::diagram{engine="mermaid" alt="Document flows to portable, then to static HTML"}
-\`\`\`mermaid
-graph TD
-  A[Document] --> B[Portable]
-  B --> C[Static HTML]
-\`\`\`
-:::caption
-Diagram source is portable; each host renders it with its own engine.
-:::
-:::fallback
-Document, Portable, and Static HTML, connected in order.
-:::
-::::
+A signal and its spectrum are the same data seen from two sides. The discrete Fourier transform (DFT) is the bookkeeping that converts one into the other, and the fast Fourier transform (FFT) is the classic divide-and-conquer arrangement that makes the conversion cheap: instead of $N^{2}$ multiply-adds, it needs about $N \log_{2} N$.
 
-::::embed{provider="youtube" resource="dQw4w9WgXcQ" title="Embedded video"}
-:::fallback
-The embed ships a static fallback for print and no-JS readers.
-:::
-::::
-`,
-  },
-  {
-    id: "bibliography",
-    title: "Bibliography",
-    description: "CSL JSON entries validated at import time.",
-    markdown: `# Bibliography entries
+This article exercises **every block type the website supports** while developing the idea.
 
-:::bibliography
-\`\`\`json
-[
-  {
-    "id": "shannon1949",
-    "type": "article",
-    "authors": ["Shannon, Claude E."],
-    "title": "Communication in the Presence of Noise",
-    "issued": "1949",
-    "publisher": "Proceedings of the IRE"
-  }
-]
-\`\`\`
+> The DFT is a change of basis. The FFT is just a clever order of the same arithmetic.
+
+## What you can do here
+
+- [ ] Follow a color-coded signal through the transform.
+- [ ] Step through a butterfly network stage by stage below.
+- [ ] Check the numbers against real code and citations.
+- [x] Notice that the interactive part ships a static fallback for print.
+
+:::callout{variant="info" title="One source, every reader"}
+Everything on this page is one portable document. Print and no-JS readers get the fallbacks; browsers additionally get the live butterfly. Your edits save on this device, and Ctrl+K inserts more blocks.
 :::
 
-Entries are CSL JSON, validated at import. The research profile resolves and
-formats them for journal exports; core readers list them as authored.
-`,
-  },
-  {
-    id: "full-article",
-    title: "Full demo article",
-    description:
-      "A complete tutorial with experiments, equations, figures, a diagram, code, and results.",
-    markdown: String.raw`# Measuring a Clocked Counter
+:::heading{label="sec:dft"}
 
-:::callout{variant="info" title="Abstract"}
-A complete worked example for a reader learning how a clocked counter works.
-Follow the model, inspect the circuit, run an experiment, and compare results.
-This article combines
-structured sections, inline and display mathematics, an interactive island
-with a static fallback, a captioned figure and table, and a bibliography.
+## 1. The transform, color-coded
+
 :::
 
-## What you will learn
+The DFT of a length-$N$ signal is defined in Equation :ref[eq\:dft]:
 
-By the end of this tutorial, you can:
-
-1. Describe how a clock changes a counter's state.
-2. Predict the result of a sequence of clock and reset events.
-3. Compare a mathematical model with an interactive demonstration.
-4. Publish the same explanation for web and print readers.
-
-You do not need electronics experience. A clock edge is simply the event
-that tells the counter to advance once.
-
-## Model
-
-The counter advances on each clock edge, so its value after $n$ edges is
+:::equation{label="eq:dft"}
 
 $$
-c(n) = c(0) + n \pmod{2^{8}}
+X[k]=\sum_{n=0}^{N-1}\,\textcolor{RoyalBlue}{x[n]}\;e^{-2\pi ikn/N},\qquad k=0,1,\dots,N-1.
 $$
 
-with reset mapping $c(n) \mapsto 0$. The increments relate as
-$\Delta c \propto \nabla t$, and the state space is $\mathbb{Z}/256\mathbb{Z}$.
+:::
 
-## Reading the circuit
+The $\textcolor{RoyalBlue}{\text{samples}}$ on the left are coordinates in the time basis; the $\textcolor{ForestGreen}{\text{spectrum}}$ on the right is the same information in the frequency basis. For the eight square-wave samples used throughout this article,
 
-::::figure{src="/counter-experiment.svg" alt="A counter starts at zero, advances to one and two on successive Clock events, then returns to zero on Reset"}
+$$
+\underbrace{[1,0,-1,0,1,0,-1,0]}_{\textcolor{RoyalBlue}{\text{signal}}}
+\;\xrightarrow{\;\text{DFT}\;}\;
+[0,0,\textcolor{ForestGreen}{4},0,0,0,\textcolor{ForestGreen}{4},0],
+$$
+
+so the periodicity shows up as exactly two nonzero bins: $|X[2]| = |X[6]| = 4$. Figure :ref[fig\:spectrum] plots those magnitudes.
+
+::::figure{src="/fft-spectrum.svg" alt="Bar chart of eight DFT magnitudes; only the bars at frequency bins 2 and 6 rise to 4" label="fig:spectrum"}
 :::caption
-Two Clock events produce two increments. Reset returns the output to its initial state.
+The magnitude spectrum of the sampled square wave. Energy sits in bins 2 and 6 because the signal repeats every four samples.
 :::
 ::::
 
-::::diagram{engine="mermaid" alt="Clock and Reset inputs feed the counter, whose state feeds the numeric output"}
+:::heading{label="sec:butterfly"}
+
+## 2. Halving the work with butterflies
+
+:::
+
+The FFT :cite[cooley1965] reuses half of every computation by splitting the sum into even and odd samples. One butterfly consumes two inputs and produces two outputs:
+
+$$
+\begin{aligned}
+E &= a + \textcolor{ForestGreen}{W \cdot b} \\
+O &= a - \textcolor{ForestGreen}{W \cdot b}
+\end{aligned}
+$$
+
+Repeating the split $\log_{2} N$ times gives the butterfly network below; Table :ref[tab\:stages] lists what each stage costs.
+
+::::diagram{engine="mermaid" alt="Sample indices enter bit-reversed, pass through three butterfly stages, and leave as the spectrum"}
 ${FENCE}mermaid
 flowchart LR
-  Clock --> Counter
-  Reset --> Counter
-  Counter --> Output
+  A["x 0..7 (bit-reversed)"] --> S1["Stage 1: size-2 butterflies"]
+  S1 --> S2["Stage 2: size-4 butterflies"]
+  S2 --> S3["Stage 3: size-8 butterflies"]
+  S3 --> X["X 0..7 (spectrum)"]
 ${FENCE}
 :::caption
-The counter has two inputs and one observable output.
+Dataflow of a decimation-in-time FFT. Inputs are visited in bit-reversed order; outputs emerge in natural order.
 :::
 :::fallback
-Clock advances the counter by one. Reset sets it to zero. The numeric output
-shows the current count after each event.
+Samples in bit-reversed order pass through three butterfly stages of growing block size and leave as the spectrum in natural order.
 :::
 ::::
 
-## Interactive measurement
+::::table{headerRows="1" label="tab:stages"}
+| Stage | Block size | Twiddle factors | Butterflies |
+| ----- | ---------- | ---------------- | ----------- |
+| 1     | 2          | $W_{2}^{0}$      | 4           |
+| 2     | 4          | $W_{4}^{0},W_{4}^{1}$ | 4      |
+| 3     | 8          | $W_{8}^{0},\dots,W_{8}^{3}$ | 4 |
+:::caption
+Three stages of four butterflies each transform eight samples — 12 complex multiply-adds instead of the 64 that the definition implies.
+:::
+::::
 
-:::publisle{type="publisle:interactive-schematic" schemaVersion="1"}
+### Run it yourself
+
+:::publisle{type="publisle:interactive-schematic" schemaVersion="2"}
 ${FENCE}json
-${JSON.stringify(SCHEMATIC_DATA, null, 2)}
+${JSON.stringify(FFT_ISLAND, null, 2)}
 ${FENCE}
 :::
 
 :::callout{variant="warning" title="Print readers"}
-The island above renders as its authored fallback in print and PDF targets.
+The butterfly above is live in the browser. Its authored fallback paragraph is what PDF, print, and no-JS readers see, and the payload is validated data, not a script.
 :::
 
-## Experiment procedure
+:::heading{label="sec:verify"}
 
-1. Activate the example with **Explore Clocked counter**.
-2. Select **Reset** so that every experiment starts from the same state.
-3. Select **Clock** five times and record the output.
-4. Select **Reset** again, then select **Clock** three times.
-5. Compare your readings with the table below.
+## 3. Verify it in code
 
-> A repeatable experiment starts from a known state. Reset is part of the
-> procedure, rather than an afterthought.
+:::
 
-### Predict before you click
+The article never asks you to trust it. Ten lines of Python reproduce the spectrum in Figure :ref[fig\:spectrum]:
 
-Starting from zero, three clock edges should produce three. Reset should
-immediately return the output to zero, even if no clock edge follows it.
+${FENCE}python
+import numpy as np
 
-## Recorded runs
+signal = np.array([1, 0, -1, 0, 1, 0, -1, 0])
+print(np.fft.fft(signal).round(2))
+# [ 0.+0.j  0.+0.j  4.+0.j  0.+0.j
+#   0.+0.j  0.+0.j  4.+0.j  0.+0.j]
+${FENCE}
 
-::::table{headerRows="1"}
-| Run | Edges | Final value |
-| --- | --- | --- |
-| Cold start | 0 | 0 |
-| After burst | 5 | 5 |
-| After reset | 3 | 3 |
-:::caption
-Three runs of the counter under the model of Section Model.
+The idea long predates computers: Gauss described the same splitting by hand half a century earlier :cite[gauss1805], though the butterfly network is the 1965 formulation.[^why-fast]
+
+::::embed{provider="youtube" resource="spUNpyF58BY" title="But what is the Fourier Transform? A visual introduction"}
+:::fallback
+An external video introduction to the Fourier transform is embedded here on the website. Print readers can search for *3Blue1Brown, "But what is the Fourier Transform?"*.
 :::
 ::::
 
-## Implementing the behavior
-
-A small state machine is enough to model the controls in this demo:
-
-${FENCE}ts
-let count = 0;
-
-function clock(): number {
-  count += 1;
-  return count;
-}
-
-function reset(): number {
-  count = 0;
-  return count;
-}
-${FENCE}
-
-### A note about the model
-
-The eight-bit equation describes a hardware counter that wraps after 255.
-The interactive example deliberately counts upwards without a hardware limit.
-For the short experiments in this article, both produce the same readings.
-
-:::callout{variant="warning" title="Know the limits of your simulation"}
-A demonstration is useful only when its assumptions are clear. If your lesson
-needs eight-bit overflow, implement the wrap and test the transition from
-255 back to zero before using it to explain hardware behavior.
-:::
-
-## Publishing the experiment
-
-The same source contains the explanation, mathematical notation, diagram
-source, captions, table headers, code, and interactive fallback. Readers can
-understand the procedure even when JavaScript is unavailable.
-
-- **Web:** activate the counter and follow the experiment.
-- **Print:** read the fallback description and the recorded measurements.
-- **Another host:** compile the document again and apply that host's layout.
-
-### Try changing this article
-
-Edit the table measurements, add a paragraph explaining your observations,
-or switch to Markdown and change the experiment procedure. The preview updates
-as you type, and your draft is saved on this device.
-
----
+[^why-fast]: The 1965 paper popularized the algorithm; the term "fast Fourier transform" is what stuck. The count is $N \log _{2} N$ butterflies versus $N^{2}$ direct evaluations.
 
 ## Summary
 
-The document round-trips: every block here survives Markdown import,
-preparation, and static compilation with its semantics intact.
+One document carried the math, the picture, the network diagram, the experiment, and the references — and every block above survives Markdown import, editing, and static compilation with its semantics intact.
 
 :::bibliography
 ${FENCE}json
-${JSON.stringify(BIB_ENTRIES, null, 2)}
+${JSON.stringify(FFT_BIBLIOGRAPHY, null, 2)}
 ${FENCE}
 :::
 `,
