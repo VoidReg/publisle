@@ -387,7 +387,7 @@ Edit this document and see the result beside it. Your draft saves on this device
 
 <div class="flex h-full min-h-[70vh] flex-col gap-4">
   <div
-    class="-mx-1 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg px-2 py-2"
+    class="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-bg px-2 py-2"
   >
     <div
       class="flex overflow-hidden rounded-lg border border-line lg:hidden"
@@ -512,14 +512,11 @@ Edit this document and see the result beside it. Your draft saves on this device
   <details
     class="rounded-xl border border-line bg-surface p-3"
   >
-    <summary class="cursor-pointer text-sm font-medium">Load an example · {playgroundExamples.length} documents</summary>
+    <summary class="cursor-pointer text-sm font-medium">Example documents · {playgroundExamples.length}</summary>
     <section
       aria-label="Example documents"
       class="pt-3"
     >
-      <p class="mb-2 text-xs font-medium tracking-wide text-muted uppercase">
-        Load an example
-      </p>
       <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {#each playgroundExamples as example (example.id)}
           <button
@@ -596,10 +593,10 @@ Edit this document and see the result beside it. Your draft saves on this device
     </section>
     <section
       aria-label="Compiled preview"
-      class="publication-wide min-w-0 max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 sm:p-6 {view === 'edit' ? 'hidden lg:block' : ''}"
+      class="publication-wide min-w-0 max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-3 sm:p-4 {view === 'edit' ? 'hidden lg:block' : ''}"
     >
       <h2 class="mb-2 font-display text-lg font-semibold">Live preview</h2>
-      <p class="mb-4 text-xs text-muted">Your compiled article, with working interactive blocks.</p>
+      <p class="mb-3 text-xs text-muted">Your compiled article, with working interactive blocks.</p>
       {#if compiled.error}
         <p class="whitespace-pre-wrap rounded-lg border border-danger bg-surface px-3 py-2 font-mono text-xs">
           {compiled.error}

@@ -413,6 +413,28 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 4px;
   margin: 6px 0;
+  min-width: 0;
+}
+.field > input,
+.field > select,
+.field > textarea {
+  width: 100%;
+  min-width: 0;
+}
+/* Checkboxes sit inline with their label, without text-field chrome. */
+.field--check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 4px 0;
+}
+.field--check > input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--accent, currentColor);
 }
 .field--segments {
   border: 1px solid var(--border);
@@ -424,11 +446,21 @@ textarea:focus-visible {
   align-items: center;
   gap: 6px;
   margin: 4px 0;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 .segment__label {
-  min-width: 110px;
+  min-width: 0;
+  flex: 0 1 auto;
   font-size: 12px;
   color: var(--text-muted);
+}
+.segment > input,
+.segment > textarea,
+.segment > select {
+  flex: 1 1 12ch;
+  width: 100%;
+  min-width: 0;
 }
 .segment--add {
   justify-content: flex-end;

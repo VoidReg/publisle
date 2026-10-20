@@ -245,19 +245,48 @@
 
   /* Live schematic island (publisle:interactive-schematic). */
   .publisle-schematic {
-    @apply my-4 flex flex-wrap items-center gap-4 rounded-lg border border-line bg-raised p-4;
+    @apply my-4 flex flex-col gap-3 rounded-lg border border-line bg-raised p-4;
+  }
+
+  .publisle-fft__header {
+    @apply flex flex-wrap items-baseline justify-between gap-2;
+  }
+
+  .publisle-fft__stage {
+    @apply text-sm font-semibold;
+  }
+
+  .publisle-fft__twiddles {
+    @apply font-mono text-xs text-muted;
+  }
+
+  .publisle-fft__grid {
+    @apply m-0 grid list-none gap-2 p-0;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .publisle-fft__cell {
+    @apply flex min-w-0 items-baseline justify-between gap-2 rounded-md border border-line bg-surface px-2.5 py-1.5;
+  }
+
+  .publisle-fft__index {
+    @apply font-mono text-xs text-muted;
+  }
+
+  .publisle-fft__value {
+    @apply font-mono text-sm tabular-nums;
   }
 
   .publisle-schematic output {
-    @apply rounded-md border border-accent/40 bg-surface px-4 py-2 font-mono text-xl text-accent;
+    @apply self-start rounded-md border border-accent/40 bg-surface px-4 py-2 font-mono text-xl text-accent;
   }
 
   .publisle-schematic__controls {
-    @apply flex gap-2;
+    @apply flex flex-wrap gap-2;
   }
 
   .publisle-schematic__controls button {
-    @apply rounded-md border border-line bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent;
+    @apply rounded-md border border-line bg-surface px-3 py-1.5 text-sm hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /* Math editor (from @publisle/playground). */
@@ -412,11 +441,11 @@
 }
 
 .block-editor__header {
-  @apply mb-3 flex items-center justify-between gap-2;
+  @apply mb-3 flex flex-wrap items-center justify-between gap-2;
 }
 
 .block-editor__actions {
-  @apply flex gap-1;
+  @apply flex flex-wrap gap-1;
 }
 
 .block-editor__actions button {
@@ -480,12 +509,7 @@ main p a {
   text-underline-offset: 0.2em;
 }
 
-.block-editor__header {
-  flex-wrap: wrap;
-}
-.block-editor__actions {
-  flex-wrap: wrap;
-}
+/* Overflow guards: fields and segments shrink instead of overflowing. */
 .field,
 .segment,
 .segment__editor {
@@ -493,14 +517,14 @@ main p a {
 }
 .field > input,
 .field > textarea,
-.field > select {
+.field > select,
+.segment > input,
+.segment > textarea {
   width: 100%;
   min-width: 0;
 }
 .segment > input,
 .segment > textarea {
-  width: 100%;
-  min-width: 0;
   flex: 1;
 }
 .segment__chip {
