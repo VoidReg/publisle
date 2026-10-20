@@ -30,8 +30,9 @@ export const template: PublishingTemplate = {
       numericCitationPackage: true,
       pdfSymbols: true,
       keywords: (subjects, text) =>
-        subjects.length
-          ? `\\begin{IEEEkeywords}${subjects.map(text).join(", ")}\\end{IEEEkeywords}`
-          : "",
+        // IEEEtran requires \IEEEpeerreviewmaketitle after the abstract and
+        // keywords; it closes the title area so body floats cannot be placed
+        // above the abstract on the first page.
+        `${subjects.length ? `\\begin{IEEEkeywords}${subjects.map(text).join(", ")}\\end{IEEEkeywords}\n` : ""}\\IEEEpeerreviewmaketitle`,
     }),
 };

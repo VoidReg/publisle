@@ -55,6 +55,73 @@ describe("IEEE journal source packages", () => {
     ).toContain("table-rendered-as-text");
   });
 
+  it("keeps figures, tables, and display math out of the abstract region", () => {
+    const result = createLatexPackage(
+      document({
+        metadata: {
+          title: "Float order",
+          authors: [{ name: "Ada Example" }],
+          subjects: ["Testing"],
+        },
+        blocks: [
+          createBlock({
+            type: "publisle:heading",
+            data: {
+              level: 1,
+              content: [{ type: "text", value: "Abstract" }],
+              role: "abstract",
+            },
+          }),
+          createBlock({
+            type: "publisle:paragraph",
+            data: { content: [{ type: "text", value: "Prose abstract." }] },
+          }),
+          createBlock({
+            type: "publisle:figure",
+            data: {
+              src: "ieee-square-wave.pdf",
+              alt: "A square wave plot",
+              caption: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", value: "A plot." }],
+                },
+              ],
+            },
+          }),
+          createBlock({
+            type: "publisle:paragraph",
+            data: { content: [{ type: "text", value: "Body text." }] },
+          }),
+        ],
+      }),
+    );
+    const tex = result.files["manuscript.tex"] ?? "";
+    const abstractStart = tex.indexOf("\\begin{abstract}");
+    const abstractEnd = tex.indexOf("\\end{abstract}");
+    const figureBegin = tex.indexOf("\\begin{figure}");
+    expect(abstractStart).toBeGreaterThan(-1);
+    expect(abstractEnd).toBeGreaterThan(abstractStart);
+    expect(figureBegin).toBeGreaterThan(abstractEnd);
+    expect(tex.slice(abstractStart, abstractEnd)).not.toContain(
+      "\\begin{figure}",
+    );
+    expect(tex).toContain("\\begin{figure}[!tb]");
+    // flafter guarantees floats never rise above their source position.
+    expect(tex).toContain("\\usepackage{flafter}");
+    expect(result.requirements).toContain("flafter.sty");
+  });
+
+  it("locks the IEEE title area with \\IEEEpeerreviewmaketitle after the keywords", async () => {
+    const files = createLatexPackage(await fixture()).files;
+    const tex = files["manuscript.tex"] ?? "";
+    const keywordsEnd = tex.indexOf("\\end{IEEEkeywords}");
+    const lock = tex.indexOf("\\IEEEpeerreviewmaketitle");
+    expect(keywordsEnd).toBeGreaterThan(-1);
+    expect(lock).toBeGreaterThan(keywordsEnd);
+    expect(tex.indexOf("\\section")).toBeGreaterThan(lock);
+  });
+
   it("keeps multilingual text and direction for LuaLaTeX and rejects pdfLaTeX substitution", async () => {
     const input = await fixture("ieee-unicode");
     expect(() => createLatexPackage(input)).toThrow(/lualatex/u);

@@ -214,7 +214,15 @@ export function renderLatexArticle(
   const abstract: string[] = [];
   const body: string[] = [];
   for (const block of article.blocks) {
-    const target = "abstract" in block && block.abstract ? abstract : body;
+    // Floating environments never join the abstract: a [!t] float inside the
+    // abstract would be hoisted above it on the first page.
+    const target =
+      "abstract" in block &&
+      block.abstract &&
+      block.kind !== "figure" &&
+      block.kind !== "table"
+        ? abstract
+        : body;
     const label = block.label ? `\\label{${latexKey(block.label)}}` : "";
     if (block.kind === "heading") {
       if (!block.abstract)
@@ -243,7 +251,7 @@ export function renderLatexArticle(
       const destination = `assets/figure-${String(assets.length + 1)}.${extension}`;
       assets.push({ source: block.src, destination });
       target.push(
-        `\\begin{figure}[!t]\n\\centering\n\\includegraphics[width=\\columnwidth${pdfStandard ? `,alt={${latexText(block.alt)}}` : ""}]{${destination}}\n\\caption{${take(block.caption)}}${label}\n\\end{figure}`,
+        `\\begin{figure}[!tb]\n\\centering\n\\includegraphics[width=\\columnwidth${pdfStandard ? `,alt={${latexText(block.alt)}}` : ""}]{${destination}}\n\\caption{${take(block.caption)}}${label}\n\\end{figure}`,
       );
     } else if (block.kind === "table") {
       const width = block.rows[0]?.length ?? 0;
@@ -269,7 +277,7 @@ export function renderLatexArticle(
         )
         .join("\n");
       target.push(
-        `\\begin{table}[!t]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n${pdfStandard ? `\\tagpdfsetup{table/header-rows={${Array.from({ length: block.headerRows ?? 0 }, (_, index) => String(index + 1)).join(",")}}}\n` : ""}\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
+        `\\begin{table}[!tb]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n${pdfStandard ? `\\tagpdfsetup{table/header-rows={${Array.from({ length: block.headerRows ?? 0 }, (_, index) => String(index + 1)).join(",")}}}\n` : ""}\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
       );
     } else if (block.kind === "list")
       target.push(
@@ -335,6 +343,9 @@ ${needsCjk ? `\\newfontfamily\\cjkfont{${fonts.cjk}}` : ""}
   });
   const manuscript = `${pdfStandard ? `\\DocumentMetadata{lang=${language},pdfstandard=${pdfStandard},${pdfStandard === "ua-1" ? "pdfversion=1.7," : ""}tagging=on,tagging-setup={math/setup={mathml-AF${pdfStandard === "ua-2" ? ",mathml-SE" : ""}}}}\n` : ""}\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
 ${unicodePreamble}\\usepackage{amsmath,${engine === "pdflatex" && profile.pdfSymbols === true ? "amssymb," : ""}graphicx,tabularx${profile.numericCitationPackage ? ",cite" : ""}}
+% flafter keeps floats at or after their source position, so a figure can
+% never be hoisted above the abstract region on the first page.
+\\usepackage{flafter}
 \\usepackage[normalem]{ulem}
 \\usepackage{hyperref}
 \\hypersetup{hidelinks}
@@ -356,6 +367,7 @@ ${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automati
     ...(pdfStandard ? { pdfStandard } : {}),
     requirements: [
       "amsmath.sty",
+      "flafter.sty",
       "graphicx.sty",
       "tabularx.sty",
       "ulem.sty",

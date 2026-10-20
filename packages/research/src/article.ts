@@ -264,6 +264,9 @@ export function projectArticle(
   const read = readEntries(document);
   losses.push(...read.losses);
   const blocks: ArticleBlock[] = [];
+  // An abstract is prose-only. The first non-paragraph block ends it, so a
+  // figure or table after the abstract heading can never join the abstract
+  // and float above it on the first page.
   let abstract = false;
   const authors = (document.metadata?.authors ?? []).map(
     (author) => author.name,
@@ -285,6 +288,7 @@ export function projectArticle(
       });
       continue;
     }
+    if (block.type !== "publisle:paragraph") abstract = false;
     if (block.type === "publisle:paragraph") {
       blocks.push({
         kind: "paragraph",
