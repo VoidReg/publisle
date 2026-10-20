@@ -13,7 +13,14 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from "node:path";
 import { promisify } from "node:util";
 import type { ResearchLoss } from "./article.ts";
 import type { Block, BlockType, Document } from "@publisle/schema";
@@ -21,6 +28,37 @@ import { createLatexPackage, type LatexPackageOptions } from "./package.ts";
 import type { LatexPackage } from "./package.ts";
 
 const execute = promisify(execFile);
+
+/** One kpsewhich invocation resolves every requirement at once. kpsewhich
+ * exits non-zero when a file is missing but still lists the found paths on
+ * stdout, so partial results survive; output basenames match the arguments. */
+async function kpsewhichAll(
+  names: readonly string[],
+): Promise<Map<string, string>> {
+  const paths = new Map<string, string>();
+  if (!names.length) return paths;
+  let stdout: string;
+  try {
+    stdout = (await execute("kpsewhich", [...names], { timeout: 10_000 }))
+      .stdout;
+  } catch (error) {
+    stdout = (error as { stdout?: string }).stdout ?? "";
+  }
+  for (const line of stdout.split("\n")) {
+    const path = line.trim();
+    if (path) paths.set(basename(path), path);
+  }
+  return paths;
+}
+
+/** In-process probe caches. Native TeX installations do not change while the
+ * process runs, so successful probes are reused across compilations. Failed
+ * probes are retried so an installation completed mid-process is picked up. */
+const taggingFormatCache = new Map<string, string | undefined>();
+const doctorCache = new Map<string, CompilerStatus>();
+const engineVersionCache = new Map<string, string>();
+const dependencyDigestCache = new Map<string, string>();
+
 export interface CompileLatexOptions {
   /** Base directory for local manuscript assets. */
   readonly sourceDirectory: string;
@@ -118,31 +156,35 @@ export async function compileLatexPackage(
     ...source.resources,
   };
   try {
-    for (const [name, value] of Object.entries({
-      ...source.files,
-      ...source.resources,
-    })) {
-      const path = packagePath(directory, name);
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, value, { flag: "wx" });
-    }
+    await Promise.all(
+      Object.entries({
+        ...source.files,
+        ...source.resources,
+      }).map(async ([name, value]) => {
+        const path = packagePath(directory, name);
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(path, value, { flag: "wx" });
+      }),
+    );
     const base = await realpath(options.sourceDirectory);
-    for (const asset of source.assets) {
-      const path = await realpath(resolve(base, asset.source));
-      const local = relative(base, path);
-      if (
-        isAbsolute(local) ||
-        local === ".." ||
-        local.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)
-      )
-        throw new Error(
-          `Figure asset escapes manuscript directory: ${asset.source}`,
-        );
-      const destination = packagePath(directory, asset.destination);
-      await mkdir(dirname(destination), { recursive: true });
-      await copyFile(path, destination, constants.COPYFILE_EXCL);
-      files[asset.destination] = new Uint8Array(await readFile(destination));
-    }
+    await Promise.all(
+      source.assets.map(async (asset) => {
+        const path = await realpath(resolve(base, asset.source));
+        const local = relative(base, path);
+        if (
+          isAbsolute(local) ||
+          local === ".." ||
+          local.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)
+        )
+          throw new Error(
+            `Figure asset escapes manuscript directory: ${asset.source}`,
+          );
+        const destination = packagePath(directory, asset.destination);
+        await mkdir(dirname(destination), { recursive: true });
+        await copyFile(path, destination, constants.COPYFILE_EXCL);
+        files[asset.destination] = new Uint8Array(await readFile(destination));
+      }),
+    );
     let stdout = "";
     const containerName = `publisle-${randomUUID()}`;
     try {
@@ -238,43 +280,65 @@ export async function compileLatexPackage(
     files["build.log"] = stdout;
     const engineVersion =
       backend.kind === "native"
-        ? (
-            await execute(source.engine, ["--version"], { timeout: 5000 })
-          ).stdout.split("\n")[0]
+        ? await (async () => {
+            const cached = engineVersionCache.get(source.engine);
+            if (cached) return cached;
+            const version = (
+              await execute(source.engine, ["--version"], { timeout: 5000 })
+            ).stdout.split("\n")[0];
+            engineVersionCache.set(source.engine, version ?? "");
+            return version;
+          })()
         : backend.image;
     const fontVersions: Record<string, string> = {};
     if (backend.kind === "native")
-      for (const [script, font] of Object.entries(source.fonts))
-        fontVersions[script] = (
-          await execute(
-            "fc-match",
-            ["-f", "%{family}: %{fontversion}\n", font],
-            { timeout: 5000 },
-          )
-        ).stdout.trim();
+      await Promise.all(
+        Object.entries(source.fonts).map(async ([script, font]) => {
+          fontVersions[script] = (
+            await execute(
+              "fc-match",
+              ["-f", "%{family}: %{fontversion}\n", font],
+              { timeout: 5000 },
+            )
+          ).stdout.trim();
+        }),
+      );
     const dependencyDigests: Record<string, string> = {};
     const dependencyVersions: Record<string, string> = {};
-    if (backend.kind === "native")
-      for (const name of source.requirements) {
-        const provided = source.resources?.[name] ?? source.files[name];
-        const bytes =
-          provided === undefined
-            ? await readFile(
-                (
-                  await execute("kpsewhich", [name], { timeout: 5000 })
-                ).stdout.trim(),
-              )
-            : typeof provided === "string"
-              ? Buffer.from(provided)
-              : provided;
-        dependencyDigests[name] =
-          "sha256:" + createHash("sha256").update(bytes).digest("hex");
-        const version =
-          /\\Provides(?:Package|Class)\{[^}]+\}\s*\[([^\]]+)\]/u.exec(
-            new TextDecoder().decode(bytes),
-          )?.[1];
-        if (version) dependencyVersions[name] = version;
-      }
+    if (backend.kind === "native") {
+      const resolvedPaths = await kpsewhichAll(
+        source.requirements.filter(
+          (name) =>
+            source.resources?.[name] === undefined &&
+            source.files[name] === undefined,
+        ),
+      );
+      await Promise.all(
+        source.requirements.map(async (name) => {
+          const provided = source.resources?.[name] ?? source.files[name];
+          const path = resolvedPaths.get(name);
+          const bytes =
+            provided === undefined
+              ? await readFile(path ?? "")
+              : typeof provided === "string"
+                ? Buffer.from(provided)
+                : provided;
+          const digest = dependencyDigestCache.get(path ?? name);
+          if (digest) {
+            dependencyDigests[name] = digest;
+          } else {
+            dependencyDigests[name] =
+              "sha256:" + createHash("sha256").update(bytes).digest("hex");
+            dependencyDigestCache.set(path ?? name, dependencyDigests[name]);
+          }
+          const version =
+            /\\Provides(?:Package|Class)\{[^}]+\}\s*\[([^\]]+)\]/u.exec(
+              new TextDecoder().decode(bytes),
+            )?.[1];
+          if (version) dependencyVersions[name] = version;
+        }),
+      );
+    }
     files["manifest.json"] =
       JSON.stringify(
         {
@@ -333,6 +397,8 @@ export interface CompilerStatus {
   readonly latexFormat?: string;
 }
 async function taggingFormat(image?: string): Promise<string | undefined> {
+  const key = image ?? "native";
+  if (taggingFormatCache.has(key)) return taggingFormatCache.get(key);
   const directory = await mkdtemp(join(tmpdir(), "publisle-format-"));
   const containerName = `publisle-format-${randomUUID()}`;
   try {
@@ -383,7 +449,11 @@ async function taggingFormat(image?: string): Promise<string | undefined> {
         maxBuffer: 1024 * 1024,
       },
     );
-    return /PUBLISLE-FORMAT:(\d{4}-\d{2}-\d{2})/u.exec(output.stdout)?.[1];
+    const detected = /PUBLISLE-FORMAT:(\d{4}-\d{2}-\d{2})/u.exec(
+      output.stdout,
+    )?.[1];
+    taggingFormatCache.set(key, detected);
+    return detected;
   } finally {
     if (image)
       await execute("docker", ["rm", "--force", containerName], {
@@ -395,6 +465,18 @@ async function taggingFormat(image?: string): Promise<string | undefined> {
 export async function doctorCompiler(
   source: LatexPackage,
 ): Promise<CompilerStatus> {
+  const cacheKey = [
+    source.engine,
+    source.pdfStandard ?? "",
+    Object.values(source.fonts).join(","),
+    ...source.requirements.map((name) =>
+      source.files[name] === undefined && source.resources?.[name] === undefined
+        ? name
+        : `${name}:bundled`,
+    ),
+  ].join("|");
+  const cached = doctorCache.get(cacheKey);
+  if (cached) return cached;
   const missing: string[] = [];
   let latexFormat: string | undefined;
   if (source.engine === "lualatex") {
@@ -404,44 +486,45 @@ export async function doctorCompiler(
     else if (source.pdfStandard && latexFormat < "2025-11-01")
       missing.push("LaTeX format >= 2025-11-01 (PDF/UA tagging)");
   }
-  for (const command of ["latexmk", source.engine, "bibtex", "kpsewhich"])
-    try {
-      await execute(command, ["--version"], { timeout: 5000 });
-    } catch {
-      missing.push(command);
-    }
-  for (const dependency of source.requirements) {
-    if (
-      source.files[dependency] !== undefined ||
-      source.resources?.[dependency] !== undefined
-    )
-      continue;
-    try {
-      if (
-        !(
-          await execute("kpsewhich", [dependency], { timeout: 5000 })
-        ).stdout.trim()
-      )
-        missing.push(dependency);
-    } catch {
-      missing.push(dependency);
-    }
-  }
-  for (const font of Object.values(source.fonts))
-    try {
-      const matched = (
-        await execute("fc-match", ["-f", "%{family}", font], { timeout: 5000 })
-      ).stdout;
-      if (!matched.toLowerCase().includes(font.toLowerCase()))
+  await Promise.all(
+    ["latexmk", source.engine, "bibtex", "kpsewhich"].map(async (command) => {
+      try {
+        await execute(command, ["--version"], { timeout: 5000 });
+      } catch {
+        missing.push(command);
+      }
+    }),
+  );
+  const external = source.requirements.filter(
+    (dependency) =>
+      source.files[dependency] === undefined &&
+      source.resources?.[dependency] === undefined,
+  );
+  const resolved = await kpsewhichAll(external);
+  for (const dependency of external)
+    if (!resolved.has(dependency)) missing.push(dependency);
+  await Promise.all(
+    Object.values(source.fonts).map(async (font) => {
+      try {
+        const matched = (
+          await execute("fc-match", ["-f", "%{family}", font], {
+            timeout: 5000,
+          })
+        ).stdout;
+        if (!matched.toLowerCase().includes(font.toLowerCase()))
+          missing.push(`font:${font}`);
+      } catch {
         missing.push(`font:${font}`);
-    } catch {
-      missing.push(`font:${font}`);
-    }
-  return {
+      }
+    }),
+  );
+  const status: CompilerStatus = {
     available: missing.length === 0,
     missing,
     ...(latexFormat ? { latexFormat } : {}),
   };
+  if (status.available) doctorCache.set(cacheKey, status);
+  return status;
 }
 async function selectCompiler(
   source: LatexPackage,
