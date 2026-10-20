@@ -6,7 +6,9 @@ workspace package patterns. Requires Node.js 24 or later.
 
 The existing article, square-wave illustration, clock payload, host-owned scene
 contract, Mermaid SVGs and playground palette/styles are retained from
-`examples/`. The three Mermaid diagrams use the checked-in SVGs. Other diagram
+`examples/` — `scripts/rehearse.sh` copies the article and its two assets from
+`examples/articles/` into `public/` before building, so they are not checked in
+twice. The three Mermaid diagrams use the checked-in SVGs. Other diagram
 engines, the 3D scene and manual counter retain their authored static fallback
 prose. The page identifies itself as a static reading edition.
 

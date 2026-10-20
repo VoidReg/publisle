@@ -6,6 +6,11 @@ if [ "$#" -ne 1 ]; then
 fi
 case "$1" in /*) tarballs=$1 ;; *) echo "Use an absolute tarball directory." >&2; exit 2 ;; esac
 cd "$(dirname "$0")/.."
+# The article and its assets have one source of truth in examples/articles;
+# the showcase serves copies so the built site stays self-contained.
+cp ../../examples/articles/fourier-series.md public/fourier-series.md
+cp ../../examples/articles/fourier-square-wave.svg public/fourier-square-wave.svg
+cp ../../examples/articles/fourier-clock.json public/fourier-clock.json
 mkdir -p .artifacts
 node --input-type=module - "$tarballs" <<'JS'
 import assert from 'node:assert/strict';
