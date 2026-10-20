@@ -184,46 +184,56 @@ async function main(): Promise<void> {
   if (action === "images") {
     const { default: sharp } = await import("sharp");
     sharp.cache(false);
+    // Each conversion runs with single-threaded libvips; conversions themselves
+    // run in parallel below, so worker threads stay busy without
+    // oversubscribing the CPU budget.
     sharp.concurrency(1);
+    // Convert in parallel, then emit in the authored asset order: the output
+    // protocol is NDJSON record + bytes pairs consumed sequentially.
+    const converted = await Promise.all(
+      normalized.assets.map(async (asset, index) => {
+        if (!/^image-[0-9]+\.input$/u.test(asset.file))
+          throw new Error("Invalid asset name.");
+        const bytes = await readFile(join(inputDirectory, asset.file));
+        if (asset.mime === "image/svg+xml")
+          checkSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+        const image = sharp(bytes, {
+          limitInputPixels: 8_000_000,
+          failOn: "warning",
+          animated: false,
+        });
+        const metadata = await image.metadata();
+        if (
+          !metadata.width ||
+          !metadata.height ||
+          metadata.width * metadata.height > 8_000_000 ||
+          !["png", "jpeg", "svg"].includes(metadata.format) ||
+          (metadata.pages ?? 1) > 1 ||
+          (metadata.format === "svg" && asset.mime !== "image/svg+xml")
+        )
+          throw new Error("Invalid or oversized image.");
+        return {
+          source: asset.source,
+          file: `image-${String(index)}.${metadata.format === "jpeg" ? "jpg" : metadata.format === "svg" ? "png" : metadata.format}`,
+          bytes:
+            metadata.format === "svg" ? await image.png().toBuffer() : bytes,
+        };
+      }),
+    );
     let total = 0;
-    for (const [index, asset] of normalized.assets.entries()) {
-      if (!/^image-[0-9]+\.input$/u.test(asset.file))
-        throw new Error("Invalid asset name.");
-      const bytes = await readFile(join(inputDirectory, asset.file));
-      if (asset.mime === "image/svg+xml")
-        checkSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-      const image = sharp(bytes, {
-        limitInputPixels: 8_000_000,
-        failOn: "warning",
-        animated: false,
-      });
-      const metadata = await image.metadata();
-      if (
-        !metadata.width ||
-        !metadata.height ||
-        metadata.width * metadata.height > 8_000_000 ||
-        !["png", "jpeg", "svg"].includes(metadata.format) ||
-        (metadata.pages ?? 1) > 1 ||
-        (metadata.format === "svg" && asset.mime !== "image/svg+xml")
-      )
-        throw new Error("Invalid or oversized image.");
-      const converted =
-        metadata.format === "svg" ? await image.png().toBuffer() : bytes;
-      total += converted.length;
+    for (const item of converted) {
+      total += item.bytes.length;
       if (total > 16 * 1024 * 1024)
         throw new Error("Converted images exceed the size limit.");
-      const file = `image-${String(index)}.${metadata.format === "jpeg" ? "jpg" : "png"}`;
-      if (
-        !process.stdout.write(
-          JSON.stringify({
-            source: asset.source,
-            file,
-            bytes: converted.length,
-          }) + "\n",
-        )
-      )
+      const record = JSON.stringify({
+        source: item.source,
+        file: item.file,
+        bytes: item.bytes.length,
+      });
+      if (!process.stdout.write(record + "\n"))
         await once(process.stdout, "drain");
-      if (!process.stdout.write(converted)) await once(process.stdout, "drain");
+      if (!process.stdout.write(item.bytes))
+        await once(process.stdout, "drain");
     }
     return;
   }

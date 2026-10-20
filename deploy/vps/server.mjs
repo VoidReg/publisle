@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 import {
   mkdtemp,
@@ -7,6 +8,8 @@ import {
   readFile,
   chmod,
   readdir,
+  stat,
+  mkdir,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -217,7 +220,95 @@ export async function checkReadiness(image, allowUnverified = false) {
   }
 }
 
+// Content-addressed PDF cache, opt-in via PDF_CACHE_DIR. Keyed by the
+// validated request, so identical repeat compiles skip every container run.
+// Remote figure assets are fetched during compilation; a cached PDF is only
+// as fresh as its TTL, which is why the cache is off unless explicitly
+// enabled and entries expire quickly by default.
+const CACHE_PDF_TTL_MS = Number(process.env.PDF_CACHE_TTL_MS ?? 3_600_000);
+const CACHE_TOTAL_BYTES = 256 * 1024 * 1024;
+
+function cacheKey(request) {
+  return createHash("sha256").update(JSON.stringify(request)).digest("hex");
+}
+
+async function readCachedPdf(cacheDirectory, key) {
+  const base = join(cacheDirectory, key);
+  try {
+    const [info, pdf, diagnostics] = await Promise.all([
+      stat(`${base}.pdf`),
+      readFile(`${base}.pdf`),
+      readFile(`${base}.json`, "utf8").then(
+        (value) => JSON.parse(value),
+        () => [],
+      ),
+    ]);
+    if (Date.now() - info.mtimeMs > CACHE_PDF_TTL_MS) return undefined;
+    if (pdf.subarray(0, 5).toString() !== "%PDF-") return undefined;
+    return { pdf, diagnostics };
+  } catch {
+    return undefined;
+  }
+}
+
+async function storeCachedPdf(cacheDirectory, key, result) {
+  const base = join(cacheDirectory, key);
+  try {
+    await writeFile(`${base}.pdf`, result.pdf, { flag: "wx" });
+    await writeFile(`${base}.json`, JSON.stringify(result.diagnostics ?? []), {
+      flag: "wx",
+    });
+    let entries = await readdir(cacheDirectory);
+    let total = 0;
+    const sized = [];
+    for (const entry of entries) {
+      if (!entry.endsWith(".pdf")) continue;
+      const info = await stat(join(cacheDirectory, entry));
+      total += info.size;
+      sized.push({ entry, mtime: info.mtimeMs, size: info.size });
+    }
+    if (total > CACHE_TOTAL_BYTES) {
+      sized.sort((a, b) => a.mtime - b.mtime);
+      for (const item of sized) {
+        if (total <= CACHE_TOTAL_BYTES) break;
+        if (item.entry === `${key}.pdf`) continue;
+        await rm(join(cacheDirectory, item.entry), { force: true });
+        await rm(join(cacheDirectory, `${item.entry.slice(0, -4)}.json`), {
+          force: true,
+        });
+        total -= item.size;
+      }
+    }
+  } catch {
+    /* The cache is best-effort; compilation results are never dropped. */
+  }
+}
+
 export async function compileJob(request, signal, options) {
+  const cacheDirectory = options.pdfCacheDirectory;
+  if (cacheDirectory) {
+    const cached = await readCachedPdf(cacheDirectory, cacheKey(request));
+    if (cached) {
+      console.log(
+        JSON.stringify({
+          event: "pdf-job",
+          code: "cache-hit",
+          durationMs: 0,
+        }),
+      );
+      return {
+        pdf: cached.pdf,
+        diagnostics: [
+          ...cached.diagnostics,
+          {
+            code: "pdf-cache-hit",
+            message:
+              "An identical document was compiled recently; the cached PDF was served.",
+          },
+        ],
+      };
+    }
+  }
   const directory = await mkdtemp(
     join(options.jobDirectory ?? tmpdir(), "publisle-pdf-"),
   );
@@ -275,6 +366,11 @@ export async function compileJob(request, signal, options) {
     const pdf = output.subarray(line + 1);
     if (!metadata.ok || pdf.subarray(0, 5).toString() !== "%PDF-")
       throw new Error("Invalid worker output");
+    if (cacheDirectory)
+      await storeCachedPdf(cacheDirectory, cacheKey(request), {
+        pdf,
+        diagnostics: metadata.diagnostics,
+      });
     return { pdf, diagnostics: metadata.diagnostics };
   } catch (error) {
     resultCode = signal.aborted
@@ -522,6 +618,9 @@ if (
     image,
     assetBase: process.env.PDF_ASSET_BASE ?? "https://publisle.xyz/",
     jobDirectory: process.env.PDF_JOB_DIRECTORY,
+    pdfCacheDirectory: process.env.PDF_CACHE_DIR
+      ? join(process.env.PDF_CACHE_DIR, "pdfs")
+      : undefined,
     trustedProxies: (process.env.PDF_TRUST_PROXY ?? "")
       .split(",")
       .map((entry) => entry.trim())
@@ -529,6 +628,8 @@ if (
     origins: (process.env.PDF_ORIGINS ?? "https://publisle.xyz").split(","),
     ready: enabled && (await checkReadiness(image, localQa)),
   };
+  if (options.pdfCacheDirectory)
+    await mkdir(options.pdfCacheDirectory, { recursive: true });
   const api = createApi(options);
   api.server.listen(Number(process.env.PORT ?? 8787), bind, () =>
     console.log(`Publisle API ready (PDF: ${options.ready})`),
