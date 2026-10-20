@@ -70,11 +70,45 @@ describe("playground examples", () => {
     return { document, artifact: compilePublication(prepared) };
   }
 
-  it("the flagship example exists exactly once", () => {
-    expect(playgroundExamples.map((example) => example.id)).toEqual(["fft"]);
+  it("the example set is the FFT tutorial plus a research paper", () => {
+    expect(playgroundExamples.map((example) => example.id)).toEqual([
+      "fft",
+      "research-paper",
+    ]);
     expect(new Set(playgroundExamples.map((e) => e.title)).size).toBe(
       playgroundExamples.length,
     );
+  });
+
+  it("follows research paper conventions", () => {
+    const { document } = compileExample("research-paper");
+    const types = document.blocks.map((block) => block.type);
+    for (const type of [
+      "publisle:heading",
+      "publisle:paragraph",
+      "publisle:math",
+      "publisle:figure",
+      "publisle:table",
+      "publisle:footnote",
+      "publisle:bibliography",
+    ])
+      expect(types).toContain(type);
+    // An abstract heading carries the abstract role, and the genre stays
+    // scholarly: no tutorial-genre blocks.
+    const abstractHeading = document.blocks.find(
+      (block) =>
+        block.type === "publisle:heading" &&
+        (block.data as Record<string, unknown>).role === "abstract",
+    );
+    expect(abstractHeading).toBeDefined();
+    expect(types).not.toContain("publisle:callout");
+    expect(types).not.toContain("publisle:embed");
+    expect(types).not.toContain("publisle:interactive-schematic");
+    expect(document.metadata?.documentType).toBe("research-paper");
+    expect(document.metadata?.authors?.[0]).toMatchObject({
+      name: "Ada Example",
+      affiliation: "Illustrative Signal Processing Laboratory",
+    });
   });
 
   it("carries every advertised block type in one document", () => {
