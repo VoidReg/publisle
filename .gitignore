@@ -20,3 +20,4 @@ coverage
 .next-env.d.ts
 .publisle-cache/
 .local/
+/native/pdf/target/
