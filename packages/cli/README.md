@@ -3,7 +3,7 @@
 Node CLI for validation, static reader builds, and explicit source upgrades.
 
 Requires Node.js 24 or later. Framework adapters also require their declared peer dependencies.
-This package is part of Publisle, independently versioned at `0.1.1` and published under the npm `beta` tag.
+This package is part of Publisle, independently versioned at `0.2.0` and published under the npm `latest` tag.
 Frozen contract version integers are independent of npm package versions.
 
 - [Core standard](https://github.com/VoidReg/publisle/blob/main/docs/standards/README.md)

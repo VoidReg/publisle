@@ -1,16 +1,16 @@
 {
   "schemaVersion": 2,
-  "id": "npm-release-38182495585-1",
+  "id": "npm-release-39574366601-1",
   "versions": {
     "@publisle/adapter-astro": "0.2.0",
-    "@publisle/adapter-core": "0.1.1",
+    "@publisle/adapter-core": "0.1.2",
     "@publisle/adapter-next": "0.1.1",
     "@publisle/adapter-react": "0.1.1",
     "@publisle/adapter-svelte": "0.1.1",
     "@publisle/adapter-vue": "0.1.1",
     "@publisle/block-sdk": "0.1.1",
-    "@publisle/cli": "0.1.1",
-    "@publisle/cli-research": "0.1.1",
+    "@publisle/cli": "0.2.0",
+    "@publisle/cli-research": "0.1.2",
     "@publisle/contracts": "0.1.1",
     "@publisle/core": "0.1.1",
     "@publisle/markdown": "0.1.1",
@@ -22,16 +22,31 @@
     "@publisle/template-article": "0.1.1",
     "@publisle/template-elsevier": "0.1.1",
     "@publisle/template-ieee": "0.1.1",
-    "@publisle/template-sdk": "0.1.1",
+    "@publisle/template-sdk": "0.1.2",
     "@publisle/template-springer": "0.1.1",
     "@publisle/blocks-core": "0.1.1",
     "@publisle/blocks-technical": "0.1.1"
   },
   "releases": [
     {
-      "name": "@publisle/playground",
-      "oldVersion": "0.2.0",
-      "version": "0.2.1"
+      "name": "@publisle/adapter-core",
+      "oldVersion": "0.1.1",
+      "version": "0.1.2"
+    },
+    {
+      "name": "@publisle/cli",
+      "oldVersion": "0.1.1",
+      "version": "0.2.0"
+    },
+    {
+      "name": "@publisle/cli-research",
+      "oldVersion": "0.1.1",
+      "version": "0.1.2"
+    },
+    {
+      "name": "@publisle/template-sdk",
+      "oldVersion": "0.1.1",
+      "version": "0.1.2"
     }
   ]
 }

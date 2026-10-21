@@ -1,5 +1,17 @@
 # @publisle/cli-research
 
+## 0.1.2
+
+### Patch Changes
+
+- 879eed3: Publish the CLI peer dependency as a compatible caret range, including the new CLI build release.
+- Updated dependencies [879eed3]
+- Updated dependencies [879eed3]
+- Updated dependencies [4342a8d]
+  - @publisle/adapter-core@0.1.2
+  - @publisle/cli@0.2.0
+  - @publisle/template-sdk@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

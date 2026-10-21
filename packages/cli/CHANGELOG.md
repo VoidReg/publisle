@@ -1,5 +1,17 @@
 # @publisle/cli
 
+## 0.2.0
+
+### Minor Changes
+
+- 879eed3: Add the `publisle build <file.json|file.md> --out <new-directory>` command: it compiles a portable document into a static reader page (HTML, stylesheets with inlined KaTeX rules, and a `publication.json` island manifest). Interactive blocks ship their authored fallbacks. The CLI now depends on `@publisle/adapter-core`; research tooling stays optional.
+
+### Patch Changes
+
+- Updated dependencies [879eed3]
+- Updated dependencies [4342a8d]
+  - @publisle/adapter-core@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

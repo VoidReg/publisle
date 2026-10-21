@@ -20,9 +20,9 @@
     "@publisle/blocks-technical": "file:.artifacts/publisle-blocks-technical-0.1.1.tgz",
     "@publisle/markdown": "file:.artifacts/publisle-markdown-0.1.1.tgz",
     "@publisle/profiles": "file:.artifacts/publisle-profiles-0.1.1.tgz",
-    "@publisle/adapter-core": "file:.artifacts/publisle-adapter-core-0.1.1.tgz",
+    "@publisle/adapter-core": "file:.artifacts/publisle-adapter-core-0.1.2.tgz",
     "@publisle/adapter-astro": "file:.artifacts/publisle-adapter-astro-0.2.0.tgz",
-    "@publisle/cli": "file:.artifacts/publisle-cli-0.1.1.tgz",
+    "@publisle/cli": "file:.artifacts/publisle-cli-0.2.0.tgz",
     "astro": "7.2.8"
   },
   "devDependencies": {
