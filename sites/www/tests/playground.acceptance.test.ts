@@ -119,7 +119,9 @@ it("compiles all examples live and runs the FFT butterfly", async () => {
         expect(await preview.locator("figcaption").count()).toBe(3);
         await preview
           .locator("img")
-          .evaluate((image: HTMLImageElement) => image.decode());
+          .evaluateAll((images: HTMLImageElement[]) =>
+            Promise.all(images.map((image) => image.decode())),
+          );
         await preview
           .getByRole("button", { name: "Explore Eight-point FFT butterfly" })
           .focus();
