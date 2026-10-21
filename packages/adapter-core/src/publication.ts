@@ -315,6 +315,12 @@ export function compilePublication(
   if (isRenderPlan(source))
     return compilePlan(source, styles, options.build, options.rawHtmlPlacement);
   const compilerOptions: AdapterCompilerOptions = {
+    ...(options.citations === undefined
+      ? {}
+      : { citations: options.citations }),
+    ...(options.bibliography === undefined
+      ? {}
+      : { bibliography: options.bibliography }),
     ...(options.renderers === undefined
       ? {}
       : { renderers: options.renderers }),

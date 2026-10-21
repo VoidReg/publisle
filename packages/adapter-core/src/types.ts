@@ -87,6 +87,12 @@ export type DiagramRenderer = (input: {
   readonly alt: string;
 }) => DiagramRenderResult;
 export interface AdapterCompilerOptions {
+  /** Preformatted citation text keyed by citationKey; keeps CSL out of readers. */
+  readonly citations?: Readonly<Record<string, string>>;
+  readonly bibliography?: readonly {
+    readonly id: string;
+    readonly text: string;
+  }[];
   /** Raw HTML's authored IDs cannot be safely rewritten by a generic compiler. */
   readonly rawHtmlPlacement?: "reject" | "preserve";
   readonly renderers?: Readonly<Record<string, IslandRendererReference>>;

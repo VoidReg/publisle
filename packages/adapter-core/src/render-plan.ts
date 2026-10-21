@@ -30,6 +30,29 @@ const element = (
   children: readonly RenderNode[],
 ): RenderNode => ({ kind: "element", tag, attributes, children });
 
+/** Stable identity for a citation cluster, independent of object property order. */
+export function citationKey(cluster: {
+  readonly items: readonly {
+    readonly id: string;
+    readonly locator?: string;
+    readonly label?: string;
+    readonly suppressAuthor?: boolean;
+  }[];
+  readonly prefix?: string;
+  readonly suffix?: string;
+}): string {
+  return JSON.stringify([
+    cluster.items.map((item) => [
+      item.id,
+      item.locator ?? "",
+      item.label ?? "",
+      item.suppressAuthor ?? false,
+    ]),
+    cluster.prefix ?? "",
+    cluster.suffix ?? "",
+  ]);
+}
+
 function referenceText(target: ReferenceTarget): string {
   if (target.kind === "heading") return target.title ?? target.label;
   const name = target.kind.charAt(0).toUpperCase() + target.kind.slice(1);
@@ -203,6 +226,12 @@ function inline(
             {
               class: "publisle-citation",
               "data-publisle-citation": JSON.stringify(items),
+              ...(node["prefix"]
+                ? { "data-publisle-citation-prefix": String(node["prefix"]) }
+                : {}),
+              ...(node["suffix"]
+                ? { "data-publisle-citation-suffix": String(node["suffix"]) }
+                : {}),
             },
             [text(`[${value}]`)],
           ),
@@ -1126,6 +1155,18 @@ function blockNodes(
     }
     case "publisle:bibliography": {
       const entries = Array.isArray(data["entries"]) ? data["entries"] : [];
+      if (options.bibliography)
+        return [
+          element(
+            "section",
+            { class: "publisle-bibliography" },
+            options.bibliography.map((entry) =>
+              element("p", { "data-publisle-bibliography-id": entry.id }, [
+                text(entry.text),
+              ]),
+            ),
+          ),
+        ];
       return [
         element(
           "section",
@@ -1235,7 +1276,7 @@ export function createRenderPlan(
   );
   const base = {
     document,
-    nodes: wrapInputs(nodes, document),
+    nodes: wrapInputs(resolveCitations(nodes, options.citations), document),
     diagnostics: diagnostics.map((diagnostic) =>
       locateDiagnostic(diagnostic, document.sourceMap),
     ),
@@ -1243,6 +1284,31 @@ export function createRenderPlan(
   return document.metadata === undefined
     ? base
     : { ...base, metadata: document.metadata };
+}
+
+function resolveCitations(
+  nodes: readonly RenderNode[],
+  citations: AdapterCompilerOptions["citations"],
+): RenderNode[] {
+  if (!citations) return [...nodes];
+  return nodes.map((node) => {
+    if (node.kind === "island")
+      return { ...node, fallback: resolveCitations(node.fallback, citations) };
+    if (node.kind === "component" && node.artifact)
+      return { ...node, artifact: resolveCitations(node.artifact, citations) };
+    if (node.kind !== "element") return node;
+    const raw = node.attributes["data-publisle-citation"];
+    if (typeof raw === "string") {
+      const key = citationKey({
+        items: JSON.parse(raw) as Parameters<typeof citationKey>[0]["items"],
+        prefix: String(node.attributes["data-publisle-citation-prefix"] ?? ""),
+        suffix: String(node.attributes["data-publisle-citation-suffix"] ?? ""),
+      });
+      const value = citations[key];
+      if (value !== undefined) return { ...node, children: [text(value)] };
+    }
+    return { ...node, children: resolveCitations(node.children, citations) };
+  });
 }
 
 function wrapInputs(

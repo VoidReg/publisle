@@ -34,3 +34,4 @@ export {
   publicationReaderManifest,
   type PublicationReaderManifest,
 } from "./publication.ts";
+export { citationKey } from "./render-plan.ts";
