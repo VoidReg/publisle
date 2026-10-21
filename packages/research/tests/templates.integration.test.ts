@@ -47,7 +47,7 @@ describe("publisher starter packages", () => {
         "",
         "Intro.",
         "",
-        ':::diagram{engine="mermaid" alt="Sample indices enter bit-reversed"}',
+        '::::diagram{engine="mermaid" alt="Sample indices enter bit-reversed"}',
         "flowchart LR",
         '  A["x"] --> B["y"]',
         ":::caption",
