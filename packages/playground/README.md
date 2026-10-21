@@ -17,6 +17,6 @@ editor.importMarkdown("# Hello");
 ```
 
 This package is part of Publisle, independently versioned and published under
-the npm `beta` tag. See the
+the npm `latest` tag. See the
 [core standard](https://github.com/VoidReg/publisle/blob/main/docs/standards/README.md)
 and the [playground](https://publisle.xyz/playground) for the hosted editor.
