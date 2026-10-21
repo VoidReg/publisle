@@ -22,8 +22,23 @@ import {
   resolve,
 } from "node:path";
 import { promisify } from "node:util";
+import {
+  compileNativePdf,
+  type NativeCompileOptions,
+  type NativeCompileResult,
+} from "./native-node.ts";
+export {
+  compileNativePdf,
+  type NativeCompileOptions,
+  type NativeCompileResult,
+};
 import type { ResearchLoss } from "./article.ts";
-import type { Block, BlockType, Document } from "@publisle/schema";
+import {
+  parseDocument,
+  type Block,
+  type BlockType,
+  type Document,
+} from "@publisle/schema";
 import { createLatexPackage, type LatexPackageOptions } from "./package.ts";
 import type { LatexPackage } from "./package.ts";
 
@@ -672,10 +687,22 @@ export async function setupCompiler(
   return details.Id;
 }
 /** Unicode-safe default PDF API. Never falls back to the legacy text exporter. */
-export async function exportPdf(
+export function exportPdf(
+  document: Document<Block<BlockType, unknown>>,
+  options: NativeCompileOptions & { readonly engine: "rust" },
+): Promise<NativeCompileResult>;
+export function exportPdf(
   document: Document<Block<BlockType, unknown>>,
   options: LatexPackageOptions & CompileLatexOptions,
-): Promise<CompiledLatexPackage> {
+): Promise<CompiledLatexPackage>;
+export async function exportPdf(
+  document: Document<Block<BlockType, unknown>>,
+  options:
+    | (LatexPackageOptions & CompileLatexOptions)
+    | (NativeCompileOptions & { readonly engine: "rust" }),
+): Promise<CompiledLatexPackage | NativeCompileResult> {
+  if (options.engine === "rust")
+    return compileNativePdf(parseDocument(document), options);
   return compileLatexPackage(createLatexPackage(document, options), options);
 }
 

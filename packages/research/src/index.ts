@@ -1,4 +1,15 @@
 export type { CitationEntry, ResearchLoss } from "./article.ts";
+export { citationClusters } from "./article.ts";
+export {
+  createNativePdfPackage,
+  NATIVE_PDF_INPUT_VERSION,
+  NATIVE_PDF_TEMPLATES,
+  type NativeFont,
+  type NativePdfInput,
+  type NativePdfOptions,
+  type NativePdfPackage,
+  type NativePdfTemplate,
+} from "./native.ts";
 export { parseBibtex, toBibtex, toCslJson } from "./bibtex.ts";
 export { parseCslStyle } from "./csl.ts";
 export { toJats, createJatsPackage, type JatsPackage } from "./jats.ts";

@@ -31,6 +31,7 @@ import {
 } from "@publisle/research";
 import {
   compileLatexPackage,
+  compileNativePdf,
   collectJatsPackage,
   lookupDoi,
   fetchBibliography,
@@ -69,7 +70,7 @@ export const researchCommandNames = [
 export type ResearchCommandName = (typeof researchCommandNames)[number];
 
 export const researchCommandHelp = `Research export: publisle export <file.json|file.md> --to bibtex|csl-json|latex|jats|pdf|html [--style numeric|author-date|file.csl] [--output <new-file>]
-Journal templates: publisle export <file.json|file.md> --to pdf|submission --template ieee-journal [--engine pdflatex|lualatex] --output <new-file|new-directory>
+Journal templates: publisle export <file.json|file.md> --to pdf|submission --template ieee-journal [--engine pdflatex|lualatex|rust] --output <new-file|new-directory>
 BibTeX import: publisle bibliography <file.bib>
 Compiler: publisle doctor [--verapdf] | publisle setup compiler
 Submission: --config host.ts --template-data data.json --compiler auto|native|container [--archive]
@@ -197,7 +198,7 @@ async function exportCommand(
     | undefined;
   let style = "numeric";
   let template: string | undefined;
-  let engine: "pdflatex" | "lualatex" | undefined;
+  let engine: "pdflatex" | "lualatex" | "rust" | undefined;
   let configFile: string | undefined;
   let templateDataFile: string | undefined;
   let compiler: "auto" | "native" | "container" = "auto";
@@ -239,7 +240,7 @@ async function exportCommand(
       compiler = value;
     else if (
       key === "--engine" &&
-      (value === "pdflatex" || value === "lualatex")
+      (value === "pdflatex" || value === "lualatex" || value === "rust")
     )
       engine = value;
     else if (key === "--style") style = value;
@@ -374,6 +375,38 @@ async function exportCommand(
         error.code === "ENOENT"
       ))
         throw error;
+    }
+    if (engine === "rust") {
+      if (target !== "pdf")
+        throw new Error(
+          "The rust engine produces PDF only; LaTeX source and submission exports use their existing engines.",
+        );
+      const native = await compileNativePdf(loaded.document, {
+        ...(templateDataFile
+          ? {
+              data: parseJson(await readFile(resolve(templateDataFile))) as {
+                country?: string;
+              },
+            }
+          : {}),
+        sourceDirectory: dirname(sourceName),
+        ...(template
+          ? {
+              template:
+                template as import("@publisle/research").NativePdfTemplate,
+            }
+          : {}),
+        style:
+          style === "numeric" || style === "author-date"
+            ? style
+            : await readFile(resolve(style), "utf8"),
+      });
+      for (const diagnostic of native.diagnostics)
+        io.stderr(
+          `${sourceName}: warning [${diagnostic.code}]: ${diagnostic.message}\n`,
+        );
+      await writeFile(destination, native.pdf, { flag: "wx" });
+      return 0;
     }
     const sourcePackage = createLatexPackage(loaded.document, {
       ...(template ? { template } : {}),
