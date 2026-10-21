@@ -28,9 +28,12 @@ metadata, glyphs and citations fail explicitly. Publisher layouts retain their
 existing accessibility limitations; standard LuaLaTeX articles retain PDF/UA
 source defaults. Validation is performed in QA, not on every public request.
 
-There is no database, object storage, upload endpoint or retained output cache.
-Temporary files disappear after success, failure, cancellation or timeout.
-Labeled orphan containers and job directories are removed on service restart.
+There is no database, object storage, upload endpoint or persistent job record.
+Temporary job files disappear after success, failure, cancellation or timeout.
+A content-addressed cache (opt-in via `PDF_CACHE_DIR`) retains compiled PDFs for
+identical repeat requests until their TTL or a size cap evicts them; see
+[the cache section](#pdf-cache) for the trade-offs. Labeled orphan containers and
+job directories are removed on service restart.
 Worker logging is disabled so binary PDF output is not written into runtime logs.
 The API records only timing and failure codes.
 
@@ -113,7 +116,25 @@ PDF_ENABLED=true
 PDF_WORKER_IMAGE=sha256:<immutable-installed-image-id>
 PDF_ORIGINS=https://publisle.xyz
 PDF_ASSET_BASE=https://publisle.xyz/
+PDF_CACHE_DIR=/var/lib/publisle-pdf/cache
 ```
+
+## PDF cache
+
+Without `PDF_CACHE_DIR` every compile runs the full container pipeline, so an
+identical repeat export pays the full compilation time again. With the cache
+enabled, a request whose validated JSON (document/markdown, template, engine,
+style, data) and worker image hash to an already-stored key is served from disk
+and reports a `pdf-cache-hit` diagnostic. Two properties matter for freshness:
+
+- Documents may reference remote figure assets. A cached PDF is only as fresh
+  as its TTL, which is why the cache is opt-in and entries expire quickly by
+  default (`PDF_CACHE_TTL_MS`, one hour).
+- Total cache size is capped at 256 MiB; the oldest entries are evicted first.
+
+The cache lives under the service's `StateDirectory`, so it survives restarts
+but not a reprovision. Set `PDF_CACHE_DIR=/var/lib/publisle-pdf/cache` (the
+installer's template value) or disable it by leaving the variable unset.
 
 When the public edge is another reverse proxy that cannot reach loopback (for
 example a Dockerized nginx), also set `PDF_BIND` to an RFC1918 address on this

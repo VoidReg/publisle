@@ -94,6 +94,9 @@ PDF_ENABLED=false
 PDF_WORKER_IMAGE=
 PDF_ORIGINS=https://publisle.xyz
 PDF_ASSET_BASE=https://publisle.xyz/
+# Content-addressed PDF cache; repeat compiles of an identical document skip
+# the container run. Entries expire after PDF_CACHE_TTL_MS (default 1 hour).
+PDF_CACHE_DIR=/var/lib/publisle-pdf/cache
 HOME=/var/lib/publisle-runtime
 XDG_RUNTIME_DIR=$RUNTIME_DIR
 DOCKER_HOST=unix://$RUNTIME_DIR/docker.sock
