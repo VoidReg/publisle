@@ -253,6 +253,54 @@ test("admission serializes work, bounds queue, releases cancellation and enforce
   assert.equal(gate.active, false);
 });
 
+test("cache hits skip admission so repeat exports never consume the quota", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "pdf-cache-quota-test-"));
+  const cache = join(directory, "cache");
+  await mkdir(cache);
+  const pdf = Buffer.from("%PDF-1.7\nfixture");
+  let compiles = 0;
+  const api = createApi({
+    ready: true,
+    image: `sha256:${"1".repeat(64)}`,
+    pdfCacheDirectory: cache,
+    limits: { ...LIMITS, attempts: 1 },
+    compile: async () => {
+      compiles++;
+      return { pdf, diagnostics: [] };
+    },
+  });
+  api.server.listen(0, "127.0.0.1");
+  await once(api.server, "listening");
+  const base = `http://127.0.0.1:${api.server.address().port}`;
+  const send = (markdown) =>
+    fetch(`${base}/pdf/compile`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/pdf",
+      },
+      body: JSON.stringify({ markdown }),
+    });
+  const body =
+    "---\ntitle: Test\nauthors:\n  - name: Ada\n---\n\nRepeatable body";
+  try {
+    const first = await send(body);
+    assert.equal(first.status, 200);
+    assert.equal(compiles, 1);
+    const repeat = await send(body);
+    assert.equal(repeat.status, 200);
+    assert.equal(await repeat.text(), pdf.toString());
+    assert.equal(compiles, 1);
+    const different = await send(`${body} Changed`);
+    assert.equal(different.status, 429);
+    assert.ok(different.headers.get("retry-after"));
+    assert.equal(compiles, 1);
+  } finally {
+    api.shutdown();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("worker sandbox is immutable, bounded and has no network", async () => {
   const args = workerArguments(
     `sha256:${"a".repeat(64)}`,
@@ -452,8 +500,6 @@ test("API serves binary and legacy PDFs, CORS, capability and error states", asy
 
 test("PDF compilation converts images in the compiler and partitions caches by worker image", async () => {
   const directory = await mkdtemp(join(tmpdir(), "pdf-pipeline-test-"));
-  const cache = join(directory, "cache");
-  await mkdir(cache);
   const actions = [];
   const observed = [];
   const image = `sha256:${"1".repeat(64)}`;
@@ -492,7 +538,6 @@ test("PDF compilation converts images in the compiler and partitions caches by w
   const options = {
     image,
     jobDirectory: directory,
-    pdfCacheDirectory: cache,
     runWorker: worker,
     onTimings: (t) => observed.push(t),
     assetBase: "https://example.com",
@@ -513,19 +558,65 @@ test("PDF compilation converts images in the compiler and partitions caches by w
     assert.equal(observed[0].latexMs, 12);
     assert.equal(observed[0].hostPath, undefined);
     assert.equal(observed[0].invalid, undefined);
-    const cached = await compileJob(
-      request,
-      new AbortController().signal,
-      options,
-    );
-    assert.equal(actions.length, 2);
-    assert.ok(cached.diagnostics.some((d) => d.code === "pdf-cache-hit"));
     await compileJob(request, new AbortController().signal, {
       ...options,
       image: `sha256:${"2".repeat(64)}`,
     });
     assert.deepEqual(actions, ["prepare", "compile", "prepare", "compile"]);
   } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("the cache partitions by worker image and reports hits without recompiling", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "pdf-cache-test-"));
+  const cache = join(directory, "cache");
+  await mkdir(cache);
+  const pdf = Buffer.from("%PDF-1.7\nfixture");
+  let compiles = 0;
+  const api = (image) => {
+    const instance = createApi({
+      ready: true,
+      image,
+      pdfCacheDirectory: cache,
+      compile: async () => {
+        compiles++;
+        return { pdf, diagnostics: [] };
+      },
+    });
+    instance.server.listen(0, "127.0.0.1");
+    return instance;
+  };
+  const body = {
+    markdown: "---\ntitle: Test\nauthors:\n  - name: Ada\n---\n\nBody",
+  };
+  const compile = (base) =>
+    fetch(`${base}/pdf/compile`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  let first;
+  let second;
+  try {
+    first = api(`sha256:${"1".repeat(64)}`);
+    await once(first.server, "listening");
+    const firstBase = `http://127.0.0.1:${first.server.address().port}`;
+    assert.equal((await compile(firstBase)).status, 200);
+    assert.equal(compiles, 1);
+    const hit = await compile(firstBase);
+    assert.equal((await hit.json()).diagnostics[0].code, "pdf-cache-hit");
+    assert.equal(compiles, 1);
+    first.shutdown();
+    // A different worker image never reuses the first image's cache entries.
+    second = api(`sha256:${"2".repeat(64)}`);
+    await once(second.server, "listening");
+    const secondBase = `http://127.0.0.1:${second.server.address().port}`;
+    await compile(secondBase);
+    assert.equal(compiles, 2);
+  } finally {
+    first?.shutdown();
+    second?.shutdown();
     await rm(directory, { recursive: true, force: true });
   }
 });

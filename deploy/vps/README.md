@@ -7,8 +7,9 @@ excludes them. The website remains static on GitHub Pages.
 ## Architecture and limits
 
 Caddy forwards HTTPS to a Node 24 API on `127.0.0.1:8787`. The API admits one job
-at a time, with at most two waiting requests and five attempts per IP per ten
-minutes. The dedicated rootless runtime and API share `publisle-pdf.slice`, capped
+at a time, with at most two waiting requests and fifteen attempts per IP per
+ten minutes. Identical repeat requests answered from the PDF cache do not
+consume the attempt quota. The dedicated rootless runtime and API share `publisle-pdf.slice`, capped
 at **0.5 vCPU and 512 MiB total**, including all compiler containers. Swap is
 forbidden. Existing VPS workloads stay outside this hierarchy.
 

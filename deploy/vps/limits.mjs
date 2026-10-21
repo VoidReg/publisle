@@ -10,7 +10,9 @@ export const LIMITS = Object.freeze({
   jobMs: 180_000,
   fetchMs: 10_000,
   redirects: 3,
-  attempts: 5,
+  // Compilation attempts per IP per quota window. Cache hits never consume
+  // the quota, so repeated demo exports of an unchanged document stay free.
+  attempts: 15,
   quotaMs: 600_000,
 });
 

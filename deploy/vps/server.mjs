@@ -299,33 +299,6 @@ export async function compileJob(request, signal, options) {
       400,
     );
   const worker = options.runWorker ?? runWorker;
-  const cacheDirectory = options.pdfCacheDirectory;
-  if (cacheDirectory) {
-    const cached = await readCachedPdf(
-      cacheDirectory,
-      cacheKey(request, image),
-    );
-    if (cached) {
-      console.log(
-        JSON.stringify({
-          event: "pdf-job",
-          code: "cache-hit",
-          durationMs: 0,
-        }),
-      );
-      return {
-        pdf: cached.pdf,
-        diagnostics: [
-          ...cached.diagnostics,
-          {
-            code: "pdf-cache-hit",
-            message:
-              "An identical document was compiled recently; the cached PDF was served.",
-          },
-        ],
-      };
-    }
-  }
   const directory = await mkdtemp(
     join(options.jobDirectory ?? tmpdir(), "publisle-pdf-"),
   );
@@ -433,11 +406,6 @@ export async function compileJob(request, signal, options) {
       );
     if (!metadata.ok || pdf.subarray(0, 5).toString() !== "%PDF-")
       throw new Error("Invalid worker output");
-    if (cacheDirectory)
-      await storeCachedPdf(cacheDirectory, cacheKey(request, image), {
-        pdf,
-        diagnostics: metadata.diagnostics,
-      });
     return { pdf, diagnostics: metadata.diagnostics };
   } catch (error) {
     resultCode = signal.aborted
@@ -566,6 +534,26 @@ export function createApi(options = {}) {
       response.on("close", () => controller.abort());
       void (async () => {
         let release;
+        const respondWithPdf = (result) => {
+          if (request.headers.accept?.includes("application/pdf")) {
+            const diagnostics = Buffer.from(
+              JSON.stringify(result.diagnostics ?? []),
+            ).toString("base64");
+            response.writeHead(200, {
+              "content-type": "application/pdf",
+              "content-disposition": 'attachment; filename="publisle.pdf"',
+              "content-length": result.pdf.length,
+              "x-publisle-diagnostics":
+                diagnostics.length <= 8192 ? diagnostics : "W10=",
+            });
+            response.end(result.pdf);
+          } else
+            json(response, 200, {
+              ok: true,
+              pdfBase64: result.pdf.toString("base64"),
+              diagnostics: result.diagnostics ?? [],
+            });
+        };
         try {
           if (
             request.headers["content-type"]?.split(";")[0]?.trim() !==
@@ -588,14 +576,6 @@ export function createApi(options = {}) {
             request.socket.remoteAddress,
             request.headers["x-forwarded-for"],
             isTrustedProxy,
-          );
-          const admittedAt = performance.now();
-          release = await admission.acquire(ip, controller.signal);
-          console.log(
-            JSON.stringify({
-              event: "pdf-admission",
-              queueMs: Math.round(performance.now() - admittedAt),
-            }),
           );
           const chunks = [];
           let size = 0;
@@ -627,29 +607,61 @@ export function createApi(options = {}) {
             value,
             options.nativeImage ? options.nativeTemplates : [],
           );
+          // Cache hits never consume the per-IP quota: identical repeat
+          // exports stay free, which keeps launch-day demos workable.
+          if (options.pdfCacheDirectory) {
+            const cached = await readCachedPdf(
+              options.pdfCacheDirectory,
+              cacheKey(
+                input,
+                input.engine === "rust" ? options.nativeImage : options.image,
+              ),
+            );
+            if (cached) {
+              console.log(
+                JSON.stringify({
+                  event: "pdf-job",
+                  code: "cache-hit",
+                  durationMs: 0,
+                }),
+              );
+              respondWithPdf({
+                pdf: cached.pdf,
+                diagnostics: [
+                  ...cached.diagnostics,
+                  {
+                    code: "pdf-cache-hit",
+                    message:
+                      "An identical document was compiled recently; the cached PDF was served.",
+                  },
+                ],
+              });
+              return;
+            }
+          }
+          const admittedAt = performance.now();
+          release = await admission.acquire(ip, controller.signal);
+          console.log(
+            JSON.stringify({
+              event: "pdf-admission",
+              queueMs: Math.round(performance.now() - admittedAt),
+            }),
+          );
           const result = await (
             options.compile ??
             ((job, signal) => compileJob(job, signal, options))
           )(input, controller.signal);
           if (controller.signal.aborted) return;
-          if (request.headers.accept?.includes("application/pdf")) {
-            const diagnostics = Buffer.from(
-              JSON.stringify(result.diagnostics ?? []),
-            ).toString("base64");
-            response.writeHead(200, {
-              "content-type": "application/pdf",
-              "content-disposition": 'attachment; filename="publisle.pdf"',
-              "content-length": result.pdf.length,
-              "x-publisle-diagnostics":
-                diagnostics.length <= 8192 ? diagnostics : "W10=",
-            });
-            response.end(result.pdf);
-          } else
-            json(response, 200, {
-              ok: true,
-              pdfBase64: result.pdf.toString("base64"),
-              diagnostics: result.diagnostics ?? [],
-            });
+          if (options.pdfCacheDirectory)
+            await storeCachedPdf(
+              options.pdfCacheDirectory,
+              cacheKey(
+                input,
+                input.engine === "rust" ? options.nativeImage : options.image,
+              ),
+              result,
+            );
+          respondWithPdf(result);
         } catch (error) {
           if (!controller.signal.aborted) {
             if (error.status === 429) response.setHeader("retry-after", "60");
