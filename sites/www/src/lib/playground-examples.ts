@@ -138,7 +138,11 @@ extensions:
   demo:features: "colored LaTeX, labels and cross-references, figures, tables, mermaid diagrams, embeds, interactive islands, code, task lists, footnotes, and citations"
 ---
 
-# The FFT: From Sums to Butterflies
+:::heading{role="abstract"}
+
+# Abstract
+
+:::
 
 A signal and its spectrum are the same data seen from two sides. The discrete Fourier transform (DFT) is the bookkeeping that converts one into the other, and the fast Fourier transform (FFT) is the classic divide-and-conquer arrangement that makes the conversion cheap: instead of $N^{2}$ multiply-adds, it needs about $N \log_{2} N$.
 
@@ -159,7 +163,7 @@ Everything on this page is one portable document. Print and no-JS readers get th
 
 :::heading{label="sec:dft"}
 
-## 1. The transform, color-coded
+## The transform, color-coded
 
 :::
 
@@ -191,7 +195,7 @@ The magnitude spectrum of the sampled square wave. Energy sits in bins 2 and 6 b
 
 :::heading{label="sec:butterfly"}
 
-## 2. Halving the work with butterflies
+## Halving the work with butterflies
 
 :::
 
@@ -247,7 +251,7 @@ The butterfly above is live in the browser. Its authored fallback paragraph is w
 
 :::heading{label="sec:verify"}
 
-## 3. Verify it in code
+## Verify it in code
 
 :::
 

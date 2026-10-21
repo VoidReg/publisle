@@ -47,7 +47,7 @@ export async function fetchHealth(
 export interface PdfTemplate {
   readonly id: string;
   readonly label: string;
-  readonly engines: readonly ("pdflatex" | "lualatex")[];
+  readonly engines: readonly ("pdflatex" | "lualatex" | "rust")[];
   readonly fields?: readonly string[];
 }
 
@@ -66,7 +66,7 @@ export async function fetchPdfTemplates(): Promise<readonly PdfTemplate[]> {
 
 export type CompilePdfRequest = {
   readonly template: string;
-  readonly engine?: "pdflatex" | "lualatex";
+  readonly engine?: "pdflatex" | "lualatex" | "rust";
   readonly data?: { readonly country?: string };
 } & (
   | {

@@ -50,8 +50,6 @@ authors:
   - name: Ada Example
 ---
 
-## Hello, Publisle
-
 Edit this document and see the result beside it. Your draft saves on this device.
 
 ## Blocks
@@ -80,12 +78,14 @@ PDF export works out of the box: this sample already carries a title and author.
   let health = $state<ApiHealth | undefined>(undefined);
   let pdfTemplates = $state<readonly PdfTemplate[]>([]);
   let pdfTemplate = $state("article");
-  let pdfEngine = $state<"pdflatex" | "lualatex">("lualatex");
+  let pdfEngine = $state<"pdflatex" | "lualatex" | "rust">("lualatex");
   let pdfTitle = $state("");
   let pdfAuthors = $state("");
   let pdfAffiliation = $state("");
   let pdfCountry = $state("");
   let pdfBusy = $state(false);
+  let pdfElapsed = $state(0);
+  let citationResolver = $state<typeof import("../lib/preview-citations").previewCitations>();
   let pdfAbort: AbortController | undefined;
   let pdfDownloadUrl: string | undefined;
   const selectedPdfTemplate = $derived(pdfTemplates.find((item) => item.id === pdfTemplate));
@@ -109,10 +109,13 @@ PDF export works out of the box: this sample already carries a title and author.
     document.metadata = { ...document.metadata, title, authors };
     pdfBusy = true;
     notice = "Compiling PDF…";
+    pdfElapsed = 0;
+    const started = performance.now();
+    const elapsedTimer = setInterval(() => { pdfElapsed = Math.floor((performance.now() - started) / 1000); }, 1000);
     pdfAbort = new AbortController();
     try {
       const result = await compilePdf({ document, template: pdfTemplate, engine: pdfEngine, ...(pdfCountry.trim() && pdfTemplate === "acm-journal" ? { data: { country: pdfCountry.trim() } } : {}) }, pdfAbort.signal);
-      if (!result.ok) { notice = result.message; return; }
+      if (!result.ok) { notice = pdfAbort.signal.aborted ? "PDF export cancelled." : result.message; return; }
       if (pdfDownloadUrl) URL.revokeObjectURL(pdfDownloadUrl);
       pdfDownloadUrl = URL.createObjectURL(result.value.pdf);
       const link = window.document.createElement("a");
@@ -122,7 +125,7 @@ PDF export works out of the box: this sample already carries a title and author.
       notice = result.value.diagnostics.length ? `PDF downloaded. ${result.value.diagnostics.map((entry) => entry.message).join(" ")}` : "PDF downloaded.";
       const downloadedUrl = pdfDownloadUrl;
       setTimeout(() => { URL.revokeObjectURL(downloadedUrl); if (pdfDownloadUrl === downloadedUrl) pdfDownloadUrl = undefined; }, 1000);
-    } finally { pdfBusy = false; pdfAbort = undefined; }
+    } finally { clearInterval(elapsedTimer); pdfBusy = false; pdfAbort = undefined; }
   }
 
   let selectedId = $state<string | undefined>(undefined);
@@ -136,6 +139,10 @@ PDF export works out of the box: this sample already carries a title and author.
   const DRAFT_KEY = "publisle-draft-v1";
 
   onMount(() => {
+    let disposed = false;
+    void import("../lib/preview-citations").then((module) => {
+      if (!disposed) citationResolver = module.previewCitations;
+    }).catch(() => { if (!disposed) notice = "Citation formatting could not load. Reload to retry."; });
     const unsubscribe = editor.subscribe(() => { version += 1; });
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
@@ -163,7 +170,7 @@ PDF export works out of the box: this sample already carries a title and author.
       history.replaceState(history.state, "", url);
     }
     draftReady = true;
-    return () => { unsubscribe(); clearTimeout(sourceTimer); pdfAbort?.abort(); if (pdfDownloadUrl) URL.revokeObjectURL(pdfDownloadUrl); };
+    return () => { disposed = true; unsubscribe(); clearTimeout(sourceTimer); pdfAbort?.abort(); if (pdfDownloadUrl) URL.revokeObjectURL(pdfDownloadUrl); };
   });
 
   $effect(() => {
@@ -227,6 +234,7 @@ PDF export works out of the box: this sample already carries a title and author.
     void version;
     return editor.document.blocks;
   });
+  const previewTitle = $derived.by(() => { void version; return editor.document.metadata?.title; });
 
   const types = blockTypes();
   const labels = blockLabels();
@@ -257,7 +265,7 @@ PDF export works out of the box: this sample already carries a title and author.
           manifest: undefined,
         };
       }
-      const artifact = compilePublication(result.document);
+      const artifact = compilePublication(result.document, citationResolver?.(editor.document));
       return {
         html: artifact.html,
         warnings: artifact.diagnostics.length,
@@ -386,7 +394,7 @@ PDF export works out of the box: this sample already carries a title and author.
       void fetchHealth().then((result) => {
         if (result.ok) health = result.value;
       });
-      void fetchPdfTemplates().then((templates) => { pdfTemplates = templates; });
+      void fetchPdfTemplates().then((templates) => { pdfTemplates = templates; selectPdfTemplate(); });
     }
   });
 </script>
@@ -470,7 +478,7 @@ PDF export works out of the box: this sample already carries a title and author.
 
     <span class="ml-auto flex items-center gap-2 text-xs text-muted">
       {#if PDF_ENABLED}
-        <button type="button" class="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-bg disabled:opacity-50" disabled={pdfBusy || !health?.services?.pdf || !pdfTemplates.length} onclick={() => void exportPdf()}>{pdfBusy ? "Compiling…" : "Export PDF"}</button>
+        <button type="button" class="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-bg disabled:opacity-50" aria-busy={pdfBusy} disabled={pdfBusy || !health?.services?.pdf || !pdfTemplates.length} onclick={() => void exportPdf()}>{pdfBusy ? `Compiling… ${pdfElapsed}s` : "Export PDF"}</button>
         {#if pdfBusy}<button type="button" class="rounded-md border border-line px-3 py-1.5" onclick={() => pdfAbort?.abort()}>Cancel PDF</button>{/if}
         {#if health}
           <span class="rounded-full border border-line px-2 py-0.5">
@@ -504,7 +512,7 @@ PDF export works out of the box: this sample already carries a title and author.
         <label class="grid gap-1 text-sm">Affiliation for entered authors<input class="rounded border border-line bg-bg p-2" bind:value={pdfAffiliation} maxlength="500" /></label>
         {#if pdfTemplate === "acm-journal"}<label class="grid gap-1 text-sm">Affiliation country<input class="rounded border border-line bg-bg p-2" bind:value={pdfCountry} maxlength="100" /></label>{/if}
       </div>
-      <p class="pt-2 text-xs text-muted">The current document and its referenced public images are sent for compilation. Interactive blocks use readable fallbacks. Processing files are deleted after the request. Compilation takes about 40–50 s.</p>
+      <p class="pt-2 text-xs text-muted">The current document and its referenced public images are sent for compilation. Interactive blocks use readable fallbacks. Processing files are deleted after the request. Export time depends on the document and selected layout; you can cancel while it runs.</p>
     </details>
   {/if}
 
@@ -611,6 +619,7 @@ PDF export works out of the box: this sample already carries a title and author.
         </p>
       {:else}
         <div class="publisle-preview" bind:this={previewEl}>
+          {#if previewTitle}<h2 class="mb-4 font-display text-2xl font-semibold">{previewTitle}</h2>{/if}
           {@html compiled.html}
         </div>
       {/if}

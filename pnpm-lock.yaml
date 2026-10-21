@@ -1109,6 +1109,9 @@ importers:
       '@publisle/playground':
         specifier: workspace:*
         version: link:../../packages/playground
+      '@publisle/research':
+        specifier: workspace:*
+        version: link:../../packages/research
       '@publisle/schema':
         specifier: workspace:*
         version: link:../../packages/schema
