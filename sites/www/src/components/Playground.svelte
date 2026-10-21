@@ -44,7 +44,13 @@
 
   const registry = createPlaygroundRegistry([interactiveSchematicDefinition]);
 
-  const STARTER_MARKDOWN = `# Hello, Publisle
+  const STARTER_MARKDOWN = `---
+title: "Hello, Publisle"
+authors:
+  - name: Ada Example
+---
+
+# Hello, Publisle
 
 Edit this document and see the result beside it. Your draft saves on this device.
 
@@ -53,6 +59,8 @@ Edit this document and see the result beside it. Your draft saves on this device
 - Structured blocks keep IDs, captions, and labels
 - Math stays TeX: $e^{i\\pi} + 1 = 0$
 - Press Ctrl+K to add blocks from the searchable palette
+
+PDF export works out of the box: this sample already carries a title and author.
 `;
 
   const editor = new DocumentEditor(undefined, registry);

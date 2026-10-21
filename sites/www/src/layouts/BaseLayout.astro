@@ -13,6 +13,7 @@ interface Props {
   readonly title: string;
   readonly description?: string;
   readonly path?: string;
+  readonly image?: string;
   readonly ogType?: "website" | "article";
   readonly noindex?: boolean;
   readonly jsonLd?: readonly Record<string, unknown>[];
@@ -22,6 +23,7 @@ const {
   title,
   description = "Turn Markdown into readable web articles, working interactive examples, and print-ready exports.",
   path = "/",
+  image = "/og.png",
   ogType = "website",
   noindex = false,
   jsonLd,
@@ -29,7 +31,7 @@ const {
 
 const site = Astro.site ?? new URL("https://publisle.xyz");
 const canonical = new URL(path, site).href;
-const ogImage = new URL("/og.png", site).href;
+const ogImage = new URL(image, site).href;
 const github = "https://github.com/VoidReg/publisle";
 
 const nav = [

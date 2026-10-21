@@ -275,6 +275,86 @@ describe("Node CLI safety and entrypoint", () => {
     expect((await invoke(["--help"])).stdout).toContain("Usage:");
   });
 
+  it("builds markdown into a fresh static reader directory", async () => {
+    const source = join(directory, "article.md");
+    await writeFile(
+      source,
+      "---\ntitle: Built article\nlanguage: en\n---\n\n# Built\n\nHello static readers.\n",
+    );
+    const out = join(directory, "dist");
+    const result = await invoke(["build", source, "--out", out]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("built index.html");
+    const page = await readFile(join(out, "index.html"), "utf8");
+    expect(page).toContain("<title>Built article</title>");
+    expect(page).toContain('class="publisle-document"');
+    expect(page).toContain('href="./katex.css"');
+    expect(await readFile(join(out, "document.css"), "utf8")).toContain(
+      ".publisle-document",
+    );
+    // The inlined KaTeX stylesheet ships real rules, not the @import stub.
+    expect(await readFile(join(out, "katex.css"), "utf8")).toContain(".katex");
+    const manifest: unknown = JSON.parse(
+      await readFile(join(out, "publication.json"), "utf8"),
+    );
+    expect(manifest).toBeDefined();
+    // A build output is always a fresh directory.
+    expect((await invoke(["build", source, "--out", out])).code).toBe(2);
+    expect((await invoke(["build", source])).code).toBe(2);
+    expect(
+      (await invoke(["build", source, "--out", out, "--unknown", "x"])).code,
+    ).toBe(2);
+  });
+
+  it("builds configured JSON fixtures and rejects invalid documents", async () => {
+    const out = join(directory, "configured");
+    expect(
+      (await invoke(["build", file, "--config", host, "--out", out])).code,
+    ).toBe(0);
+    expect(await readFile(join(out, "index.html"), "utf8")).toContain(
+      "demo:notice",
+    );
+    expect(
+      (await readdir(join(out, "fonts"))).some((name) =>
+        name.endsWith(".woff2"),
+      ),
+    ).toBe(true);
+    await writeFile(file, "{");
+    expect(
+      (await invoke(["build", file, "--out", join(directory, "invalid")])).code,
+    ).toBe(1);
+    expect(await readdir(directory)).not.toContain("invalid");
+  });
+
+  it("escapes document metadata in the static reader shell", async () => {
+    await writeFile(
+      file,
+      JSON.stringify({
+        schemaVersion: 1,
+        metadata: { title: '<script>alert("x")</script>' },
+        blocks: [],
+      }),
+    );
+    const out = join(directory, "escaped");
+    expect((await invoke(["build", file, "--out", out])).code).toBe(0);
+    const html = await readFile(join(out, "index.html"), "utf8");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain("<script>");
+  });
+
+  it("build preserves unknown blocks as honest fallback content", async () => {
+    const source = join(directory, "island.md");
+    await writeFile(
+      source,
+      '# Island\n\n:::publisle{type="demo:notice" schemaVersion="1"}\n\n```json\n{"text":"Legacy"}\n```\n\n:::\n',
+    );
+    const out = join(directory, "dist");
+    const result = await invoke(["build", source, "--out", out]);
+    expect(result.code).toBe(0);
+    const page = await readFile(join(out, "index.html"), "utf8");
+    expect(page).toContain("data-publisle-unknown-block");
+  });
+
   it("runs the actual executable with Node strip-only TypeScript and meaningful exit codes", async () => {
     const execute = promisify(execFile);
     const result = await execute(process.execPath, [

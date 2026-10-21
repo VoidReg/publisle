@@ -1,6 +1,9 @@
 import {
   chmod,
+  copyFile,
+  cp,
   lstat,
+  mkdir,
   mkdtemp,
   readFile,
   rename,
@@ -8,22 +11,30 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname, extname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   isPlainObject,
+  locateDiagnostic,
   parseDocument,
   parseJson,
   type Diagnostic,
+  type Document,
+  type DocumentSourceMap,
 } from "@publisle/schema";
-import { toReadingMarkdown } from "@publisle/markdown";
+import { fromMarkdown, toReadingMarkdown } from "@publisle/markdown";
+import {
+  compilePublication,
+  publicationReaderManifest,
+} from "@publisle/adapter-core";
 import { processSource, lockSource, type CliConfig } from "./index.ts";
 import {
   exportSemanticDocument,
   inspectDocument,
   validateContractBundle,
 } from "@publisle/contracts";
-import { createRegistry } from "@publisle/core";
+import { createRegistry, prepare, type PrepareOptions } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 
 /**
@@ -65,6 +76,10 @@ export interface CliIo {
 }
 
 const help = `Usage: publisle validate|upgrade|lock <file.json|file.md> [--config <host.mjs|host.ts>] [--format json|markdown]
+Static build: publisle build <file.json|file.md> --out <new-directory> [--config <host.mjs|host.ts>]
+  Compiles a portable document into a static reader page. Interactive blocks
+  ship their authored fallbacks (the CLI has no host runtime). publication.json carries the island manifests
+  for hosts that attach runtimes later. --out refuses an existing directory.
 JSON-only inspection: publisle inspect|semantic <source.json> [--bundle <contracts.json>] [--mode linked|standalone]
 Reading projection: publisle reading <source.json> (not a round trip).
 Research profile (requires the optional @publisle/cli-research plugin):
@@ -184,6 +199,144 @@ export async function runCli(
         diagnosticText,
       });
     }
+    if (command === "build") {
+      let file: string | undefined;
+      let outDirectory: string | undefined;
+      let configFile: string | undefined;
+      const seen = new Set<string>();
+      for (let index = 1; index < args.length; index += 1) {
+        const arg = args[index];
+        if (arg === undefined) continue;
+        if (!arg.startsWith("-")) {
+          if (file) throw new Error("Only one input file is supported.");
+          file = arg;
+          continue;
+        }
+        if (seen.has(arg)) throw new Error(`Duplicate option ${arg}.`);
+        seen.add(arg);
+        if (arg !== "--out" && arg !== "--config")
+          throw new Error("build accepts only --out and --config.");
+        const value = args[++index];
+        if (!value || value.startsWith("-"))
+          throw new Error(`Missing value for ${arg}.`);
+        if (arg === "--out") outDirectory = value;
+        else configFile = value;
+      }
+      if (!file) throw new Error("An input file is required.");
+      if (!outDirectory)
+        throw new Error("build requires --out <new-directory>.");
+      file = resolve(file);
+      const extension = extname(file).toLowerCase();
+      const format =
+        extension === ".json"
+          ? "json"
+          : extension === ".md" || extension === ".markdown"
+            ? "markdown"
+            : undefined;
+      if (!format)
+        throw new Error("build reads .json or .md sources; got " + extension);
+      const config = await loadConfig(configFile);
+      const preparation: PrepareOptions = {
+        registry: createRegistry(coreBlockDefinitions),
+        unknownBlocks: "preserve",
+        ...config.prepare,
+      };
+      const source = await readFile(file, "utf8");
+      let sourceMap: DocumentSourceMap | undefined;
+      let input: Document;
+      const diagnostics: Diagnostic[] = [];
+      if (format === "markdown") {
+        const imported = fromMarkdown(source, {
+          ...config.markdown,
+          sourceName: file,
+          resolveSchemaVersion: (type: `${string}:${string}`) =>
+            preparation.registry.get(type)?.schemaVersion,
+        });
+        diagnostics.push(...imported.diagnostics);
+        sourceMap = imported.sourceMap;
+        if (!imported.document) {
+          for (const item of diagnostics) io.stderr(diagnosticText(item, file));
+          return 1;
+        }
+        input = imported.document;
+      } else {
+        try {
+          input = parseDocument(parseJson(source));
+        } catch (cause) {
+          io.stderr(
+            `${file}: ${cause instanceof Error ? cause.message : "Invalid document"}\n`,
+          );
+          return 1;
+        }
+      }
+      const prepared = prepare(input, {
+        ...preparation,
+        ...(sourceMap ? { sourceMap } : {}),
+      });
+      diagnostics.push(
+        ...prepared.diagnostics.map((item) =>
+          locateDiagnostic(
+            item,
+            sourceMap ?? {
+              document: { source: file, line: 1, column: 1 },
+              blocks: {},
+            },
+          ),
+        ),
+      );
+      for (const item of diagnostics) io.stderr(diagnosticText(item, file));
+      if (!prepared.document) return 1;
+      if (diagnostics.some(({ level }) => level === "error")) return 1;
+      const artifact = compilePublication(prepared.document);
+      const out = resolve(outDirectory);
+      // mkdir without recursive fails when the directory already exists:
+      // a build output is always a fresh directory.
+      await mkdir(out);
+      const styles = createRequire(import.meta.url);
+      const documentCss = styles.resolve("@publisle/adapter-core/document.css");
+      // The exported stylesheet is an @import stub; inline the real KaTeX
+      // stylesheet resolved from adapter-core's own dependency.
+      const katexCss = createRequire(documentCss).resolve(
+        "katex/dist/katex.min.css",
+      );
+      await Promise.all([
+        copyFile(documentCss, join(out, "document.css")),
+        copyFile(katexCss, join(out, "katex.css")),
+        cp(join(dirname(katexCss), "fonts"), join(out, "fonts"), {
+          recursive: true,
+        }),
+      ]);
+      const title = prepared.document.metadata?.title;
+      const blocks = prepared.document.blocks.length;
+      const islands = artifact.islands.length;
+      const escapeHtml = (value: string) =>
+        value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      const page = `<!doctype html>
+<html lang="${escapeHtml(prepared.document.metadata?.language ?? "en")}">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title ?? "Publication")}</title>
+<link rel="stylesheet" href="./document.css">
+<link rel="stylesheet" href="./katex.css">
+<article class="publisle-document">
+${artifact.html}
+</article>
+`;
+      await writeFile(join(out, "index.html"), page, { flag: "wx" });
+      await writeFile(
+        join(out, "publication.json"),
+        `${JSON.stringify(publicationReaderManifest(artifact), null, 2)}\n`,
+        { flag: "wx" },
+      );
+      io.stdout(
+        `${out}: built index.html from ${String(blocks)} block${blocks === 1 ? "" : "s"}${islands ? ` (${String(islands)} interactive block${islands === 1 ? "" : "s"} shipped as static fallbacks)` : ""}\n`,
+      );
+      return 0;
+    }
     if (command === "reading") {
       if (args.length !== 2 || !args[1] || args[1].startsWith("-"))
         throw new Error("reading requires only canonical source.json");
@@ -235,7 +388,7 @@ export async function runCli(
     }
     if (command !== "validate" && command !== "upgrade" && command !== "lock")
       throw new Error(
-        "Expected validate, upgrade, lock, inspect, semantic, or reading. Research commands (export, bibliography, doctor, setup) require @publisle/cli-research.",
+        "Expected validate, build, upgrade, lock, inspect, semantic, or reading. Research commands (export, bibliography, doctor, setup) require @publisle/cli-research.",
       );
     let file: string | undefined;
     let configFile: string | undefined;

@@ -157,6 +157,65 @@ for (const research of [false, true]) {
     assert.match(result.stderr, /@publisle\/cli-research/u);
   }
 }
+// Exercise the exact unqualified install lines shown on the home page.
+const quickstart = join(temporary, "quickstart");
+const prefix = join(temporary, "global");
+await mkdir(quickstart);
+await writeFile(
+  join(quickstart, "package.json"),
+  '{"private":true,"type":"module"}',
+);
+run(
+  process.execPath,
+  [
+    npmCli(),
+    "install",
+    "--global",
+    "--prefix",
+    prefix,
+    "@publisle/cli",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund",
+  ],
+  quickstart,
+);
+const globalCli = join(prefix, "lib/node_modules/@publisle/cli");
+assert.equal(
+  (
+    JSON.parse(await readFile(join(globalCli, "package.json"), "utf8")) as {
+      version: string;
+    }
+  ).version,
+  versions["@publisle/cli"],
+);
+await writeFile(
+  join(quickstart, "article.md"),
+  "# Hello\n\nBuilt from a clean global install.\n",
+);
+run(
+  process.execPath,
+  [join(globalCli, "dist/bin.js"), "build", "article.md", "--out", "dist"],
+  quickstart,
+);
+assert(
+  (await readFile(join(quickstart, "dist/index.html"), "utf8")).includes(
+    "Built from a clean global install.",
+  ),
+);
+run(
+  process.execPath,
+  [
+    npmCli(),
+    "install",
+    "@publisle/cli-research",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund",
+  ],
+  quickstart,
+);
+await inspectLock(quickstart, false);
 const showcase = join(temporary, "showcase");
 await cp(join(root, "showcase/fourier"), showcase, {
   recursive: true,
@@ -192,6 +251,7 @@ await writeFile(
       node: process.version,
       status: "passed",
       consumers,
+      quickstart: { globalCli: "passed", researchInstall: "passed" },
       showcase: JSON.parse(
         await readFile(join(showcase, "dist/rehearsal.json"), "utf8"),
       ) as unknown,

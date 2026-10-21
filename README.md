@@ -12,6 +12,36 @@
   </p>
 </div>
 
+## Quickstart
+
+```sh
+npm install -g @publisle/cli
+cat > article.md <<'EOF'
+---
+title: My first article
+---
+
+# Hello, Publisle
+
+Readable articles start with Markdown.
+EOF
+publisle build article.md --out dist/
+```
+
+`publisle build` compiles Markdown or typed JSON into a static reader page —
+HTML, stylesheets, and a `publication.json` manifest that hosts can use to
+attach interactive runtimes later. Interactive blocks ship their authored
+fallbacks so nothing depends on JavaScript. Journal exports (PDF, LaTeX, JATS)
+live in the optional research profile:
+`npm install -g @publisle/cli-research`
+([export guide](docs/guides/journal-export.md)).
+
+Try it in the browser: the [playground](https://publisle.xyz/playground/)
+loads a feature-complete FFT article and a journal-style research paper in one
+click — live preview, colored LaTeX, and a working interactive butterfly.
+
+![The Publisle playground: editing Markdown, loading the FFT article, and stepping through an interactive FFT butterfly](docs/assets/brand/demo.gif)
+
 Publisle is a publishing toolkit for technical articles, research papers, and
 interactive explanations. Author content as Markdown or typed JSON, validate it
 against a portable schema, and publish it through React or Svelte adapters.
@@ -29,7 +59,7 @@ templates, LaTeX/JATS/PDF export, and a pinned compiler toolchain
 ([publishing standard](docs/standards/publishing.md),
 [export guide](docs/guides/journal-export.md)). Core adopters never install it.
 
-## Core quickstart
+## Core in-process quickstart
 
 Use the [source workspace](#try-the-playgrounds) with Node 24+ and pnpm 11.x.
 This example uses only Core packages:
@@ -109,8 +139,9 @@ instance state. Framework JavaScript still follows the host's rendering policy.
 
 Workspace development resolves TypeScript sources. `pnpm build:packages` builds
 ESM, declarations and source maps for packing; `pnpm test:distribution` checks the
-packed artifacts in a clean consumer. Registry publication is still pending.
-See the [release guide](docs/guides/releases.md). Use Node **24+** and pnpm
+packed artifacts in a clean consumer, and packages publish to npm under the
+[@publisle scope](https://www.npmjs.com/org/publisle). See the
+[release guide](docs/guides/releases.md). Use Node **24+** and pnpm
 **11.17+ (11.x)**:
 
 ```sh
@@ -164,9 +195,9 @@ journal acceptance or PDF/UA certification.
 The [Fourier showcase rehearsal](showcase/fourier/README.md) builds the complete
 illustrated tutorial as a standalone Astro site from packed Core packages, with
 its existing figures, MathML, tables, styles and authored static fallbacks.
-Its lockfile and replay script exercise the actual tarballs outside the workspace.
-The released-package public deployment remains pending package publication and a
-clean registry install; this local rehearsal does not claim public adoption.
+Its lockfile and replay script exercise the actual tarballs outside the workspace;
+packages are published to npm, and the rehearsal stays a local verification of
+the packed-artifact path.
 
 ## Development
 

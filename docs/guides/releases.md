@@ -1,7 +1,7 @@
 # Distribution and release checklist
 
 Publisle packages have independent numeric `0.x.y` versions and publish under
-npm's `beta` tag. Contract version integers and compiler image recipes evolve
+npm's `latest` tag. Contract version integers and compiler image recipes evolve
 independently. Development and CI use Node.js ≥24 and pnpm 11.17.0.
 
 ## Release pending npm package changes from GitHub
@@ -31,14 +31,13 @@ Research export, and Distribution to pass. Release distribution tests combine th
 candidate tarballs with downloaded, integrity-checked npm tarballs for unchanged
 packages. Rebuilding unchanged packages cannot substitute for testing the actual
 published dependency graph. The workflow publishes only the planned subset in
-dependency order and verifies each package's own version, `beta` tag, integrity,
+dependency order and verifies each package's own version, `latest` tag, integrity,
 and downloaded bytes. Fresh registry-only Core, Research, and showcase consumers
 then verify the resulting version map, declarations, CLI isolation, and Astro
 build with normal peer dependency validation.
 
 After successful verification, it creates tags such as
-`@publisle/adapter-astro@0.2.0` and a GitHub prerelease named for the
-`npm-release-RUN-ATTEMPT` batch. Evidence includes the validated tarballs, version
+`@publisle/adapter-astro@0.2.0` and a GitHub prerelease named for the released packages and versions. Evidence includes the validated tarballs, version
 map, contract bundle, publication record, and consumer report. Preparation and
 publication runs share a concurrency group. A new preparation is refused until
 the preceding batch has a completed, non-draft GitHub release.

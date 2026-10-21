@@ -454,7 +454,7 @@ describe("independent npm releases", () => {
             return Promise.resolve(
               Response.json({
                 versions: { [record.pkg.version]: { dist: record.dist } },
-                "dist-tags": { beta: record.pkg.version },
+                "dist-tags": { latest: record.pkg.version },
               }),
             );
         }

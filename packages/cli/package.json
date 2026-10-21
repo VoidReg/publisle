@@ -1,7 +1,7 @@
 {
   "name": "@publisle/cli",
   "version": "0.1.1",
-  "description": "Optional Node-only validation and explicit source upgrades.",
+  "description": "Node CLI for validation, static reader builds, and explicit source upgrades.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -15,6 +15,7 @@
     "publisle": "./src/bin.ts"
   },
   "dependencies": {
+    "@publisle/adapter-core": "workspace:^",
     "@publisle/contracts": "workspace:^",
     "@publisle/blocks-core": "workspace:^",
     "@publisle/core": "workspace:^",

@@ -114,7 +114,8 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             test "$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           else
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "Publisle $TAG (beta)" --prerelease --draft --generate-notes
+            TITLE=$(node -p "require('./.release/plan.json').releases.map((pkg) => pkg.name + ' v' + pkg.version).join(', ')")
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "Publisle beta: $TITLE" --prerelease --draft --generate-notes
           fi
           gh release upload "$TAG" "$RELEASE_STAGE"/tarballs/*.tgz "$RELEASE_STAGE/release-manifest.json" "$RELEASE_STAGE/contract-bundle.json" "$RELEASE_STAGE/publication-record.json" "$RELEASE_STAGE/registry-consumers.json" --clobber
           gh release edit "$TAG" --draft=false --prerelease

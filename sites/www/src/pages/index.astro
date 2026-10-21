@@ -161,12 +161,23 @@ const packages = coreBlockDefinitions.length >= 0
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
       <div class="min-w-0">
         <p class="text-muted">
-          Install the compiler and validate a document from the terminal:
+          Install the CLI and compile a document into a static reader page:
         </p>
         <pre
           class="mt-3 max-w-full overflow-x-auto rounded-lg border border-line bg-raised p-4 font-mono text-sm"><code>npm install -g @publisle/cli
-publisle build article.md --out dist/
-publisle export paper.md --to pdf --template ieee-journal</code></pre>
+publisle validate article.md
+publisle build article.md --out dist/</code></pre>
+        <p class="mt-3 text-sm text-muted">
+          Journal exports (PDF, LaTeX, JATS) live in the optional research
+          profile:{" "}
+          <code
+            class="rounded border border-line bg-raised px-1 font-mono text-xs"
+            >npm install -g @publisle/cli-research</code
+          >. See the{" "}
+          <a class="text-accent hover:underline" href="/docs/guides/journal-export"
+            >journal export guide</a
+          >.
+        </p>
       </div>
       <div class="min-w-0">
         <p class="text-muted">Or compile in-process with the Astro adapter:</p>

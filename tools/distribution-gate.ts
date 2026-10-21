@@ -163,6 +163,16 @@ for (const group of ["packages", "blocks"]) {
           );
       }
     }
+    if (artifact.name === "@publisle/adapter-core") {
+      assert.equal(artifact.dependencies?.["vite"], undefined);
+      assert.equal(
+        artifact.peerDependencies?.["vite"],
+        manifest.peerDependencies?.["vite"],
+      );
+    }
+    if (artifact.name === "@publisle/cli-research") {
+      assert.match(artifact.peerDependencies?.["@publisle/cli"] ?? "", /^\^/u);
+    }
     packed.set(manifest.name, tarball);
     manifests.set(manifest.name, artifact);
   }
@@ -292,6 +302,21 @@ run(
 );
 const cli = join(consumer, "node_modules/@publisle/cli/dist/bin.js");
 run(process.execPath, [cli, "validate", "source.json"], consumer);
+run(
+  process.execPath,
+  [cli, "build", "source.json", "--out", "reader"],
+  consumer,
+);
+assert(
+  (await readFile(join(consumer, "reader/index.html"), "utf8")).includes(
+    "<!doctype html>",
+  ),
+);
+assert(
+  (await readdir(join(consumer, "reader/fonts"))).some((name) =>
+    name.endsWith(".woff2"),
+  ),
+);
 let refusal = false;
 try {
   run(

@@ -95,6 +95,15 @@ it("compiles all examples live and runs the FFT butterfly", async () => {
     const editor = page.getByRole("region", { name: "Document editor" });
     expect(await editor.isVisible()).toBe(true);
     expect(await preview.isVisible()).toBe(true);
+    // The starter sample carries exportable metadata so the first Export PDF
+    // click is never blocked by missing title/authors.
+    await page.getByRole("tab", { name: /^markdown$/i }).click();
+    expect(
+      await page.getByRole("textbox", { name: "Markdown source" }).inputValue(),
+    ).toMatch(
+      /title: "Hello, Publisle"[\s\S]*authors:\n {2}- name: Ada Example/,
+    );
+    await page.getByRole("tab", { name: /^blocks$/i }).click();
     const editorBounds = await editor.boundingBox();
     const previewBounds = await preview.boundingBox();
     expect(previewBounds?.x).toBeGreaterThan(
@@ -292,7 +301,11 @@ it("contains Quickstart code on mobile and keeps the toolbar above the scrolling
         if (!bounds) throw new Error("Quickstart code is not visible");
         expect(bounds.x).toBeGreaterThanOrEqual(0);
         expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
-        if (width <= 390) {
+        if (
+          await panel.evaluate(
+            (element) => element.scrollWidth > element.clientWidth,
+          )
+        ) {
           expect(
             await panel.evaluate((element) => {
               element.scrollLeft = 32;

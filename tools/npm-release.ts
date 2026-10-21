@@ -227,7 +227,7 @@ export async function prepareRelease(
         readme,
         content.replace(
           /^This package is part of Publisle[^\n]*\.$/mu,
-          `This package is part of Publisle, independently versioned at \`${version}\` and published under the npm \`beta\` tag.`,
+          `This package is part of Publisle, independently versioned at \`${version}\` and published under the npm \`latest\` tag.`,
         ),
       );
     }
@@ -406,7 +406,7 @@ export async function publishRelease(
             "--access",
             "public",
             "--tag",
-            "beta",
+            "latest",
             "--registry",
             registry,
             "--ignore-scripts",
@@ -426,13 +426,13 @@ export async function publishRelease(
           "dist-tags": Record<string, string>;
         }>(`${registry}/${encodeURIComponent(pkg.name)}`);
         metadata = index?.versions[pkg.version];
-        if (metadata && index?.["dist-tags"]["beta"] === pkg.version) break;
+        if (metadata && index?.["dist-tags"]["latest"] === pkg.version) break;
         metadata = undefined;
         await new Promise((ok) => setTimeout(ok, 5000));
       }
       assert(
         metadata,
-        `Registry index or beta tag not ready: ${pkg.name}. Rerun failed jobs after npm processing completes.`,
+        `Registry index or latest tag not ready: ${pkg.name}. Rerun failed jobs after npm processing completes.`,
       );
       assert.equal(metadata.dist.integrity, pkg.integrity);
       const response = await fetch(metadata.dist.tarball, {
@@ -453,7 +453,7 @@ export async function publishRelease(
         tarball: metadata.dist.tarball,
       });
       console.log(
-        `Verified public index, beta tag and downloaded bytes: ${pkg.name}`,
+        `Verified public index, latest tag and downloaded bytes: ${pkg.name}`,
       );
     }
   } finally {
@@ -462,7 +462,7 @@ export async function publishRelease(
       JSON.stringify(
         {
           releaseId: (await readReleasePlan(root)).id,
-          tag: "beta",
+          tag: "latest",
           sourceCommit: process.env["GITHUB_SHA"],
           verifiedAt: new Date().toISOString(),
           packages: records,
@@ -475,7 +475,7 @@ export async function publishRelease(
   if (process.env["GITHUB_STEP_SUMMARY"])
     await appendFile(
       process.env["GITHUB_STEP_SUMMARY"],
-      `Published and verified **${String(records.length)} independently versioned packages** under the npm **beta** tag.\n`,
+      `Published and verified **${String(records.length)} independently versioned packages** under the npm **latest** tag.\n`,
     );
 }
 
