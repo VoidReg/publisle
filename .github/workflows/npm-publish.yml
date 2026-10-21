@@ -111,14 +111,14 @@ jobs:
             }
           }
           JS
+          TITLE=$(node -p "require('./.release/plan.json').releases.map((pkg) => pkg.name + ' v' + pkg.version).join(', ')")
           if gh release view "$TAG" >/dev/null 2>&1; then
             test "$(gh release view "$TAG" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           else
-            TITLE=$(node -p "require('./.release/plan.json').releases.map((pkg) => pkg.name + ' v' + pkg.version).join(', ')")
             gh release create "$TAG" --target "$GITHUB_SHA" --title "Publisle beta: $TITLE" --prerelease --draft --generate-notes
           fi
           gh release upload "$TAG" "$RELEASE_STAGE"/tarballs/*.tgz "$RELEASE_STAGE/release-manifest.json" "$RELEASE_STAGE/contract-bundle.json" "$RELEASE_STAGE/publication-record.json" "$RELEASE_STAGE/registry-consumers.json" --clobber
-          gh release edit "$TAG" --draft=false --prerelease
+          gh release edit "$TAG" --title "Publisle beta: $TITLE" --draft=false --prerelease
       - uses: actions/upload-artifact@v7
         if: always() && steps.artifacts.outputs.stage != ''
         with:
