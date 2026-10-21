@@ -42,6 +42,15 @@ map, contract bundle, publication record, and consumer report. Preparation and
 publication runs share a concurrency group. A new preparation is refused until
 the preceding batch has a completed, non-draft GitHub release.
 
+If all npm uploads succeeded but a later consumer check needs a source fix, keep
+all published versions and original tarballs. Fix the consumer tooling, then run
+**Finalize published npm release** (`npm-finalize.yml`) with the original
+publication run ID. This workflow requires the original source, Check, Research,
+and Distribution gates to have passed, restores the retained publication record
+and tarballs, verifies registry integrity, reruns clean consumers, and creates the
+GitHub release against the original source commit. It has no npm publishing
+credentials and does not rebuild packages.
+
 If publication fails, use **Re-run failed jobs** on its original run. Retained
 artifacts and upload progress allow matching published versions to be skipped;
 conflicting immutable versions fail the entire preflight before any upload.

@@ -224,6 +224,16 @@ await cp(join(root, "showcase/fourier"), showcase, {
       basename(source),
     ),
 });
+for (const file of [
+  "fourier-series.md",
+  "fourier-square-wave.svg",
+  "fourier-clock.json",
+]) {
+  await cp(
+    join(root, "examples/articles", file),
+    join(showcase, "public", file),
+  );
+}
 const showcasePath = join(showcase, "package.json");
 const manifest = JSON.parse(await readFile(showcasePath, "utf8")) as {
   dependencies: Record<string, string>;
