@@ -43,6 +43,10 @@ describe("site SEO metadata", () => {
       expect(doc.description.length, doc.id).toBeGreaterThanOrEqual(80);
       expect(doc.description.length, doc.id).toBeLessThanOrEqual(160);
       expect(doc.description, doc.id).not.toMatch(/…$|\.\.\.$/u);
+      // Reader tabs and search results truncate near 60 characters.
+      expect(`${doc.title} · Publisle Docs`.length, doc.id).toBeLessThanOrEqual(
+        60,
+      );
       titles.add(doc.title);
       descriptions.add(doc.description);
       const image = readFileSync(join(site, "public/og/docs", `${doc.id}.png`));

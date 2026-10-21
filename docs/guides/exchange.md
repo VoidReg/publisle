@@ -1,4 +1,4 @@
-# Lock, archive and serve without reader tooling
+# Lock, archive and serve documents
 
 Work on the authoring/build side, retaining the original input until the conversion is reviewed:
 

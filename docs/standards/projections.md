@@ -1,4 +1,4 @@
-# Semantic exports and renderer-free inspection
+# Semantic exports and inspection
 
 Canonical JSON and archival Markdown remain authoritative and lossless. The
 following are distinct, build/save-time projections, not replacement formats:

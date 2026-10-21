@@ -1,4 +1,4 @@
-# Preparation order and normalization boundaries
+# Preparation order and normalization
 
 These groups do not replace existing trusted preparation callbacks or silently enable schema-based defaults.
 

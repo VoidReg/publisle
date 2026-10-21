@@ -1,4 +1,4 @@
-# Publisle Research profile: scholarly and publishing contracts
+# Publisle Research profile
 
 **Status:** Normative for the Publisle Research profile (beta).
 **Profile version:** 1; requires Publisle Core document envelope 1 and supported pinned contract digests.
