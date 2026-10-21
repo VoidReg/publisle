@@ -5,14 +5,14 @@ Core requires no citeproc, TeX, xmllint, Docker or Research template packages.
 The optional **Research profile** adds scholarly preparation, citations, journal
 sources and PDF/JATS export.
 
-| Entry point                                                          | Purpose                                                                            |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [Project overview and Core quickstart](../README.md#core-quickstart) | Small prepared article and supported integration paths                             |
-| [Normative standards index](standards/README.md)                     | Core contracts, named profiles and machine-readable sources                        |
-| [Research profile 1 (beta)](standards/publishing.md)                 | Optional citations, templates, export and compiler contracts                       |
-| [Conformance claims and evidence](standards/conformance.md)          | Roles, TEST-01–16 scope, executable gates and explicit unclaimed limits            |
-| [Governance and versioning](governance.md)                           | Beta freeze, immutable digests, compatibility matrix and change/deprecation policy |
-| [Developer guide](developer-guide.md)                                | Public APIs, framework adapters, profiles, resources and migrations                |
+| Entry point                                                                     | Purpose                                                                            |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [Project overview and Core quickstart](../README.md#core-in-process-quickstart) | Small prepared article and supported integration paths                             |
+| [Normative standards index](standards/README.md)                                | Core contracts, named profiles and machine-readable sources                        |
+| [Research profile 1 (beta)](standards/publishing.md)                            | Optional citations, templates, export and compiler contracts                       |
+| [Conformance claims and evidence](standards/conformance.md)                     | Roles, TEST-01–16 scope, executable gates and explicit unclaimed limits            |
+| [Governance and versioning](governance.md)                                      | Beta freeze, immutable digests, compatibility matrix and change/deprecation policy |
+| [Developer guide](developer-guide.md)                                           | Public APIs, framework adapters, profiles, resources and migrations                |
 
 ## Guides
 
