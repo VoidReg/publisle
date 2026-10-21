@@ -18,7 +18,7 @@
   "devDependencies": {
     "@publisle/adapter-core": "workspace:*",
     "playwright-core": "^1.58.0",
-    "vite": "^8.0.0"
+    "vite": "^8.3.3"
   },
   "dependencies": {
     "@publisle/blocks-core": "workspace:*",
