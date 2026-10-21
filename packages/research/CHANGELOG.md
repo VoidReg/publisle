@@ -1,5 +1,25 @@
 # @publisle/research
 
+## 0.2.0
+
+### Minor Changes
+
+- 0c8ad7b: Add an explicit experimental Rust PDF compiler API and CLI engine with pinned fonts, bounded math, local assets and structured diagnostics. Allow editor hosts to supply resolved citation and bibliography text without loading CSL in publication readers. Omit empty abstracts and normalize body section levels in LaTeX exports.
+
+### Patch Changes
+
+- a9d627b: Add npm keywords to every package manifest. The Astro adapter now carries the `astro-integration`, `astro-component` and `withastro` keywords so it appears in the Astro integrations directory.
+- f3dd162: Preview and export fidelity fixes. LaTeX export reduces embeds, diagrams and raw HTML to one readable text instead of concatenating the alternative text with the authored fallback. Publication artifacts number footnote markers and definitions by first reference instead of showing raw labels, and style the numbers. LuaLaTeX section levels are relative to the first emitted heading, so documents whose title doubles as a level-1 heading no longer number sections 0.1 onward. The website shortens four documentation titles below 60 characters.
+- Updated dependencies [0c8ad7b]
+- Updated dependencies [a9d627b]
+- Updated dependencies [603d12a]
+- Updated dependencies [f3dd162]
+  - @publisle/template-sdk@0.1.3
+  - @publisle/contracts@0.1.2
+  - @publisle/profiles@0.1.2
+  - @publisle/schema@0.1.1
+  - @publisle/template-article@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@publisle/schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Semantic document types for Publisle.",
   "license": "MIT",
   "keywords": [

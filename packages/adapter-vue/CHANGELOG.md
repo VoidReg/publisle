@@ -1,5 +1,18 @@
 # @publisle/adapter-vue
 
+## 0.1.2
+
+### Patch Changes
+
+- a9d627b: Add npm keywords to every package manifest. The Astro adapter now carries the `astro-integration`, `astro-component` and `withastro` keywords so it appears in the Astro integrations directory.
+- Updated dependencies [0c8ad7b]
+- Updated dependencies [a9d627b]
+- Updated dependencies [f3dd162]
+- Updated dependencies [603d12a]
+  - @publisle/adapter-core@0.2.0
+  - @publisle/core@0.1.2
+  - @publisle/schema@0.1.1
+
 ## 0.1.1
 
 ### Patch Changes

@@ -3,7 +3,7 @@
 Semantic document types for Publisle.
 
 Requires Node.js 24 or later. Framework adapters also require their declared peer dependencies.
-This package is part of Publisle `0.1.0`, the first beta release.
+This package is part of Publisle, independently versioned at `0.1.1` and published under the npm `latest` tag.
 Frozen contract version integers are independent of npm package versions.
 
 - [Core standard](https://github.com/VoidReg/publisle/blob/main/docs/standards/README.md)
