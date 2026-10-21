@@ -20,7 +20,7 @@ describe("documentation links", () => {
         context,
       ),
     ).toBe(
-      "[Contract](/docs/standards/contracts#identity) [Overview](/docs/standards) [Guide](/docs/guides/meaning)",
+      "[Contract](/docs/standards/contracts/#identity) [Overview](/docs/standards/) [Guide](/docs/guides/meaning/)",
     );
   });
   it("routes repository files and directories to GitHub with anchors", () => {

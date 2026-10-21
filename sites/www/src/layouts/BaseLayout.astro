@@ -30,14 +30,16 @@ const {
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://publisle.xyz");
-const canonical = new URL(path, site).href;
+const canonicalUrl = new URL(path, site);
+canonicalUrl.pathname = `${canonicalUrl.pathname.replace(/\/+$/u, "")}/`;
+const canonical = canonicalUrl.href;
 const ogImage = new URL(image, site).href;
 const github = "https://github.com/VoidReg/publisle";
 
 const nav = [
-  { href: "/docs", label: "Docs" },
-  { href: "/examples", label: "Examples" },
-  { href: "/playground", label: "Playground" },
+  { href: "/docs/", label: "Docs" },
+  { href: "/examples/", label: "Examples" },
+  { href: "/playground/", label: "Playground" },
 ];
 
 const current = Astro.url.pathname;
@@ -180,7 +182,7 @@ const ldScripts = jsonLd ?? [];
       >
         <p>© 2026 Publisle · MIT License · beta</p>
         <p class="flex gap-4">
-          <a href="/docs" class="hover:text-accent">Docs</a>
+          <a href="/docs/" class="hover:text-accent">Docs</a>
           <a href={github + "/issues"} class="hover:text-accent">Issues</a>
           <a href={github + "/releases"} class="hover:text-accent">Releases</a>
         </p>

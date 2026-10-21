@@ -13,7 +13,7 @@ export interface DocSource {
   readonly id: string;
   readonly section: DocSection;
   readonly title: string;
-  /** First-paragraph summary for meta descriptions (~155 chars). */
+  /** Complete editorial summary for page and social metadata. */
   readonly description: string;
   /** Absolute path of the Markdown source in the checkout. */
   readonly file: string;
@@ -37,6 +37,61 @@ function resolveDocsRoot(): string {
 
 export const docsRoot: string = resolveDocsRoot();
 
+const descriptions: Readonly<Record<string, string>> = {
+  "guides/accessibility":
+    "Review accessible web and PDF output, structural checks, mathematical alternatives, and the limits of automated conformance evidence.",
+  "guides/contracts":
+    "Create portable block contracts, validate their schemas, and consume locked definitions through preparation-only tooling.",
+  "guides/exchange":
+    "Lock portable documents, archive their resources, and serve publication artifacts while preserving the original source.",
+  "guides/framework-hosts":
+    "Integrate Publisle with Next.js, Astro, Vue, and Python while retaining control of routes, metadata, and implementation loaders.",
+  "guides/journal-export":
+    "Export research manuscripts to journal templates, LaTeX, and PDF with local compiler setup and explicit accessibility checks.",
+  "guides/meaning":
+    "Declare block meaning, traversal, and readable fallbacks without duplicating prose or embedding executable behavior.",
+  "guides/performance-comparison":
+    "Compare measured preparation, publication, reader delivery, and PDF compilation costs using reproducible benchmark evidence.",
+  "guides/releases":
+    "Prepare independent package releases, validate distribution artifacts, and publish compiler images with retained evidence.",
+  "guides/reproductions":
+    "Reproduce consumer and rendering problems by pinning source, package artifacts, compiler versions, and the failing environment.",
+  standards:
+    "Read the implemented Publisle beta contracts for portable documents, block definitions, preparation, exchange, and publishing.",
+  "standards/composition":
+    "Define bounded state and composition through the optional beta profile while preserving existing document and artifact versions.",
+  "standards/conformance":
+    "Identify consumer conformance roles, supported profiles, trust boundaries, and the fixture evidence required for each claim.",
+  "standards/contracts":
+    "Specify portable block definitions, local export, offline consumption, and the boundaries of trusted preparation callbacks.",
+  "standards/delivery":
+    "Specify native framework delivery and precompiled publication artifacts with shared island inputs and static fallback behavior.",
+  "standards/exchange":
+    "Specify locked source discovery, document manifests, archival Markdown, resources, and reproducible offline exchange.",
+  "standards/json-wire":
+    "Specify canonical UTF-8 JSON interchange, digest calculation, bounded parsing, and rejection of ambiguous wire representations.",
+  "standards/meaning":
+    "Specify descriptive meaning, declared traversal, and readable preservation for the implemented portable beta vocabulary.",
+  "standards/myst":
+    "Inspect the supported MyST mappings, machine-readable loss classifications, and boundaries of Markdown round-trip preservation.",
+  "standards/performance-analysis":
+    "Review preparation profiling, canonicalization costs, and measured optimizations for declared semantic traversal.",
+  "standards/performance-budget-proposal":
+    "Inspect the recorded runner calibration and baseline evidence used to propose reproducible preparation performance budgets.",
+  "standards/performance-budgets":
+    "Review accepted preparation performance caps, calibration evidence, and the conditions required to interpret budget results.",
+  "standards/performance":
+    "Measure preparation and serialization costs with static fixtures, reproducible inputs, and explicit measurement boundaries.",
+  "standards/preparation":
+    "Specify preparation order, normalization boundaries, validation groups, and the role of trusted preparation callbacks.",
+  "standards/projections":
+    "Specify semantic exports and renderer-free inspection while retaining canonical JSON and archival Markdown as authoritative source.",
+  "standards/publishing":
+    "Specify scholarly metadata, citation resolution, research projections, journal templates, and publishing conformance for the beta profile.",
+  "standards/schema-profile":
+    "Specify the offline structural JSON Schema profile, supported validation behavior, and diagnostics for invalid portable contracts.",
+};
+
 /** Repository path of a doc's Markdown source (README lives at the bare id). */
 export function docRepoPath(id: string): string {
   return id === "standards" ? "standards/README.md" : `${id}.md`;
@@ -44,7 +99,7 @@ export function docRepoPath(id: string): string {
 
 /** On-site raw route serving the exact Markdown source. */
 export function docRawRoute(id: string): string {
-  return `/docs/${docRepoPath(id)}`;
+  return `/docs/${docRepoPath(id)}/`;
 }
 
 /** First prose paragraph of a document, flattened to ~155 plain characters. */
@@ -89,7 +144,9 @@ function sectionSources(section: DocSection): DocSource[] {
         id: isReadme ? section : `${section}/${base}`,
         section,
         title: heading ?? (isReadme ? section : base),
-        description: describeMarkdown(source),
+        description:
+          descriptions[isReadme ? section : `${section}/${base}`] ??
+          describeMarkdown(source),
         file,
         repoPath: `${section}/${name}`,
       };

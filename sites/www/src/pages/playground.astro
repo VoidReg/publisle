@@ -6,7 +6,8 @@ import Playground from "../components/Playground.svelte";
 <BaseLayout
   title="Playground · Publisle"
   description="Edit a portable Publisle document as blocks, Markdown, or JSON and watch the static compilation live."
-  path="/playground"
+  path="/playground/"
+  jsonLd={[{ "@type": "WebApplication", name: "Publisle Playground", url: "https://publisle.xyz/playground/", applicationCategory: "DeveloperApplication", operatingSystem: "Any", isAccessibleForFree: true }]}
 >
   <div class="py-10">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -22,8 +23,8 @@ import Playground from "../components/Playground.svelte";
     <noscript>
       <p class="rounded-lg border border-line bg-surface p-4 text-sm">
         The playground needs JavaScript. The{" "}
-        <a class="text-accent hover:underline" href="/docs">documentation</a>
-        {" "}and <a class="text-accent hover:underline" href="/examples">examples</a>
+        <a class="text-accent hover:underline" href="/docs/">documentation</a>
+        {" "}and <a class="text-accent hover:underline" href="/examples/">examples</a>
         {" "}work without it.
       </p>
     </noscript>

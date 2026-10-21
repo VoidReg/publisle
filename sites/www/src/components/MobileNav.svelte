@@ -3,9 +3,9 @@
   // sticky header. Desktop keeps static inline links; this island renders
   // below the sm breakpoint only.
   const links = [
-    { href: "/docs", label: "Docs" },
-    { href: "/examples", label: "Examples" },
-    { href: "/playground", label: "Playground" },
+    { href: "/docs/", label: "Docs" },
+    { href: "/examples/", label: "Examples" },
+    { href: "/playground/", label: "Playground" },
   ];
   const github = "https://github.com/VoidReg/publisle";
 

@@ -1,17 +1,17 @@
-// Single canonical sitemap. GitHub Pages has no redirects, and the previous
+// Single canonical sitemap. The previous
 // @astrojs/sitemap integration only emitted /sitemap-index.xml + /sitemap-0.xml,
 // so tools that request /sitemap.xml got a 404. This prerendered endpoint
 // enumerates every public route itself and serves them all at /sitemap.xml.
-// 404 is deliberately excluded; URLs never carry trailing slashes, matching
+// 404 is deliberately excluded; page URLs carry trailing slashes, matching
 // the canonical tags.
 import { docSources } from "../lib/docs-source";
 
 export const prerender = true;
 
-/** Every indexable route path, without trailing slashes. */
+/** Every indexable route path, with trailing slashes. */
 export function sitemapRoutes(): readonly string[] {
-  const routes = ["/", "/docs", "/examples", "/playground"];
-  for (const doc of docSources()) routes.push(`/docs/${doc.id}`);
+  const routes = ["/", "/docs/", "/examples/", "/playground/"];
+  for (const doc of docSources()) routes.push(`/docs/${doc.id}/`);
   return routes;
 }
 

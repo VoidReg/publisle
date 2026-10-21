@@ -40,7 +40,9 @@ describe("site SEO metadata", () => {
     for (const doc of docSources()) {
       expect(titles.has(doc.title), doc.id).toBe(false);
       expect(descriptions.has(doc.description), doc.id).toBe(false);
-      expect(doc.description.length, doc.id).toBeGreaterThan(40);
+      expect(doc.description.length, doc.id).toBeGreaterThanOrEqual(80);
+      expect(doc.description.length, doc.id).toBeLessThanOrEqual(160);
+      expect(doc.description, doc.id).not.toMatch(/…$|\.\.\.$/u);
       titles.add(doc.title);
       descriptions.add(doc.description);
       const image = readFileSync(join(site, "public/og/docs", `${doc.id}.png`));
@@ -53,7 +55,7 @@ describe("site SEO metadata", () => {
     expect(route).toContain("image={`/og/docs/${entry.id}.png`}");
   });
 
-  it("canonical paths never carry a trailing slash", () => {
+  it("canonical page paths carry a trailing slash", () => {
     const pages = readdirSync(join(site, "src/pages"), {
       recursive: true,
     }).filter(
@@ -66,8 +68,8 @@ describe("site SEO metadata", () => {
       );
       for (const path of paths) {
         expect(
-          path === "/" || !path.endsWith("/"),
-          `${name} canonical path "${path}" has a trailing slash`,
+          path.endsWith("/"),
+          `${name} canonical path "${path}" is missing a trailing slash`,
         ).toBe(true);
       }
     }
@@ -107,13 +109,13 @@ describe("site SEO metadata", () => {
     const routes = sitemapRoutes();
     expect(routes).toEqual([
       "/",
-      "/docs",
-      "/examples",
-      "/playground",
-      ...docSources().map((doc) => `/docs/${doc.id}`),
+      "/docs/",
+      "/examples/",
+      "/playground/",
+      ...docSources().map((doc) => `/docs/${doc.id}/`),
     ]);
     for (const route of routes) {
-      expect(route.endsWith("/") && route !== "/", route).toBe(false);
+      expect(route.endsWith("/"), route).toBe(true);
     }
   });
 });

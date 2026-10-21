@@ -12,13 +12,14 @@ const bySection = (section: string) =>
 const guides = bySection("guides");
 const standards = bySection("standards");
 
-const entryHref = (id: string) => `/docs/${id === "standards" ? "standards" : id}`;
+const entryHref = (id: string) => `/docs/${id === "standards" ? "standards" : id}/`;
 ---
 
 <BaseLayout
   title="Documentation · Publisle"
   description="Guides and standards for Publisle: portable contracts, framework hosts, accessibility, and release engineering. Compiled by Publisle itself."
-  path="/docs"
+  path="/docs/"
+  jsonLd={[{ "@type": "CollectionPage", name: "Publisle Documentation", url: "https://publisle.xyz/docs/" }]}
 >
   <div class="py-12">
     <h1 class="font-display text-4xl font-bold">Documentation</h1>

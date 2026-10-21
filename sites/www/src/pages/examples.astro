@@ -45,19 +45,20 @@ const demos = [  {
 <BaseLayout
   title="Examples · Publisle"
   description="Live Publisle examples: a compiled article, interactive islands with static fallbacks, and journal export demos."
-  path="/examples"
+  path="/examples/"
+  jsonLd={[{ "@type": "CollectionPage", name: "Publisle Examples", url: "https://publisle.xyz/examples/" }]}
 >
   <div class="py-12">
     <h1 class="font-display text-4xl font-bold">Examples</h1>
     <p class="mt-3 max-w-2xl text-muted">
       The article below is real Publisle output: compile, render, and style
       are all production paths. Edit its source in the{" "}
-      <a class="text-accent hover:underline" href="/playground">playground</a>.
+      <a class="text-accent hover:underline" href="/playground/">playground</a>.
     </p>
 
     <p class="mt-3 text-muted">
       Want a longer walkthrough?{" "}
-      <a class="text-accent underline underline-offset-2" href="/playground?example=fft">Open the Fourier &amp; FFT article</a>{" "}
+      <a class="text-accent underline underline-offset-2" href="/playground/?example=fft">Open the Fourier &amp; FFT article</a>{" "}
       with colored equations, a butterfly network, figures, code, citations, and an interactive transform.
     </p>
 

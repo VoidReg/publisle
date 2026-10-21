@@ -82,7 +82,7 @@ function rewriteLink(rawTarget: string, context: LinkContext): string {
       const route = docPath
         .replace(/(^|\/)README\.md$/u, "")
         .replace(/\.md$/u, "");
-      return `${context.routePrefix}/${route}${suffix}`;
+      return `${context.routePrefix.replace(/\/$/u, "")}/${route}/${suffix}`;
     }
     return `${REPO_BLOB}/${pathPart}${suffix}`;
   }
@@ -106,7 +106,7 @@ export function publisleDocsLoader(
   // Entries live at docs/<section>/<name>.md; two dirnames reach docs/.
   const docsDir =
     entries.length > 0 ? dirname(dirname(entries[0].file)) : process.cwd();
-  const routePrefix = options.routePrefix ?? "/docs";
+  const routePrefix = options.routePrefix ?? "/docs/";
   const { knownFiles, ...publicationOptions } = options;
 
   return {
