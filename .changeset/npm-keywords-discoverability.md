@@ -11,7 +11,6 @@
 "@publisle/contracts": patch
 "@publisle/core": patch
 "@publisle/markdown": patch
-"@publisle/pdf-service": patch
 "@publisle/playground": patch
 "@publisle/profiles": patch
 "@publisle/research": patch
