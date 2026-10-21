@@ -51,6 +51,13 @@
     "node": ">=24"
   },
   "license": "MIT",
+  "keywords": [
+    "react",
+    "publisle",
+    "publication",
+    "portable-documents",
+    "islands"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VoidReg/publisle.git",

@@ -2,6 +2,13 @@
   "name": "@publisle/template-elsevier",
   "version": "0.1.1",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "elsevier",
+    "publisle",
+    "template",
+    "scholarly"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

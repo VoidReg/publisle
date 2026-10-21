@@ -2,6 +2,13 @@
   "name": "@publisle/template-sdk",
   "version": "0.1.2",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "publisle",
+    "template-sdk",
+    "pdf-ua",
+    "publishing"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

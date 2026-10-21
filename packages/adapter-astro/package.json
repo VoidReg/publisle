@@ -3,6 +3,15 @@
   "version": "0.2.0",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "astro-component",
+    "withastro",
+    "publisle",
+    "publication",
+    "portable-documents"
+  ],
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",

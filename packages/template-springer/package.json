@@ -2,6 +2,13 @@
   "name": "@publisle/template-springer",
   "version": "0.1.1",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "springer",
+    "publisle",
+    "template",
+    "scholarly"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

@@ -2,6 +2,13 @@
   "name": "@publisle/template-acm",
   "version": "0.1.1",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "acm",
+    "publisle",
+    "template",
+    "scholarly"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

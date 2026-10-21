@@ -3,6 +3,13 @@
   "version": "0.2.0",
   "description": "Node CLI for validation, static reader builds, and explicit source upgrades.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "cli",
+    "validation",
+    "portable-documents",
+    "publishing"
+  ],
   "type": "module",
   "engines": {
     "node": ">=24"

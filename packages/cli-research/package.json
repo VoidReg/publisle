@@ -3,6 +3,14 @@
   "version": "0.1.2",
   "description": "Optional Publisle Research profile CLI plugin: journal export, bibliography acquisition, and compiler tooling.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "cli",
+    "latex",
+    "pdf",
+    "citations",
+    "export"
+  ],
   "type": "module",
   "engines": {
     "node": ">=24"

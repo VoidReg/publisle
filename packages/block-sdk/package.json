@@ -33,6 +33,12 @@
     "node": ">=24"
   },
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "blocks",
+    "schema",
+    "portable-documents"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VoidReg/publisle.git",

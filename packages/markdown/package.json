@@ -7,6 +7,13 @@
     ".": "./src/index.ts"
   },
   "license": "MIT",
+  "keywords": [
+    "markdown",
+    "myst",
+    "publisle",
+    "portable-documents",
+    "lossless"
+  ],
   "files": [
     "dist",
     "src",

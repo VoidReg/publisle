@@ -2,6 +2,13 @@
   "name": "@publisle/template-ieee",
   "version": "0.1.1",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "ieee",
+    "publisle",
+    "template",
+    "scholarly"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

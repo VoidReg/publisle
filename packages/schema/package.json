@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "description": "Semantic document types for Publisle.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "schema",
+    "documents",
+    "json",
+    "portable-documents"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

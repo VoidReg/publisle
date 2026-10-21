@@ -3,6 +3,13 @@
   "version": "0.1.1",
   "description": "Preparation, validation, migration, and planning for Publisle documents.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "preparation",
+    "validation",
+    "portable-documents",
+    "publishing"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

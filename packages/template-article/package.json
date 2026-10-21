@@ -2,6 +2,13 @@
   "name": "@publisle/template-article",
   "version": "0.1.1",
   "license": "MIT",
+  "keywords": [
+    "latex",
+    "publisle",
+    "template",
+    "pdf-ua",
+    "article"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

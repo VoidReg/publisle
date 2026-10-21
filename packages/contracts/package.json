@@ -3,6 +3,13 @@
   "version": "0.1.1",
   "description": "Preparation-only portable schema validation and canonical contract digests.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "json-schema",
+    "diagnostics",
+    "fixtures",
+    "portable-documents"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

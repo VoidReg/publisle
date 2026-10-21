@@ -67,6 +67,13 @@
     "node": ">=24"
   },
   "license": "MIT",
+  "keywords": [
+    "svelte",
+    "sveltekit",
+    "publisle",
+    "publication",
+    "portable-documents"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VoidReg/publisle.git",

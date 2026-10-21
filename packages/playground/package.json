@@ -5,6 +5,13 @@
   "sideEffects": false,
   "svelte": "./src/index.ts",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "editor",
+    "playground",
+    "svelte",
+    "blocks"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./BlockEditor.svelte": {
