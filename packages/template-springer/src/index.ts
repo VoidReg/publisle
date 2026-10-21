@@ -31,7 +31,7 @@ export const template: PublishingTemplate = {
       author: (article, text) =>
         `\\title{${text(article.title ?? "Untitled")}}\n${(article.authorDetails ?? []).map((author) => `\\author{${text(author.name)}}${author.affiliation ? `\\affil{${text(author.affiliation)}}` : ""}`).join("\n")}`,
       frontmatter: (abstract, article, text) =>
-        `\\abstract{${abstract}}\n${article.subjects?.length ? `\\keywords{${article.subjects.map(text).join(", ")}}` : ""}\n\\maketitle`,
+        `${abstract.trim() ? `\\abstract{${abstract}}\n` : ""}${article.subjects?.length ? `\\keywords{${article.subjects.map(text).join(", ")}}` : ""}\n\\maketitle`,
       bibliographyStyle: "sn-mathphys-num",
     });
     return { ...result, resources: assets };

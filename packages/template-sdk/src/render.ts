@@ -218,6 +218,11 @@ export function renderLatexArticle(
       .join("");
   const abstract: string[] = [];
   const body: string[] = [];
+  const firstHeadingLevel = Math.min(
+    ...article.blocks.flatMap((block) =>
+      block.kind === "heading" && !block.abstract ? [block.level] : [],
+    ),
+  );
   for (const block of article.blocks) {
     // Floating environments never join the abstract: a [!t] float inside the
     // abstract would be hoisted above it on the first page.
@@ -232,7 +237,7 @@ export function renderLatexArticle(
     if (block.kind === "heading") {
       if (!block.abstract)
         target.push(
-          `\\${block.level <= 1 ? "section" : block.level === 2 ? "subsection" : "subsubsection"}{${take(block.inlines)}}${label}`,
+          `\\${block.level <= firstHeadingLevel ? "section" : block.level === firstHeadingLevel + 1 ? "subsection" : "subsubsection"}{${take(block.inlines)}}${label}`,
         );
     } else if (block.kind === "paragraph") target.push(take(block.inlines));
     else if (block.kind === "math")
@@ -358,7 +363,7 @@ ${unicodePreamble}${needsColor ? "\\usepackage{xcolor}\n" : ""}\\usepackage{amsm
 ${profile.author ? profile.author(article, text) : `\\title{${text(article.title ?? "Untitled")}}\n\\author{${authors}${affiliations}}`}
 ${profile.preamble ?? ""}
 \\begin{document}
-${profile.frontmatter ? profile.frontmatter(abstract.join("\n\n"), article, text) : `\\maketitle\n\\begin{abstract}\n${abstract.join("\n\n")}\n\\end{abstract}`}
+${profile.frontmatter ? profile.frontmatter(abstract.join("\n\n"), article, text) : `\\maketitle${abstract.join("\n\n").trim() ? `\n\\begin{abstract}\n${abstract.join("\n\n")}\n\\end{abstract}` : ""}`}
 ${profile.keywords?.(article.subjects ?? [], text) ?? ""}
 ${body.join("\n\n")}
 ${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : "") : `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}`}

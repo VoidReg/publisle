@@ -29,7 +29,7 @@ export const template: PublishingTemplate = {
       direction: "ltr",
       bibliographyStyle: "elsarticle-num",
       frontmatter: (abstract, article, text) =>
-        `\\begin{frontmatter}\n\\title{${text(article.title ?? "Untitled")}}\n${article.authors.map((name) => `\\author{${text(name)}}`).join("\n")}\n\\begin{abstract}${abstract}\\end{abstract}\n\\end{frontmatter}`,
+        `\\begin{frontmatter}\n\\title{${text(article.title ?? "Untitled")}}\n${article.authors.map((name) => `\\author{${text(name)}}`).join("\n")}\n${abstract.trim() ? `\\begin{abstract}${abstract}\\end{abstract}\n` : ""}\\end{frontmatter}`,
       author: () => "",
     }),
 };
@@ -56,6 +56,6 @@ export const authorDateTemplate: PublishingTemplate = {
       defaultEngine: "pdflatex",
       author: () => "",
       frontmatter: (abstract, article, text) =>
-        `\\begin{frontmatter}\\title{${text(article.title ?? "Untitled")}}${article.authors.map((name) => `\\author{${text(name)}}`).join("\n")}\\begin{abstract}${abstract}\\end{abstract}\\end{frontmatter}`,
+        `\\begin{frontmatter}\\title{${text(article.title ?? "Untitled")}}${article.authors.map((name) => `\\author{${text(name)}}`).join("\n")}${abstract.trim() ? `\\begin{abstract}${abstract}\\end{abstract}` : ""}\\end{frontmatter}`,
     }),
 };

@@ -34,7 +34,7 @@ export const template: PublishingTemplate = {
       author: (article, text) =>
         `\\title{${text(article.title ?? "Untitled")}}\n${(article.authorDetails ?? []).map((author) => `\\author{${text(author.name)}}${author.affiliation ? `\\affiliation{\\institution{${text(author.affiliation)}}\\country{${text(typeof context.data?.["country"] === "string" ? context.data["country"] : "")}}}` : ""}`).join("\n")}`,
       frontmatter: (abstract) =>
-        `\\begin{abstract}${abstract}\\end{abstract}\n\\maketitle`,
+        `${abstract.trim() ? `\\begin{abstract}${abstract}\\end{abstract}\n` : ""}\\maketitle`,
       preamble:
         "\\setcopyright{none}\n\\acmDOI{}\n\\acmISBN{}\n\\settopmatter{printacmref=false}\n\\renewcommand\\footnotetextcopyrightpermission[1]{}",
     }),
