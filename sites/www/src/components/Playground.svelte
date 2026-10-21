@@ -50,7 +50,7 @@ authors:
   - name: Ada Example
 ---
 
-# Hello, Publisle
+## Hello, Publisle
 
 Edit this document and see the result beside it. Your draft saves on this device.
 
@@ -504,7 +504,7 @@ PDF export works out of the box: this sample already carries a title and author.
         <label class="grid gap-1 text-sm">Affiliation for entered authors<input class="rounded border border-line bg-bg p-2" bind:value={pdfAffiliation} maxlength="500" /></label>
         {#if pdfTemplate === "acm-journal"}<label class="grid gap-1 text-sm">Affiliation country<input class="rounded border border-line bg-bg p-2" bind:value={pdfCountry} maxlength="100" /></label>{/if}
       </div>
-      <p class="pt-2 text-xs text-muted">The current document and its referenced public images are sent for compilation. Interactive blocks use readable fallbacks. Processing files are deleted after the request.</p>
+      <p class="pt-2 text-xs text-muted">The current document and its referenced public images are sent for compilation. Interactive blocks use readable fallbacks. Processing files are deleted after the request. Compilation takes about 40–50 s.</p>
     </details>
   {/if}
 

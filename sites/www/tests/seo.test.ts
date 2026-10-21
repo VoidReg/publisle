@@ -52,4 +52,68 @@ describe("site SEO metadata", () => {
     );
     expect(route).toContain("image={`/og/docs/${entry.id}.png`}");
   });
+
+  it("canonical paths never carry a trailing slash", () => {
+    const pages = readdirSync(join(site, "src/pages"), {
+      recursive: true,
+    }).filter(
+      (name) => typeof name === "string" && name.endsWith(".astro"),
+    ) as string[];
+    for (const name of pages) {
+      const source = readFileSync(join(site, "src/pages", name), "utf8");
+      const paths = [...source.matchAll(/path=\{?"([^"]*)"/gu)].map(
+        (match) => match[1],
+      );
+      for (const path of paths) {
+        expect(
+          path === "/" || !path.endsWith("/"),
+          `${name} canonical path "${path}" has a trailing slash`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("favicon, manifests, and sitemap links resolve to shipped files", async () => {
+    // Browsers and SEO auditors request these by name; GitHub Pages has no
+    // redirects, so each must exist as a real static file.
+    const favicon = readFileSync(join(site, "public/favicon.ico"));
+    expect(favicon.subarray(0, 4).toString("hex")).toBe("00000100");
+    const manifests = [
+      "manifest.webmanifest",
+      "manifest.json",
+      "site.webmanifest",
+    ];
+    const contents = manifests.map((name) =>
+      readFileSync(join(site, "public", name), "utf8"),
+    );
+    for (const content of contents) expect(content).toEqual(contents[0]);
+    JSON.parse(contents[0] ?? "");
+
+    const layout = readFileSync(
+      join(site, "src/layouts/BaseLayout.astro"),
+      "utf8",
+    );
+    expect(layout).toContain(
+      '<link rel="manifest" href="/manifest.webmanifest" />',
+    );
+    expect(layout).toContain('<link rel="sitemap" href="/sitemap.xml" />');
+    expect(layout).not.toContain("sitemap-index");
+    expect(readFileSync(join(site, "public/robots.txt"), "utf8")).toContain(
+      "Sitemap: https://publisle.xyz/sitemap.xml",
+    );
+
+    const { sitemapRoutes } = await import("../src/pages/sitemap.xml.ts");
+    const { docSources } = await import("../src/lib/docs-source.ts");
+    const routes = sitemapRoutes();
+    expect(routes).toEqual([
+      "/",
+      "/docs",
+      "/examples",
+      "/playground",
+      ...docSources().map((doc) => `/docs/${doc.id}`),
+    ]);
+    for (const route of routes) {
+      expect(route.endsWith("/") && route !== "/", route).toBe(false);
+    }
+  });
 });

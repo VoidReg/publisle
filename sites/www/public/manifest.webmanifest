@@ -1,0 +1,24 @@
+{
+  "name": "Publisle",
+  "short_name": "Publisle",
+  "description": "Turn Markdown into readable web articles, working interactive examples, and print-ready exports.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#fffdfa",
+  "theme_color": "#9b3214",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    }
+  ]
+}

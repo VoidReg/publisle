@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://publisle.xyz/sitemap-index.xml
+Sitemap: https://publisle.xyz/sitemap.xml
