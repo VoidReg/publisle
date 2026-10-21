@@ -374,3 +374,138 @@ it("contains Quickstart code on mobile and keeps the toolbar above the scrolling
     await page.close();
   }
 });
+
+it("contains docs code and aligns Research equation numbers on small and large screens", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const page = await browser.newPage();
+  try {
+    for (const width of [320, 390, 768, 1280]) {
+      for (const theme of ["light", "dark"]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`${baseUrl}/docs/guides/journal-export/`);
+        await page.evaluate((theme) => {
+          localStorage.setItem("publisle-theme", theme);
+          document.documentElement.dataset.theme = theme;
+        }, theme);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth),
+        ).toBe(width);
+        const panels = page.locator(".publisle-document pre");
+        expect(await panels.first().innerText()).toContain(
+          "npm install -g @publisle/cli",
+        );
+        for (const panel of await panels.all()) {
+          const box = await panel.boundingBox();
+          if (!box) continue;
+          expect(box.x).toBeGreaterThanOrEqual(0);
+          expect(box.x + box.width).toBeLessThanOrEqual(width + 1);
+        }
+        await page.goto(`${baseUrl}/playground/?example=research-paper`);
+        await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+        if (width < 1024)
+          await page.getByRole("tab", { name: /^Preview/ }).click();
+        const preview = page.getByRole("region", { name: "Compiled preview" });
+        expect(await preview.innerText()).not.toMatch(
+          /(Equation|Figure|Table) \1 /u,
+        );
+        const equations = preview.locator(".publisle-math-numbered");
+        expect(await equations.count()).toBeGreaterThan(0);
+        for (const equation of await equations.all()) {
+          const math = await equation
+            .locator(":scope > .katex-display")
+            .boundingBox();
+          const number = await equation
+            .locator(".publisle-equation-number")
+            .boundingBox();
+          if (!math || !number) throw new Error("Missing equation geometry");
+          expect(number.x).toBeGreaterThanOrEqual(math.x + math.width);
+          expect(
+            Math.abs(number.y + number.height / 2 - math.y - math.height / 2),
+          ).toBeLessThan(2);
+        }
+      }
+    }
+  } finally {
+    await page.close();
+  }
+}, 60000);
+
+it("shows static research content before starting the landing-page experiment", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const page = await browser.newPage();
+  try {
+    for (const width of [320, 390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${baseUrl}/`);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBe(width);
+      expect(
+        await page.locator(".publisle-math-numbered").count(),
+      ).toBeGreaterThan(0);
+      expect(await page.locator(".publisle-fft__stage").count()).toBe(0);
+    }
+    await page
+      .getByRole("button", { name: "Explore the FFT butterfly", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Step stage", exact: true }).click();
+    await expect
+      .poll(() => page.locator(".publisle-fft__stage").innerText())
+      .toContain("After butterfly stage 1 of 3");
+  } finally {
+    await page.close();
+  }
+  const staticPage = await browser.newPage({ javaScriptEnabled: false });
+  try {
+    await staticPage.goto(`${baseUrl}/`);
+    expect(
+      await staticPage.locator(".publisle-equation-number").innerText(),
+    ).toBe("(1)");
+    expect(
+      await staticPage
+        .getByAltText(/output spectrum has magnitude/)
+        .isVisible(),
+    ).toBe(true);
+    expect(
+      (
+        await staticPage.request.get(`${baseUrl}/examples/research-paper.pdf`)
+      ).ok(),
+    ).toBe(true);
+  } finally {
+    await staticPage.close();
+  }
+});
+
+it("keeps long equations scrollable without displacing their number", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const page = await browser.newPage({ viewport: { width: 320, height: 900 } });
+  try {
+    await page.goto(`${baseUrl}/playground/`);
+    await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await page.getByRole("tab", { name: /^Markdown$/i }).click();
+    await page
+      .getByRole("textbox", { name: "Markdown source" })
+      .fill(
+        `:::equation{label="eq:long"}\n\n$$\nx=${Array.from({ length: 40 }, (_, i) => `a_${String(i)}`).join("+")}\n$$\n\n:::\n`,
+      );
+    await page.getByRole("tab", { name: /^Preview/ }).click();
+    const math = page.locator(".publisle-math-numbered > .katex-display");
+    await expect.poll(() => math.count()).toBe(1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBe(320);
+    expect(
+      await math.evaluate((el) => {
+        el.scrollLeft = 100;
+        return el.scrollLeft;
+      }),
+    ).toBeGreaterThan(0);
+    const number = await page
+      .locator(".publisle-equation-number")
+      .boundingBox();
+    if (!number) throw new Error("Missing equation number");
+    expect(number.x + number.width).toBeLessThanOrEqual(320);
+  } finally {
+    await page.close();
+  }
+});

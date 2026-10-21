@@ -1,0 +1,59 @@
+{
+  "samples": 30,
+  "warmups": 5,
+  "generatedAt": "2026-10-21T15:43:10.772Z",
+  "fixture": "math-heavy",
+  "readerFixture": "mixed",
+  "tools": [
+    {
+      "name": "Publisle",
+      "version": "source checkout",
+      "host": "Minimal static HTML host, one article",
+      "operation": "HTML · warm process",
+      "compileMs": 11.294550999999956,
+      "p95Ms": 12.214273999999989,
+      "readerJsGzipBytes": 0,
+      "installedBytes": 11315545
+    },
+    {
+      "name": "MDX",
+      "version": "3.1.1",
+      "host": "Minimal static HTML host, one article",
+      "operation": "HTML · warm process",
+      "compileMs": 46.35400200000004,
+      "p95Ms": 69.306104,
+      "readerJsGzipBytes": 0,
+      "installedBytes": 14447572
+    },
+    {
+      "name": "VitePress",
+      "version": "1.6.4",
+      "host": "Default documentation theme, one article",
+      "operation": "HTML · warm process",
+      "compileMs": 60.21566100000018,
+      "p95Ms": 79.42648699999995,
+      "readerJsGzipBytes": 58179,
+      "installedBytes": 151179199
+    },
+    {
+      "name": "Docusaurus",
+      "version": "3.10.2",
+      "host": "Default documentation theme, one article",
+      "operation": "MDX module · warm process",
+      "compileMs": 42.94007500000009,
+      "p95Ms": 47.55632700000001,
+      "readerJsGzipBytes": 175343,
+      "installedBytes": 171192607
+    },
+    {
+      "name": "Pandoc",
+      "version": "pandoc 3.12.1",
+      "host": "Minimal static HTML host, one article",
+      "operation": "HTML · fresh process",
+      "compileMs": 24.658821999999986,
+      "p95Ms": 27.94601499999999,
+      "readerJsGzipBytes": 0,
+      "installedBytes": 165455024
+    }
+  ]
+}

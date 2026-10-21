@@ -94,33 +94,6 @@ export function clientAddress(peer, forwarded, isTrusted) {
   return normalized;
 }
 
-async function convertImages(image, directory, signal) {
-  const output = await runWorker(image, directory, "images", signal);
-  const converted = [];
-  let offset = 0;
-  while (offset < output.length) {
-    const line = output.indexOf(10, offset);
-    if (line < offset || line - offset > 4096)
-      throw new Error("Invalid image worker output");
-    const asset = JSON.parse(output.subarray(offset, line).toString("utf8"));
-    if (
-      !/^image-[0-9]+\.(png|jpg)$/.test(asset.file) ||
-      !Number.isSafeInteger(asset.bytes) ||
-      asset.bytes <= 0 ||
-      line + 1 + asset.bytes > output.length
-    )
-      throw new Error("Invalid converted image");
-    await writeFile(
-      join(directory, asset.file),
-      output.subarray(line + 1, line + 1 + asset.bytes),
-      { flag: "wx", mode: 0o644 },
-    );
-    converted.push({ source: asset.source, file: asset.file });
-    offset = line + 1 + asset.bytes;
-  }
-  return converted;
-}
-
 // Systemd delegates user-manager processes into child scopes (init.scope,
 // app.slice), leaving the service cgroup's own procs file empty. Population is
 // therefore checked across the delegated subtree.
@@ -228,8 +201,10 @@ export async function checkReadiness(image, allowUnverified = false) {
 const CACHE_PDF_TTL_MS = Number(process.env.PDF_CACHE_TTL_MS ?? 3_600_000);
 const CACHE_TOTAL_BYTES = 256 * 1024 * 1024;
 
-function cacheKey(request) {
-  return createHash("sha256").update(JSON.stringify(request)).digest("hex");
+function cacheKey(request, image) {
+  return createHash("sha256")
+    .update(JSON.stringify({ request, image }))
+    .digest("hex");
 }
 
 async function readCachedPdf(cacheDirectory, key) {
@@ -285,9 +260,13 @@ async function storeCachedPdf(cacheDirectory, key, result) {
 }
 
 export async function compileJob(request, signal, options) {
+  const worker = options.runWorker ?? runWorker;
   const cacheDirectory = options.pdfCacheDirectory;
   if (cacheDirectory) {
-    const cached = await readCachedPdf(cacheDirectory, cacheKey(request));
+    const cached = await readCachedPdf(
+      cacheDirectory,
+      cacheKey(request, options.image),
+    );
     if (cached) {
       console.log(
         JSON.stringify({
@@ -319,55 +298,81 @@ export async function compileJob(request, signal, options) {
   const deadline = AbortSignal.any([signal, AbortSignal.timeout(LIMITS.jobMs)]);
   const started = performance.now();
   let resultCode = "ok";
+  const timings = {};
+  const measured = async (key, action) => {
+    const begin = performance.now();
+    try {
+      return await action();
+    } finally {
+      timings[key] = Math.round(performance.now() - begin);
+    }
+  };
   try {
     await writeFile(join(directory, "request.json"), JSON.stringify(request), {
       flag: "wx",
       mode: 0o644,
     });
     const prepared = JSON.parse(
-      (await runWorker(options.image, directory, "prepare", deadline)).toString(
-        "utf8",
-      ),
+      (
+        await measured("prepareWorkerMs", () =>
+          worker(options.image, directory, "prepare", deadline),
+        )
+      ).toString("utf8"),
     );
+    if (
+      typeof prepared.timings?.prepareMs === "number" &&
+      Number.isFinite(prepared.timings.prepareMs) &&
+      prepared.timings.prepareMs >= 0
+    ) {
+      timings.prepareMs = Math.round(prepared.timings.prepareMs);
+      timings.prepareStartupAndCleanupMs = Math.max(
+        0,
+        timings.prepareWorkerMs - timings.prepareMs,
+      );
+    }
     if (
       !Array.isArray(prepared.sources) ||
       prepared.sources.some((source) => typeof source !== "string")
     )
       throw new Error("Invalid worker output");
-    const assets = await fetchImages(
-      prepared.sources,
-      directory,
-      deadline,
-      options.assetBase,
-      options.imageDependencies,
+    const assets = await measured("fetchMs", () =>
+      fetchImages(
+        prepared.sources,
+        directory,
+        deadline,
+        options.assetBase,
+        options.imageDependencies,
+      ),
     );
     await writeFile(
       join(directory, "prepared.json"),
       JSON.stringify({ document: prepared.document, assets }),
       { flag: "wx", mode: 0o644 },
     );
-    if (assets.length) {
-      const converted = await convertImages(options.image, directory, deadline);
-      await writeFile(
-        join(directory, "prepared.json"),
-        JSON.stringify({ document: prepared.document, assets: converted }),
-        { mode: 0o644 },
-      );
-    }
-    const output = await runWorker(
-      options.image,
-      directory,
-      "compile",
-      deadline,
+    const output = await measured("compileWorkerMs", () =>
+      worker(options.image, directory, "compile", deadline),
     );
     const line = output.indexOf(10);
     if (line < 0 || line > 16384) throw new Error("Invalid worker output");
     const metadata = JSON.parse(output.subarray(0, line).toString("utf8"));
     const pdf = output.subarray(line + 1);
+    for (const [key, value] of Object.entries(metadata.timings ?? {}))
+      if (
+        /^[a-zA-Z]{1,30}$/u.test(key) &&
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value >= 0
+      )
+        timings[key] = Math.round(value);
+    if (timings.workerMs !== undefined)
+      timings.compileStartupAndCleanupMs = Math.max(
+        0,
+        timings.compileWorkerMs - timings.workerMs,
+      );
     if (!metadata.ok || pdf.subarray(0, 5).toString() !== "%PDF-")
       throw new Error("Invalid worker output");
     if (cacheDirectory)
-      await storeCachedPdf(cacheDirectory, cacheKey(request), {
+      await storeCachedPdf(cacheDirectory, cacheKey(request, options.image), {
         pdf,
         diagnostics: metadata.diagnostics,
       });
@@ -387,11 +392,13 @@ export async function compileJob(request, signal, options) {
     throw error;
   } finally {
     await rm(directory, { recursive: true, force: true });
+    options.onTimings?.(timings);
     console.log(
       JSON.stringify({
         event: "pdf-job",
         code: resultCode,
         durationMs: Math.round(performance.now() - started),
+        timings,
       }),
     );
   }
@@ -518,7 +525,14 @@ export function createApi(options = {}) {
             request.headers["x-forwarded-for"],
             isTrustedProxy,
           );
+          const admittedAt = performance.now();
           release = await admission.acquire(ip, controller.signal);
+          console.log(
+            JSON.stringify({
+              event: "pdf-admission",
+              queueMs: Math.round(performance.now() - admittedAt),
+            }),
+          );
           const chunks = [];
           let size = 0;
           for await (const chunk of request) {

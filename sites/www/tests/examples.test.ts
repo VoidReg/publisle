@@ -70,6 +70,15 @@ describe("playground examples", () => {
     return { document, artifact: compilePublication(prepared) };
   }
 
+  it("research references have one label and equations expose numbered layout", () => {
+    const { artifact } = compileExample("research-paper");
+    expect(artifact.html).not.toMatch(/(Equation|Figure|Table)\s+<a[^>]*>\1 /u);
+    expect(artifact.html).toMatch(/Equation <a[^>]*>2<\/a>/u);
+    expect(artifact.html).toMatch(/Figure <a[^>]*>1<\/a>/u);
+    expect(artifact.html).toMatch(/Table <a[^>]*>1<\/a>/u);
+    expect(artifact.html).toContain("publisle-math-numbered");
+  });
+
   it("the example set is the FFT tutorial plus a research paper", () => {
     expect(playgroundExamples.map((example) => example.id)).toEqual([
       "fft",

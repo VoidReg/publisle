@@ -26,6 +26,33 @@ describe("createRenderPlan", () => {
     interactiveSchematicDefinition,
   ]);
 
+  it("keeps standalone and explicit reference labels while avoiding authored prefixes", () => {
+    const input = document({
+      blocks: [
+        figure({ src: "plot.svg", alt: "Plot", label: "fig:plot" }),
+        paragraph({
+          content: [
+            { type: "crossReference", target: "fig:plot" },
+            { type: "text", value: "; Figure " },
+            { type: "crossReference", target: "fig:plot" },
+            { type: "text", value: "; " },
+            {
+              type: "crossReference",
+              target: "fig:plot",
+              children: [{ type: "text", value: "the plot" }],
+            },
+          ],
+        }),
+      ],
+    });
+    const prepared = prepare(input, { registry }).document;
+    if (!prepared) throw new Error("Fixture preparation failed");
+    const html = compilePublication(prepared).html;
+    expect(html).toMatch(
+      />Figure 1<\/a>; Figure <a[^>]*>1<\/a>; <a[^>]*>the plot<\/a>/u,
+    );
+  });
+
   it("plans a registered static visualization with the full interactive envelope", () => {
     const input = document({
       blocks: [

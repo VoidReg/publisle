@@ -1,6 +1,8 @@
 .publisle-document {
   color: var(--publisle-text, inherit);
   font-family: var(--publisle-font, inherit);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .publisle-document .publisle-embed iframe {
@@ -88,6 +90,9 @@
 
 .publisle-document :where(pre) {
   overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .publisle-document :where(table) {
@@ -125,4 +130,35 @@
 
 .publisle-document .publisle-task-list-item > :last-child {
   margin-block-end: 0;
+}
+
+.publisle-document .publisle-math-numbered {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1em;
+}
+
+.publisle-document .publisle-math-numbered > .katex-display {
+  min-width: 0;
+  overflow-x: auto;
+  margin-block: 1em;
+}
+
+.publisle-document .publisle-equation-number {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.publisle-document .katex-display {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.publisle-document .katex-display > .katex {
+  width: max-content;
+  min-width: 100%;
+  text-align: center;
 }

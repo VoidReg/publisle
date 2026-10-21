@@ -7,14 +7,23 @@ back to Helvetica. The deprecated synchronous `toPdf` API remains available for
 migration and rejects unencodable characters unless `{ allowLossy: true }` is
 explicitly supplied. New Node callers should use `exportPdf`.
 
+Install the CLI and Research plugin with Node.js 24 or later:
+
 ```sh
-pnpm cli doctor
-pnpm cli export examples/articles/ieee-unicode.md --to pdf --output /tmp/article.pdf
-pnpm cli export examples/articles/ieee-journal.md --to submission \
+npm install -g @publisle/cli @publisle/cli-research
+```
+
+The examples below use files from a [repository checkout](../../CONTRIBUTING.md).
+For your own document, replace the example path with your Markdown file.
+
+```sh
+publisle doctor
+publisle export examples/articles/ieee-unicode.md --to pdf --output /tmp/article.pdf
+publisle export examples/articles/ieee-journal.md --to submission \
   --template ieee-journal --output /tmp/ieee-source
-pnpm cli export examples/articles/ieee-journal.md --to submission \
+publisle export examples/articles/ieee-journal.md --to submission \
   --template springer-journal --archive --output /tmp/springer-source.zip
-pnpm cli export examples/articles/ieee-journal.md --to jats-submission \
+publisle export examples/articles/ieee-journal.md --to jats-submission \
   --archive --output /tmp/article-jats.zip
 ```
 
@@ -34,12 +43,12 @@ study](../../examples/articles/interactive-research-paper.md)), edit it, and use
 **Export Markdown**. The saved file feeds the CLI unchanged:
 
 ```sh
-pnpm cli export paper.md --to html \
+publisle export paper.md --to html \
   --config examples/articles/interactive-paper.host.ts \
   --output paper-preview.html
-pnpm cli export paper.md --to pdf --template ieee-journal \
+publisle export paper.md --to pdf --template ieee-journal \
   --output paper-ieee.pdf
-pnpm cli export paper.md --to pdf --template acm-journal \
+publisle export paper.md --to pdf --template acm-journal \
   --template-data country.json --output paper-acm.pdf
 ```
 
@@ -132,12 +141,12 @@ has no publisher-specific rendering branches.
 | Tier             | Setup                                  | Use                                                                                                                                                                                                                      |
 | ---------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Zero-TeX preview | None                                   | `publisle export article.md --to html --output preview.html` writes a self-contained page from the publication artifact (styles inlined, no TeX, no container). A drafting aid, not a journal PDF; hosts own real pages. |
-| Pinned container | Docker only; `pnpm cli setup compiler` | Reproducible PDF output with the digest-pinned image; no local TeX distribution.                                                                                                                                         |
+| Pinned container | Docker only; `publisle setup compiler` | Reproducible PDF output with the digest-pinned image; no local TeX distribution.                                                                                                                                         |
 | Native TeX       | latexmk + engine + fonts               | Full control; `publisle doctor` reports what is missing.                                                                                                                                                                 |
 
 `--compiler auto` selects native tools only when template requirements and fonts
 are installed, otherwise an already installed pinned container. It never pulls or
-builds implicitly. Install the container explicitly with `pnpm cli setup compiler`
+builds implicitly. Install the container explicitly with `publisle setup compiler`
 (requires Docker). Its recipe pins Ubuntu by digest, freezes apt to a dated
 snapshot, includes TeX/fonts, and records the built image ID in
 `~/.cache/publisle/compiler.json`. Exports run with no network, no shell escape,
@@ -174,10 +183,10 @@ Publisher BibTeX styles are separate template policy and may restrict citation
 forms even though the CSL processor supports other forms.
 
 ```sh
-pnpm cli bibliography --doi 10.1109/JRPROC.1949.232969 --cache /tmp/bibliography-cache
-pnpm cli bibliography --url https://example.org/references.bib --cache /tmp/bibliography-cache
+publisle bibliography --doi 10.1109/JRPROC.1949.232969 --cache /tmp/bibliography-cache
+publisle bibliography --url https://example.org/references.bib --cache /tmp/bibliography-cache
 # Explicit refresh:
-pnpm cli bibliography --doi 10.1109/JRPROC.1949.232969 --cache /tmp/bibliography-cache --refresh
+publisle bibliography --doi 10.1109/JRPROC.1949.232969 --cache /tmp/bibliography-cache --refresh
 ```
 
 `lookupDoi` and `fetchBibliography` are opt-in Node APIs. HTTPS acquisition is

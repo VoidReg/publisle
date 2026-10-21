@@ -9,6 +9,7 @@ import { LIMITS, validateRequest } from "../limits.mjs";
 import { imageDestination, isPublicAddress, fetchImages } from "../images.mjs";
 import {
   createApi,
+  compileJob,
   checkReadiness,
   cgroupSubtreePopulated,
   clientAddress,
@@ -357,5 +358,85 @@ test("API serves binary and legacy PDFs, CORS, capability and error states", asy
     assert.equal((await send({ markdown: "x" })).status, 503);
   } finally {
     api.shutdown();
+  }
+});
+
+test("PDF compilation converts images in the compiler and partitions caches by worker image", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "pdf-pipeline-test-"));
+  const cache = join(directory, "cache");
+  await mkdir(cache);
+  const actions = [];
+  const observed = [];
+  const image = `sha256:${"1".repeat(64)}`;
+  const worker = async (_image, job, action) => {
+    actions.push(action);
+    if (action === "prepare")
+      return Buffer.from(
+        JSON.stringify({
+          document: { schemaVersion: 1, blocks: [] },
+          sources: ["https://example.com/plot.svg"],
+        }),
+      );
+    assert.equal(action, "compile");
+    const prepared = JSON.parse(
+      await import("node:fs/promises").then((fs) =>
+        fs.readFile(join(job, "prepared.json"), "utf8"),
+      ),
+    );
+    assert.equal(prepared.assets[0].file, "image-0.input");
+    return Buffer.concat([
+      Buffer.from(
+        JSON.stringify({
+          ok: true,
+          diagnostics: [],
+          timings: {
+            latexMs: 12,
+            latexPasses: 2,
+            hostPath: "private",
+            invalid: -1,
+          },
+        }) + "\n",
+      ),
+      Buffer.from("%PDF-1.7\nfixture"),
+    ]);
+  };
+  const options = {
+    image,
+    jobDirectory: directory,
+    pdfCacheDirectory: cache,
+    runWorker: worker,
+    onTimings: (t) => observed.push(t),
+    assetBase: "https://example.com",
+    imageDependencies: {
+      resolve: async () => [{ address: "93.184.216.34", family: 4 }],
+      download: async () => ({
+        bytes: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
+        mime: "image/svg+xml",
+      }),
+    },
+  };
+  const request = validateRequest({
+    markdown: "---\ntitle: Test\nauthors:\n  - name: Ada\n---\n\nBody",
+  });
+  try {
+    await compileJob(request, new AbortController().signal, options);
+    assert.deepEqual(actions, ["prepare", "compile"]);
+    assert.equal(observed[0].latexMs, 12);
+    assert.equal(observed[0].hostPath, undefined);
+    assert.equal(observed[0].invalid, undefined);
+    const cached = await compileJob(
+      request,
+      new AbortController().signal,
+      options,
+    );
+    assert.equal(actions.length, 2);
+    assert.ok(cached.diagnostics.some((d) => d.code === "pdf-cache-hit"));
+    await compileJob(request, new AbortController().signal, {
+      ...options,
+      image: `sha256:${"2".repeat(64)}`,
+    });
+    assert.deepEqual(actions, ["prepare", "compile", "prepare", "compile"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });

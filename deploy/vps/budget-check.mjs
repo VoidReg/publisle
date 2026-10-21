@@ -11,6 +11,7 @@ import { TEMPLATES } from "./limits.mjs";
 
 const execute = promisify(execFile);
 const root = resolve(import.meta.dirname, "../..");
+const imageTag = process.env.PDF_QA_IMAGE ?? "publisle-pdf-worker:local";
 const slice = "publislepdfqa.slice";
 const runtimeUnit = "publislepdfqa-runtime";
 const workerUnit = "publislepdfqa-check";
@@ -18,12 +19,17 @@ const artifactDirectory = resolve(
   process.env.PDF_QA_ARTIFACTS ?? join(root, ".local/pdf-service-qa"),
 );
 
-if (process.argv.includes("--inside")) {
+if (
+  process.argv.includes("--inside") &&
+  process.env.PDF_QA_BENCHMARK === "true"
+) {
+  await import("./benchmark.mjs");
+} else if (process.argv.includes("--inside")) {
   const image = (
     await execute("docker", [
       "image",
       "inspect",
-      "publisle-pdf-worker:local",
+      imageTag,
       "--format",
       "{{.Id}}",
     ])
@@ -177,7 +183,7 @@ if (process.argv.includes("--inside")) {
         `QA runtime failed to start. Inspect journalctl --user -u ${runtimeUnit}.`,
       );
     // Image installation is provisioning; impose the compilation budget after it.
-    const save = spawn("docker", ["save", "publisle-pdf-worker:local"], {
+    const save = spawn("docker", ["save", imageTag], {
       stdio: ["ignore", "pipe", "inherit"],
     });
     const load = spawn("docker", ["load", "--quiet"], {
@@ -209,6 +215,17 @@ if (process.argv.includes("--inside")) {
       `--setenv=DOCKER_HOST=${qaEnv.DOCKER_HOST}`,
       `--setenv=PDF_CGROUP_PARENT=${slice}`,
       `--setenv=PDF_QA_ARTIFACTS=${artifactDirectory}`,
+      ...[
+        "PDF_QA_IMAGE",
+        "PDF_QA_BENCHMARK",
+        "PDF_BENCH_SERVER",
+        "PDF_BENCH_NATIVE",
+        "PDF_BENCH_SAMPLES",
+        "PDF_BENCH_WARMUPS",
+        "PDF_BENCH_CASES",
+      ].flatMap((key) =>
+        process.env[key] ? [`--setenv=${key}=${process.env[key]}`] : [],
+      ),
       process.execPath,
       "--max-old-space-size=48",
       import.meta.filename,

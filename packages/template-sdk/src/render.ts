@@ -66,11 +66,16 @@ export function renderLatexArticle(
     context.bibliography,
     context.citations,
   ]);
+  const needsColor = /\\(?:textcolor|color|colorbox|fcolorbox)\b/u.test(
+    scriptText,
+  );
   const needsCjk = /[\p{Script=Han}\u3000-\u303f\uff00-\uffef]/u.test(
     scriptText,
   );
   const needsArabic =
-    profile.direction === "rtl" || /\p{Script=Arabic}/u.test(scriptText);
+    profile.direction === "rtl" ||
+    /\p{Script=Arabic}/u.test(scriptText) ||
+    scriptText.includes('"direction":"rtl"');
   for (const font of Object.values(fonts))
     if (!/^[\p{L}\p{N} .-]+$/u.test(font))
       throw new Error(
@@ -301,8 +306,8 @@ export function renderLatexArticle(
 \\setmainfont{${fonts.latin}}
 \\usepackage{unicode-math}
 \\setmathfont{${fonts.math}}
-\\usepackage[bidi=basic]{babel}
-${profile.direction === "rtl" ? "\\babelprovide[import]{english}\n\\babelprovide[import,main]{arabic}" : "\\babelprovide[import,main]{english}\n\\babelprovide[import]{arabic}"}
+\\usepackage${needsArabic ? "[bidi=basic]" : "[english]"}{babel}
+${needsArabic ? (profile.direction === "rtl" ? "\\babelprovide[import]{english}\n\\babelprovide[import,main]{arabic}" : "\\babelprovide[import,main]{english}\n\\babelprovide[import]{arabic}") : ""}
 ${needsArabic ? `\\babelfont[arabic]{rm}{${fonts.arabic}}` : ""}
 ${needsCjk ? `\\newfontfamily\\cjkfont{${fonts.cjk}}` : ""}
 `
@@ -341,8 +346,8 @@ ${needsCjk ? `\\newfontfamily\\cjkfont{${fonts.cjk}}` : ""}
       ),
     };
   });
-  const manuscript = `${pdfStandard ? `\\DocumentMetadata{lang=${language},pdfstandard=${pdfStandard},${pdfStandard === "ua-1" ? "pdfversion=1.7," : ""}tagging=on,tagging-setup={math/setup={mathml-AF${pdfStandard === "ua-2" ? ",mathml-SE" : ""}}}}\n` : ""}\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
-${unicodePreamble}\\usepackage{amsmath,${engine === "pdflatex" && profile.pdfSymbols === true ? "amssymb," : ""}graphicx,tabularx${profile.numericCitationPackage ? ",cite" : ""}}
+  const manuscript = `${needsColor ? "\\PassOptionsToPackage{dvipsnames,svgnames}{xcolor}\n" : ""}${pdfStandard ? `\\DocumentMetadata{lang=${language},pdfstandard=${pdfStandard},${pdfStandard === "ua-1" ? "pdfversion=1.7," : ""}tagging=on,tagging-setup={math/setup={mathml-AF${pdfStandard === "ua-2" ? ",mathml-SE" : ""}}}}\n` : ""}\\documentclass${profile.classOptions ? `[${profile.classOptions}]` : ""}{${profile.className}}
+${unicodePreamble}${needsColor ? "\\usepackage{xcolor}\n" : ""}\\usepackage{amsmath,${engine === "pdflatex" && profile.pdfSymbols === true ? "amssymb," : ""}graphicx,tabularx${profile.numericCitationPackage ? ",cite" : ""}}
 % flafter keeps floats at or after their source position, so a figure can
 % never be hoisted above the abstract region on the first page.
 \\usepackage{flafter}
@@ -367,6 +372,7 @@ ${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automati
     ...(pdfStandard ? { pdfStandard } : {}),
     requirements: [
       "amsmath.sty",
+      ...(needsColor ? ["xcolor.sty"] : []),
       "flafter.sty",
       "graphicx.sty",
       "tabularx.sty",

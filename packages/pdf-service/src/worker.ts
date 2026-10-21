@@ -127,7 +127,50 @@ export function checkSvg(source: string): void {
     );
 }
 
+async function convertAssets(assets: Asset[], inputDirectory: string) {
+  const { default: sharp } = await import("sharp");
+  sharp.cache(false);
+  // Each conversion runs with single-threaded libvips; conversions themselves
+  // run in parallel below, so worker threads stay busy without
+  // oversubscribing the CPU budget.
+  sharp.concurrency(1);
+  // Convert in parallel, then emit in the authored asset order: the output
+  // protocol is NDJSON record + bytes pairs consumed sequentially.
+  const converted = await Promise.all(
+    assets.map(async (asset, index) => {
+      if (!/^image-[0-9]+\.input$/u.test(asset.file))
+        throw new Error("Invalid asset name.");
+      const bytes = await readFile(join(inputDirectory, asset.file));
+      if (asset.mime === "image/svg+xml")
+        checkSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+      const image = sharp(bytes, {
+        limitInputPixels: 8_000_000,
+        failOn: "warning",
+        animated: false,
+      });
+      const metadata = await image.metadata();
+      if (
+        !metadata.width ||
+        !metadata.height ||
+        metadata.width * metadata.height > 8_000_000 ||
+        !["png", "jpeg", "svg"].includes(metadata.format) ||
+        (metadata.pages ?? 1) > 1 ||
+        (metadata.format === "svg" && asset.mime !== "image/svg+xml")
+      )
+        throw new Error("Invalid or oversized image.");
+      return {
+        source: asset.source,
+        file: `image-${String(index)}.${metadata.format === "jpeg" ? "jpg" : metadata.format === "svg" ? "png" : metadata.format}`,
+        bytes: metadata.format === "svg" ? await image.png().toBuffer() : bytes,
+      };
+    }),
+  );
+  return converted;
+}
+
 async function main(): Promise<void> {
+  const started = performance.now();
+  const timings: Record<string, number> = {};
   const action = process.argv[2];
   const inputDirectory = process.env["PDF_INPUT"] ?? "/input";
   const raw = parseJson(await readFile(join(inputDirectory, "request.json")), {
@@ -172,7 +215,11 @@ async function main(): Promise<void> {
     if (lowered.sources.length > 12)
       throw new Error("At most 12 distinct images are supported.");
     process.stdout.write(
-      JSON.stringify({ document: lowered.document, sources: lowered.sources }),
+      JSON.stringify({
+        document: lowered.document,
+        sources: lowered.sources,
+        timings: { prepareMs: performance.now() - started },
+      }),
     );
     return;
   }
@@ -182,44 +229,7 @@ async function main(): Promise<void> {
     await readFile(join(inputDirectory, "prepared.json"), "utf8"),
   ) as { document: Document; assets: Asset[] };
   if (action === "images") {
-    const { default: sharp } = await import("sharp");
-    sharp.cache(false);
-    // Each conversion runs with single-threaded libvips; conversions themselves
-    // run in parallel below, so worker threads stay busy without
-    // oversubscribing the CPU budget.
-    sharp.concurrency(1);
-    // Convert in parallel, then emit in the authored asset order: the output
-    // protocol is NDJSON record + bytes pairs consumed sequentially.
-    const converted = await Promise.all(
-      normalized.assets.map(async (asset, index) => {
-        if (!/^image-[0-9]+\.input$/u.test(asset.file))
-          throw new Error("Invalid asset name.");
-        const bytes = await readFile(join(inputDirectory, asset.file));
-        if (asset.mime === "image/svg+xml")
-          checkSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-        const image = sharp(bytes, {
-          limitInputPixels: 8_000_000,
-          failOn: "warning",
-          animated: false,
-        });
-        const metadata = await image.metadata();
-        if (
-          !metadata.width ||
-          !metadata.height ||
-          metadata.width * metadata.height > 8_000_000 ||
-          !["png", "jpeg", "svg"].includes(metadata.format) ||
-          (metadata.pages ?? 1) > 1 ||
-          (metadata.format === "svg" && asset.mime !== "image/svg+xml")
-        )
-          throw new Error("Invalid or oversized image.");
-        return {
-          source: asset.source,
-          file: `image-${String(index)}.${metadata.format === "jpeg" ? "jpg" : metadata.format === "svg" ? "png" : metadata.format}`,
-          bytes:
-            metadata.format === "svg" ? await image.png().toBuffer() : bytes,
-        };
-      }),
-    );
+    const converted = await convertAssets(normalized.assets, inputDirectory);
     let total = 0;
     for (const item of converted) {
       total += item.bytes.length;
@@ -237,17 +247,38 @@ async function main(): Promise<void> {
     }
     return;
   }
-  const directory = inputDirectory;
-  const paths = new Map<string, string>();
-  for (const asset of normalized.assets) {
-    if (!/^image-[0-9]+\.(png|jpg)$/u.test(asset.file))
-      throw new Error("Invalid converted asset name.");
-    paths.set(asset.source, asset.file);
-  }
-  const document = replaceFigures(normalized.document, paths);
-  const source = createLatexPackage(document, { ...job, templates });
   const buildDirectory = "/tmp/build";
   await mkdir(buildDirectory);
+  const paths = new Map<string, string>();
+  const imagesStarted = performance.now();
+  if (normalized.assets.some((asset) => asset.file.endsWith(".input"))) {
+    const converted = await convertAssets(normalized.assets, inputDirectory);
+    let total = 0;
+    for (const asset of converted) {
+      total += asset.bytes.length;
+      if (total > 16 * 1024 * 1024)
+        throw new Error("Converted images exceed the size limit.");
+      await writeFile(join(buildDirectory, asset.file), asset.bytes, {
+        flag: "wx",
+      });
+      paths.set(asset.source, asset.file);
+    }
+  } else {
+    for (const asset of normalized.assets) {
+      if (!/^image-[0-9]+\.(png|jpg)$/u.test(asset.file))
+        throw new Error("Invalid converted asset name.");
+      await copyFile(
+        join(inputDirectory, asset.file),
+        join(buildDirectory, asset.file),
+      );
+      paths.set(asset.source, asset.file);
+    }
+  }
+  timings["imagesMs"] = performance.now() - imagesStarted;
+  const sourceStarted = performance.now();
+  const document = replaceFigures(normalized.document, paths);
+  const source = createLatexPackage(document, { ...job, templates });
+  timings["sourceMs"] = performance.now() - sourceStarted;
   const cacheDirectory = join(buildDirectory, "cache");
   await mkdir(cacheDirectory);
   const safePath = (name: string): string => {
@@ -272,12 +303,14 @@ async function main(): Promise<void> {
       throw new Error("Invalid image resource path.");
     const path = safePath(asset.destination);
     await mkdir(join(path, ".."), { recursive: true });
-    await copyFile(join(directory, asset.source), path);
+    if (path !== join(buildDirectory, asset.source))
+      await copyFile(join(buildDirectory, asset.source), path);
   }
   // The immutable image has already passed compiler preflight. Run only the
   // dependency-driven compilation and PDF checks; avoid CLI startup, repeated
   // font probes, source archives and per-request dependency manifests.
-  await execute(
+  const latexStarted = performance.now();
+  const { stdout: compilerOutput } = await execute(
     "latexmk",
     [
       source.engine === "pdflatex" ? "-pdf" : "-lualatex",
@@ -302,6 +335,13 @@ async function main(): Promise<void> {
       },
     },
   );
+  timings["latexMs"] = performance.now() - latexStarted;
+  timings["latexPasses"] = [
+    ...compilerOutput.matchAll(
+      /Run number [0-9]+ of rule '(?:lualatex|pdflatex)'/gu,
+    ),
+  ].length;
+  timings["workerMs"] = performance.now() - started;
   const log = await readFile(join(buildDirectory, "manuscript.log"), "utf8");
   if (
     /Missing character:|undefined references|Citation .* undefined|Reference .* undefined/iu.test(
@@ -321,7 +361,11 @@ async function main(): Promise<void> {
   ]
     .slice(0, 30)
     .map(({ code, message }) => ({ code, message: message.slice(0, 200) }));
-  if (!process.stdout.write(JSON.stringify({ ok: true, diagnostics }) + "\n"))
+  if (
+    !process.stdout.write(
+      JSON.stringify({ ok: true, diagnostics, timings }) + "\n",
+    )
+  )
     await once(process.stdout, "drain");
   process.stdout.write(pdf);
 }

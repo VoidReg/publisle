@@ -1,0 +1,893 @@
+{
+  "schemaVersion": 1,
+  "complete": true,
+  "generatedAt": "2026-10-21T15:43:10.772Z",
+  "environment": {
+    "node": "v24.21.0",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+    "logicalCpus": 16,
+    "memoryBytes": 33240408064,
+    "platform": "linux"
+  },
+  "samples": 30,
+  "warmups": 5,
+  "versions": {
+    "@mdx-js/mdx": "3.1.1",
+    "@docusaurus/core": "3.10.2",
+    "vitepress": "1.6.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remark-math": "6.0.0",
+    "rehype-katex": "7.0.1",
+    "markdown-it-mathjax3": "4.3.2",
+    "pandoc": "pandoc 3.12.1"
+  },
+  "documents": [
+    {
+      "fixture": "math-heavy",
+      "sourceSha256": "9ccba92be97b55af78f1a44787f43174b24227272ff53289436e24197dfee30b",
+      "operations": [
+        {
+          "tool": "Publisle",
+          "operation": "Markdown → validated document → static HTML",
+          "samples": [
+            12.214273999999989, 12.143785000000037, 12.045722000000012,
+            12.329826000000025, 11.95199500000001, 11.819798999999989,
+            11.580996000000027, 11.821341000000018, 11.401737000000026,
+            11.085335999999984, 11.277682000000027, 11.12843700000002, 11.25761,
+            11.415816000000007, 11.459990000000005, 11.41003999999998,
+            11.23975100000007, 11.294631000000095, 11.294550999999956,
+            11.228921000000014, 11.340266000000042, 11.015473000000043,
+            11.259430000000066, 11.400796999999898, 11.16487600000005,
+            11.137295999999992, 11.189306999999985, 11.225205999999957,
+            10.97974099999999, 10.747239000000036
+          ],
+          "medianMs": 11.294550999999956,
+          "p95Ms": 12.214273999999989,
+          "peakRssKiB": 153420,
+          "outputBytes": 110471,
+          "outputGzipBytes": 2217,
+          "freshProcessTotalMs": 677.298675,
+          "verifiedMathExpressions": 40,
+          "outputSha256": "e5769f4d1f6b84087f851c940f257c5d835f54d61f23f371ff8a0f955e6e99e6"
+        },
+        {
+          "tool": "MDX",
+          "operation": "MDX compile → evaluate → React static HTML",
+          "samples": [
+            50.073848, 52.54839800000002, 44.16208800000004, 48.097847,
+            52.23886899999991, 48.209536999999955, 51.72042099999999,
+            52.80517999999995, 40.892064000000005, 45.55820200000005, 67.253288,
+            69.75875100000007, 69.306104, 66.14024500000005, 50.48911799999996,
+            48.36330600000019, 39.47904299999982, 43.63536799999997,
+            43.74497700000006, 43.962778999999955, 42.01875199999995,
+            51.425809999999956, 45.50511299999994, 43.80769099999998,
+            44.396322000000055, 41.10188999999991, 43.84731800000009,
+            52.39184599999999, 45.41547700000001, 46.35400200000004
+          ],
+          "medianMs": 46.35400200000004,
+          "p95Ms": 69.306104,
+          "peakRssKiB": 361940,
+          "outputBytes": 108860,
+          "outputGzipBytes": 2145,
+          "freshProcessTotalMs": 2024.9653810000002,
+          "verifiedMathExpressions": 40,
+          "outputSha256": "db4cddb9b205f96390e4354b61206be209e8b4018eb0a445421ad309e9152539"
+        },
+        {
+          "tool": "VitePress",
+          "operation": "VitePress Markdown renderer → HTML (no Vue site build)",
+          "samples": [
+            89.68884100000002, 79.42648699999995, 71.53751499999998,
+            63.60693200000014, 64.63090199999988, 64.05876799999987, 64.179576,
+            65.95327999999995, 61.863018999999895, 64.95887400000015,
+            62.97603600000002, 60.13411099999985, 60.21566100000018,
+            60.068404999999984, 60.17834700000003, 59.33088900000007,
+            59.59508600000004, 59.302351000000044, 59.949190000000044,
+            61.99101500000006, 59.60216199999991, 65.59379799999988,
+            59.94643099999985, 59.798803000000134, 59.21503900000016,
+            59.84626299999991, 61.65609399999994, 60.367447000000084,
+            59.56750800000009, 58.95400400000017
+          ],
+          "medianMs": 60.21566100000018,
+          "p95Ms": 79.42648699999995,
+          "peakRssKiB": 430920,
+          "outputBytes": 413862,
+          "outputGzipBytes": 13577,
+          "freshProcessTotalMs": 2681.021671,
+          "verifiedMathExpressions": 40,
+          "outputSha256": "00ea38838b1493a80e317744fb7ab4a4d2eda6db63478ba9e03528528b96e17c"
+        },
+        {
+          "tool": "Docusaurus",
+          "operation": "Docusaurus Markdown → MDX JavaScript module (no React rendering)",
+          "samples": [
+            45.945910000000026, 45.366173, 47.55632700000001, 40.01718399999993,
+            42.17137200000002, 42.572865999999976, 43.754002000000014,
+            40.856575999999905, 42.94007500000009, 43.626203999999916,
+            46.60250399999995, 37.592093999999975, 44.95581400000003,
+            45.64543499999991, 47.06319500000018, 43.153868999999986,
+            47.55683900000008, 46.079556999999795, 41.39414099999999,
+            38.78448299999991, 44.701413999999886, 40.84476799999993,
+            46.42853799999989, 45.237293000000136, 40.26221499999997,
+            41.194001999999955, 36.60289899999998, 41.30689200000006,
+            38.68610200000012, 39.62078500000007
+          ],
+          "medianMs": 42.94007500000009,
+          "p95Ms": 47.55632700000001,
+          "peakRssKiB": 413772,
+          "outputBytes": 409220,
+          "outputGzipBytes": 7641,
+          "freshProcessTotalMs": 1804.2145330000003,
+          "verifiedMathExpressions": 40,
+          "outputSha256": "b42d51e2f37d17b2ea6c9a635303124ccd23347bb6baa77a885eba32a48fd719"
+        },
+        {
+          "tool": "Pandoc",
+          "operation": "Fresh Pandoc process → HTML fragment",
+          "samples": [
+            23.084018999999984, 26.316921000000008, 23.573481000000015,
+            26.215531, 22.638644999999997, 25.584120999999982,
+            24.836805000000027, 23.853499999999997, 27.94601499999999,
+            24.182639999999992, 26.219155, 23.937554999999975,
+            27.52937799999995, 29.663793999999996, 22.041716000000065,
+            27.528053999999997, 21.48127599999998, 23.22035900000003,
+            25.537803000000054, 27.520278000000076, 22.25506299999995,
+            27.22267899999997, 23.217196999999942, 24.000648999999953,
+            24.658821999999986, 25.101274999999987, 23.592194000000063,
+            25.042316000000028, 27.56316800000002, 23.721697000000063
+          ],
+          "medianMs": 24.658821999999986,
+          "p95Ms": 27.94601499999999,
+          "peakRssKiB": 59860,
+          "childPeakRssKiB": 62924,
+          "outputBytes": 19724,
+          "outputGzipBytes": 758,
+          "freshProcessTotalMs": 909.2822420000002,
+          "verifiedMathExpressions": 40,
+          "outputSha256": "97c2a3f75da03bdbeeb09f13b9c9dc19a49847a477349f6a6cc49142e8c872b5"
+        }
+      ]
+    },
+    {
+      "fixture": "prose-1000",
+      "sourceSha256": "1449a3fdb3c2a2da0a8cd12d665fe084266dcc0c8f1e243939bc434c04499347",
+      "operations": [
+        {
+          "tool": "Publisle",
+          "operation": "Markdown → validated document → static HTML",
+          "samples": [
+            160.84484799999996, 154.37835600000017, 159.900977,
+            177.08889899999986, 166.45891099999994, 172.80919800000015,
+            177.08136300000024, 164.13015199999973, 150.57664400000021,
+            165.3715259999999, 169.45466299999998, 184.9399639999997,
+            165.33109400000012, 171.70684900000015, 167.90520400000014,
+            168.00384600000007, 167.37146900000016, 167.85117300000047,
+            168.45469799999955, 168.56389000000036, 164.74191100000007,
+            164.23024299999997, 163.95289200000025, 165.6439219999993,
+            166.10039099999995, 179.07968900000014, 172.97064600000067,
+            151.26458699999966, 150.32022300000062, 148.04667599999993
+          ],
+          "medianMs": 166.10039099999995,
+          "p95Ms": 179.07968900000014,
+          "peakRssKiB": 401676,
+          "outputBytes": 77026,
+          "outputGzipBytes": 2916,
+          "freshProcessTotalMs": 6113.512245999998
+        },
+        {
+          "tool": "MDX",
+          "operation": "MDX compile → evaluate → React static HTML",
+          "samples": [
+            35.29658599999999, 38.732774000000006, 34.014613, 35.530011,
+            49.63673399999999, 31.18031200000007, 25.567148999999972,
+            22.97575500000005, 22.565157, 24.034494999999993,
+            24.108510000000024, 25.38929100000007, 25.10829100000001,
+            23.375943000000007, 25.27842899999996, 26.17717700000003,
+            23.82428500000003, 24.974449999999933, 24.090986999999927,
+            22.808873999999946, 22.217892000000006, 20.65841499999999,
+            19.79439400000001, 21.098905999999943, 20.390657999999917,
+            41.430384000000004, 43.286530000000084, 42.98502500000018,
+            45.11935300000005, 47.277693
+          ],
+          "medianMs": 25.10829100000001,
+          "p95Ms": 47.277693,
+          "peakRssKiB": 297776,
+          "outputBytes": 77914,
+          "outputGzipBytes": 2822,
+          "freshProcessTotalMs": 1226.4754059999996
+        },
+        {
+          "tool": "VitePress",
+          "operation": "VitePress Markdown renderer → HTML (no Vue site build)",
+          "samples": [
+            6.226472999999999, 6.722907000000021, 6.321743000000026,
+            6.310563000000002, 6.251028000000019, 6.270023999999978,
+            6.286850000000015, 5.8791969999999765, 6.373497999999984,
+            11.176236000000017, 8.059003999999959, 8.365372000000036,
+            7.217213000000015, 8.559939999999983, 5.358811000000003,
+            6.174647999999991, 5.651981999999975, 5.9737140000000295,
+            5.442163999999991, 5.956425000000024, 5.4864390000000185,
+            6.023564000000022, 5.313672999999994, 5.850460999999996,
+            5.552447000000029, 5.902960000000007, 5.317963999999961,
+            5.790930000000003, 5.895488, 6.399050999999986
+          ],
+          "medianMs": 6.023564000000022,
+          "p95Ms": 8.559939999999983,
+          "peakRssKiB": 206304,
+          "outputBytes": 78074,
+          "outputGzipBytes": 2966,
+          "freshProcessTotalMs": 464.8366129999995
+        },
+        {
+          "tool": "Docusaurus",
+          "operation": "Docusaurus Markdown → MDX JavaScript module (no React rendering)",
+          "samples": [
+            61.74816899999996, 70.99453399999993, 65.45013699999993,
+            58.85347899999999, 59.46928600000001, 58.68661499999996,
+            58.66688399999998, 58.470759000000044, 58.45104100000003,
+            55.0519569999999, 58.49060900000018, 56.54654500000015,
+            57.86803400000008, 55.006797000000006, 57.7087489999999,
+            59.82050400000003, 48.55385100000012, 53.15973599999984,
+            50.84538500000008, 51.658345000000054, 48.431061, 51.47629699999993,
+            49.117312000000084, 55.178379999999834, 52.79931600000009,
+            55.431644000000006, 55.345556000000215, 59.76350699999966,
+            45.43714899999986, 63.83454799999981
+          ],
+          "medianMs": 56.54654500000015,
+          "p95Ms": 65.45013699999993,
+          "peakRssKiB": 399564,
+          "outputBytes": 125725,
+          "outputGzipBytes": 3482,
+          "freshProcessTotalMs": 2293.1084260000007
+        },
+        {
+          "tool": "Pandoc",
+          "operation": "Fresh Pandoc process → HTML fragment",
+          "samples": [
+            78.116555, 86.867028, 94.71498299999996, 79.37961400000006,
+            81.12168299999996, 84.62034199999994, 81.18685700000003,
+            84.91819699999996, 81.42192, 86.90102999999999, 77.76947599999994,
+            88.58175499999993, 83.15879899999982, 81.37771299999986,
+            79.28623700000003, 80.2392060000002, 83.64285700000005,
+            84.79206999999997, 87.01214700000014, 89.54981100000032,
+            85.53052499999967, 86.6356780000001, 79.5648229999997,
+            78.48927999999978, 80.40734500000008, 81.99308999999994,
+            83.77555600000005, 80.89619700000003, 79.09558100000004,
+            79.96264999999994
+          ],
+          "medianMs": 81.42192,
+          "p95Ms": 89.54981100000032,
+          "peakRssKiB": 66616,
+          "childPeakRssKiB": 126116,
+          "outputBytes": 77936,
+          "outputGzipBytes": 2839,
+          "freshProcessTotalMs": 2941.7063789999993
+        }
+      ]
+    },
+    {
+      "fixture": "mixed",
+      "sourceSha256": "a9fe3cd45446cbe9f7575b0a5185f32cdacb8fc52f52b71e70a617740c122d61",
+      "operations": [
+        {
+          "tool": "Publisle",
+          "operation": "Markdown → validated document → static HTML",
+          "samples": [
+            2.457119000000006, 1.9478520000000117, 2.0425059999999746,
+            2.2685189999999977, 2.0213620000000105, 1.9132889999999918,
+            2.0948139999999853, 1.890371000000016, 1.8489139999999793,
+            2.0503459999999905, 1.8269540000000006, 1.76548200000002,
+            2.030104999999992, 1.738779999999963, 1.7803789999999822,
+            2.0739119999999502, 1.6910459999999716, 1.662479000000019,
+            1.8635160000000042, 1.578380999999979, 1.5706690000000094,
+            1.8480189999999652, 1.6279719999999998, 1.5739320000000134,
+            1.5946769999999901, 1.8657109999999761, 1.5410340000000247,
+            1.5061089999999808, 1.8244470000000206, 1.5892509999999902
+          ],
+          "medianMs": 1.8269540000000006,
+          "p95Ms": 2.2685189999999977,
+          "peakRssKiB": 126012,
+          "outputBytes": 595,
+          "outputGzipBytes": 386,
+          "freshProcessTotalMs": 305.90652599999885
+        },
+        {
+          "tool": "MDX",
+          "operation": "MDX compile → evaluate → React static HTML",
+          "samples": [
+            3.786869999999979, 1.4482329999999877, 1.2760200000000168,
+            1.2714870000000076, 1.319123000000019, 1.1110079999999982,
+            1.02761000000001, 1.0864150000000166, 1.0521900000000244,
+            0.9977159999999969, 1.0413519999999892, 0.9902859999999976,
+            1.4010800000000074, 0.8026849999999968, 0.7256370000000061,
+            0.7538069999999948, 0.8522020000000055, 0.961732000000012,
+            0.9985580000000027, 1.2751839999999959, 1.3499920000000145,
+            1.3213240000000042, 1.357022999999998, 1.590613000000019,
+            1.0287310000000218, 0.9738779999999849, 0.9180439999999805,
+            0.8913630000000126, 0.8980489999999861, 1.0170029999999883
+          ],
+          "medianMs": 1.0287310000000218,
+          "p95Ms": 1.590613000000019,
+          "peakRssKiB": 96256,
+          "outputBytes": 415,
+          "outputGzipBytes": 285,
+          "freshProcessTotalMs": 173.7899350000007
+        },
+        {
+          "tool": "VitePress",
+          "operation": "VitePress Markdown renderer → HTML (no Vue site build)",
+          "samples": [
+            1.127339999999947, 1.1736980000000017, 1.1728279999999813,
+            1.0088999999999828, 1.052392999999995, 0.9873299999999858,
+            0.9331060000000093, 1.2558290000000056, 1.0584800000000314,
+            1.2998680000000036, 1.4185929999999871, 1.3396700000000124,
+            1.2834380000000465, 2.034759000000008, 1.0265309999999772,
+            0.9948709999999892, 0.9427890000000048, 0.8801839999999856,
+            0.8967719999999986, 0.8091709999999921, 0.7757720000000177,
+            0.7417469999999753, 0.7711740000000304, 0.7031969999999887,
+            0.6979599999999664, 0.711892999999975, 0.652701000000036,
+            0.8259149999999522, 0.7870100000000093, 0.7756969999999797
+          ],
+          "medianMs": 0.9427890000000048,
+          "p95Ms": 1.4185929999999871,
+          "peakRssKiB": 171808,
+          "outputBytes": 1645,
+          "outputGzipBytes": 580,
+          "freshProcessTotalMs": 338.67226200000005
+        },
+        {
+          "tool": "Docusaurus",
+          "operation": "Docusaurus Markdown → MDX JavaScript module (no React rendering)",
+          "samples": [
+            2.142275999999981, 1.9908169999999927, 1.9630310000000009,
+            1.8812989999999843, 1.9061359999999752, 1.6793419999999912,
+            1.6575940000000173, 2.0954130000000077, 1.2384569999999826,
+            1.2112079999999992, 1.3732900000000257, 1.4218950000000063,
+            1.443115000000006, 1.2930629999999894, 1.622965999999991,
+            1.5703419999999824, 1.565148000000022, 1.527858999999978,
+            1.4941120000000012, 1.4345909999999833, 1.5132040000000018,
+            1.605716000000001, 1.1334700000000169, 1.1828409999999963,
+            1.2269349999999974, 1.229660999999993, 1.2067080000000203,
+            1.211782999999997, 1.1920709999999985, 1.311649999999986
+          ],
+          "medianMs": 1.443115000000006,
+          "p95Ms": 2.0954130000000077,
+          "peakRssKiB": 121436,
+          "outputBytes": 1981,
+          "outputGzipBytes": 701,
+          "freshProcessTotalMs": 255.25691800000277
+        },
+        {
+          "tool": "Pandoc",
+          "operation": "Fresh Pandoc process → HTML fragment",
+          "samples": [
+            352.17277100000024, 372.59491000000025, 357.4981210000001,
+            385.4312410000002, 405.5909240000001, 390.53150300000016,
+            394.025044, 355.17614500000036, 384.264553, 362.2287059999999,
+            354.914718, 391.9139189999996, 360.0940900000005,
+            356.01249499999994, 356.9494420000001, 371.59390799999983,
+            356.30432999999994, 359.0531859999992, 393.16024899999866,
+            392.91258000000016, 357.15792599999986, 388.21254299999964,
+            354.8431720000008, 378.2605969999986, 366.5554890000003,
+            398.4772379999995, 364.42846499999905, 385.7595319999982,
+            391.530678000001, 397.63632099999995
+          ],
+          "medianMs": 371.59390799999983,
+          "p95Ms": 398.4772379999995,
+          "peakRssKiB": 57352,
+          "childPeakRssKiB": 203092,
+          "outputBytes": 1059,
+          "outputGzipBytes": 435,
+          "freshProcessTotalMs": 13278.593469000003
+        }
+      ]
+    }
+  ],
+  "sites": [
+    {
+      "tool": "Publisle",
+      "configuration": "Minimal static HTML host, one article",
+      "samples": [
+        2.4053710000007413, 2.4134410000042408, 2.8663160000069183,
+        2.364407000000938, 2.433853000002273, 2.232391000005009,
+        2.223055000002205, 1.9750920000005863, 1.9527500000040163,
+        2.092003999998269, 1.9646050000010291, 2.30176599999686,
+        2.286878999999317, 1.9722010000041337, 2.0159010000061244,
+        2.93293999999878, 2.955629999996745, 2.6142540000000736,
+        2.3937999999980093, 2.387917000000016, 2.0854009999966365,
+        1.9246510000011767, 1.969786000001477, 1.828444999999192,
+        1.8224090000003343, 1.8857400000051712, 1.7681919999959064,
+        1.875294000004942, 1.810700000001816, 1.8382009999986622
+      ],
+      "medianMs": 2.0854009999966365,
+      "p95Ms": 2.93293999999878,
+      "outputBytes": 749,
+      "deliveredBytes": {
+        "html": 749,
+        "css": 0,
+        "js": 0
+      },
+      "deliveredGzipBytes": {
+        "html": 475,
+        "css": 0,
+        "js": 0
+      }
+    },
+    {
+      "tool": "MDX",
+      "configuration": "Minimal static HTML host, one article",
+      "samples": [
+        1.398945000000822, 1.861799999998766, 1.345193000001018,
+        1.3859139999985928, 1.3301370000044699, 1.196115999999165,
+        1.0254639999984647, 1.218973000002734, 1.0764280000003055,
+        1.189063999998325, 1.1389479999998002, 1.0701909999988857,
+        1.1443429999999353, 0.9984049999984563, 0.9809999999997672,
+        0.9631310000040685, 0.9674410000006901, 0.9040420000019367,
+        0.8887060000051861, 0.9223340000025928, 0.8531819999989239,
+        0.8989000000001397, 1.0310129999998026, 0.8169820000039181,
+        0.8844660000031581, 1.0898589999997057, 1.0141359999979613,
+        0.9018670000004931, 0.9370859999980894, 0.9736689999990631
+      ],
+      "medianMs": 1.0141359999979613,
+      "p95Ms": 1.398945000000822,
+      "outputBytes": 569,
+      "deliveredBytes": {
+        "html": 569,
+        "css": 0,
+        "js": 0
+      },
+      "deliveredGzipBytes": {
+        "html": 372,
+        "css": 0,
+        "js": 0
+      }
+    },
+    {
+      "tool": "Pandoc",
+      "configuration": "Minimal static HTML host, one article",
+      "samples": [
+        406.4662030000036, 406.63825099999667, 408.4639539999989,
+        367.90111400000023, 357.67188400000305, 356.36417300000176,
+        391.7071849999993, 395.4474179999961, 402.5803689999957,
+        354.2044339999993, 392.41335999999865, 399.5626590000029,
+        358.16359999999986, 394.7999469999995, 401.08531900000526,
+        393.0631809999977, 357.7768109999961, 385.553866000002,
+        392.4285549999986, 401.4339050000053, 401.3102260000014,
+        389.5586970000004, 398.85248400000273, 357.6768890000021,
+        370.088665999996, 366.69446599999355, 388.32974999999715,
+        401.62991299999703, 398.90298299999995, 397.5907460000017
+      ],
+      "medianMs": 392.4285549999986,
+      "p95Ms": 406.63825099999667,
+      "outputBytes": 1213,
+      "deliveredBytes": {
+        "html": 1213,
+        "css": 0,
+        "js": 0
+      },
+      "deliveredGzipBytes": {
+        "html": 523,
+        "css": 0,
+        "js": 0
+      }
+    },
+    {
+      "tool": "VitePress",
+      "configuration": "Default documentation theme, one article",
+      "samples": [
+        1589.7931559999997, 1669.2040990000023, 1633.813697000005,
+        1647.030264000001, 1599.1863909999956, 1622.1323879999982,
+        1570.3351470000052, 1621.8464229999954, 1602.491639999993,
+        1608.4048230000044, 1639.5206529999996, 1579.3704940000025,
+        1553.223325999992, 1535.639841000011, 1586.2454739999957,
+        1499.0608190000057, 1595.1004949999915, 1579.7081159999943,
+        1607.559361000007, 1675.048118000006, 1683.6891519999917,
+        1645.3911829999997, 1576.2430910000112, 1590.8385870000056,
+        1642.0550299999886, 1641.3175000000047, 1563.2815310000005,
+        1631.0488939999923, 1628.729263000001, 1557.010427000001
+      ],
+      "medianMs": 1602.491639999993,
+      "p95Ms": 1675.048118000006,
+      "peakRssKiB": 489036,
+      "outputBytes": 924420,
+      "deliveredBytes": {
+        "html": 8404,
+        "css": 108301,
+        "js": 160837
+      },
+      "deliveredGzipBytes": {
+        "html": 2480,
+        "css": 19434,
+        "js": 58179
+      }
+    },
+    {
+      "tool": "Docusaurus",
+      "configuration": "Default documentation theme, one article",
+      "samples": [
+        6410.147660000017, 6239.898801000003, 6271.778255000012,
+        6521.071369999991, 6276.656853000022, 6194.986475000012,
+        6050.411018000013, 6392.568212999991, 6210.624830999994,
+        6118.500090000016, 6682.274038000003, 6429.802450999996,
+        6534.509776999999, 6215.035329999984, 6293.3471680000075,
+        6380.397763999994, 6751.258809000021, 6448.234979000001,
+        6085.8056989999895, 6158.725502000016, 6225.347117000027,
+        6071.985707999964, 6386.268723000016, 6156.924312999996,
+        5970.248108999978, 6099.953610999975, 6149.416489999974,
+        6159.807884000009, 6176.158210999973, 6499.924466999946
+      ],
+      "medianMs": 6225.347117000027,
+      "p95Ms": 6682.274038000003,
+      "peakRssKiB": 1192732,
+      "outputBytes": 648280,
+      "deliveredBytes": {
+        "html": 10663,
+        "css": 77921,
+        "js": 549474
+      },
+      "deliveredGzipBytes": {
+        "html": 3555,
+        "css": 15505,
+        "js": 175343
+      }
+    }
+  ],
+  "notes": [
+    "Document operations are labeled individually; a Docusaurus MDX module is not rendered HTML.",
+    "Site builds use a single matched document with each documentation framework's default theme; site navigation and framework runtime are included.",
+    "MDX and Pandoc are also measured as static HTML; zero publication JavaScript is not unique to Publisle.",
+    "Builds use fresh output and bundler-cache directories; package installation, downloads and network are excluded."
+  ],
+  "installation": {
+    "Publisle": {
+      "bytes": 11315545,
+      "packages": 97
+    },
+    "MDX": {
+      "bytes": 14447572,
+      "packages": 154
+    },
+    "Docusaurus": {
+      "bytes": 171192607,
+      "packages": 1264
+    },
+    "VitePress": {
+      "bytes": 151179199,
+      "packages": 192
+    },
+    "Pandoc": {
+      "binaryBytes": 165455024
+    }
+  },
+  "publisleSources": {
+    "recordedAt": "publication",
+    "files": [
+      {
+        "path": "blocks/core/src/builders.ts",
+        "sha256": "b57c5ce1e6c12c003614fbcddaf84705d9d75570c7dc9ab4d889277071a52fee"
+      },
+      {
+        "path": "blocks/core/src/definitions.ts",
+        "sha256": "5b3805b891ce47f15b87626df20ea0564d5409b99684b9ff1751ef0a5eb34ca2"
+      },
+      {
+        "path": "blocks/core/src/index.ts",
+        "sha256": "1c3e4e75b1d936bbda571a2b521b4b51781df96a4e84766dc071377e1f4ba1ec"
+      },
+      {
+        "path": "blocks/core/src/parse.ts",
+        "sha256": "b7c4fc2873b4a2ee25fd1f511c62f96e74f080b7024e7e874526b6f42be14caf"
+      },
+      {
+        "path": "blocks/core/src/traversal.ts",
+        "sha256": "93c1ddb52346ebff703ac8955ffc0dda8773cd1d7168196077bf3a3b3a34223f"
+      },
+      {
+        "path": "blocks/core/src/types.ts",
+        "sha256": "5c8ac44cfb8c2eaa99d838983e0ff8033a73cbde8980a16cbbad7a187549dd38"
+      },
+      {
+        "path": "packages/adapter-core/src/composition.ts",
+        "sha256": "e66ba7c53ea4abe967fd9cfe7f10f426da532c4c416afc66a34bd0b5987c6136"
+      },
+      {
+        "path": "packages/adapter-core/src/document.css",
+        "sha256": "a38aba22d10a37a610d95c7f0d912e630965ac6e9f2522475c4eeee2553d69c7"
+      },
+      {
+        "path": "packages/adapter-core/src/html.ts",
+        "sha256": "d44c9c5427b06a39681b95a6af2bd6eb1224bfd621df25098df255563db40b76"
+      },
+      {
+        "path": "packages/adapter-core/src/index.ts",
+        "sha256": "629e309b2fe6a81d94e113bd6593213353ccfbd59ea0be72bc7af4bbada0aa0f"
+      },
+      {
+        "path": "packages/adapter-core/src/island-runtime.ts",
+        "sha256": "fa3b59181c619ddf7e4e1371294cb4701e080563ab9c778c7406485277e90e9e"
+      },
+      {
+        "path": "packages/adapter-core/src/javascript.ts",
+        "sha256": "614b5f6099a60644a6627ff8b0bbb9e7289423a884cf026f60841b7ce4e0c55d"
+      },
+      {
+        "path": "packages/adapter-core/src/katex.css",
+        "sha256": "fac07b638e4603421cfc4d9a679e1f0891f6bbfd74044bdd172b0c1207b487c5"
+      },
+      {
+        "path": "packages/adapter-core/src/node.ts",
+        "sha256": "e659fa700c882f95a41c3663df01660bb458bdabfebf27345d4ece8611ce6d41"
+      },
+      {
+        "path": "packages/adapter-core/src/placement.ts",
+        "sha256": "ceb2425ba4a1d24a9ff8a70dc7da299bb1b383dbd5ef5610ee2478e297635522"
+      },
+      {
+        "path": "packages/adapter-core/src/publication-runtime.ts",
+        "sha256": "b5b711c9b7879b89794c605623dcf9c983d01eeda1cc2733939b312ee1a1128e"
+      },
+      {
+        "path": "packages/adapter-core/src/publication.ts",
+        "sha256": "2b53b7605456bfc4d47989149d30a48e699afbb4126ed8dce4d3eb151db0fc51"
+      },
+      {
+        "path": "packages/adapter-core/src/render-plan.ts",
+        "sha256": "583317954e5b2beee8dc0fe24edb6166abcef6dda8893806027f347d6c62d46b"
+      },
+      {
+        "path": "packages/adapter-core/src/types.ts",
+        "sha256": "498209188f1dcd390ad87aae31610f94d713a2a42763dc4ce6307d0f37cc6d15"
+      },
+      {
+        "path": "packages/adapter-core/src/vite.ts",
+        "sha256": "0c0b6026252eaedc006a6bb4b4feb1edb47879251a8b092f2d1041221dfddda7"
+      },
+      {
+        "path": "packages/block-sdk/src/index.ts",
+        "sha256": "a98c75cb602cc42d438c92f56e7e80109044cc75dadce8b4be1256b12bb17059"
+      },
+      {
+        "path": "packages/contracts/src/builtin-sources.ts",
+        "sha256": "b5c9c525ecc6930448c46a7fbcda09b4898655322fbcd736f352fdc0dfb7b4a7"
+      },
+      {
+        "path": "packages/contracts/src/canonical.ts",
+        "sha256": "3bcae54f2cc85b6f42ee019db86c5622bcc0c87f1d6c043bc79ba097d6b3c72b"
+      },
+      {
+        "path": "packages/contracts/src/exchange.ts",
+        "sha256": "b5b5c124a4ff3196d70dde2fd3581b6397b120ce1a842307e1a8a16bc240394d"
+      },
+      {
+        "path": "packages/contracts/src/export.ts",
+        "sha256": "0916093b2ee5e220d0467a5cded44a0ab08185adfc4c7f50cc2544dadada444a"
+      },
+      {
+        "path": "packages/contracts/src/index.ts",
+        "sha256": "b953651cfcf7446c3baae4c6c1a35a7e607df30d92b9d90aa3d33a5ce4236073"
+      },
+      {
+        "path": "packages/contracts/src/inspection.ts",
+        "sha256": "bb5de70e2a1a9aee3ee99b1db1ec7fa5b04d080cac0893b0daf893b0c722f786"
+      },
+      {
+        "path": "packages/contracts/src/patterns.ts",
+        "sha256": "1e01c8e1a21ffac5bfbc9f0c7b9c9c1a6a4112cb3ebda0151003bc04ff7fd9bd"
+      },
+      {
+        "path": "packages/contracts/src/resolution.ts",
+        "sha256": "c36c92c1bd54997516afd555b51ac3124abc0f8bb52295bafc9525b33e4df579"
+      },
+      {
+        "path": "packages/contracts/src/schema-first.ts",
+        "sha256": "dd1221fb817829f614280870a948fa0930b957ceab5760919b331bedd46689aa"
+      },
+      {
+        "path": "packages/contracts/src/schemas.ts",
+        "sha256": "8b64efc568a0102a808668c7759cba228831d0d7cb0988f2151cade49f8eda21"
+      },
+      {
+        "path": "packages/contracts/src/semantics.ts",
+        "sha256": "471f6974558b771ed8d65d00cdc0fb53327fa0acf40d36d21f8440a19af725aa"
+      },
+      {
+        "path": "packages/contracts/src/snapshot.ts",
+        "sha256": "3550a305ec5c132473824bc725f12bfa5e020149e1a183efae4e9fb2aa1a22ce"
+      },
+      {
+        "path": "packages/contracts/src/validate.ts",
+        "sha256": "19791a01c57fd0c5c04727f970d8d92dbb1bec926a857a6260491123b6df3c47"
+      },
+      {
+        "path": "packages/core/src/compilation.ts",
+        "sha256": "46599f089ac3ae98c7dc3e6929b69b03081a05dd6657d2781c54362eb19b93de"
+      },
+      {
+        "path": "packages/core/src/document-helpers.ts",
+        "sha256": "db22d832fdcf5653955373be0deecc9ba3a96ea44d129d2ab94d7bfc3c4b8b67"
+      },
+      {
+        "path": "packages/core/src/document-migrations.ts",
+        "sha256": "a956153d63dea647964521807c22650ba0ff2de97758016e617338a4cbdd1ffa"
+      },
+      {
+        "path": "packages/core/src/hash.ts",
+        "sha256": "d41a20dc92a215fe05cf81601f42ad29abbe6e6d089033ca3b1b825a1d79770a"
+      },
+      {
+        "path": "packages/core/src/identity.ts",
+        "sha256": "268760eecb73da12caff85a67720b83bc7668683a7d624e65a3504191bce2ed5"
+      },
+      {
+        "path": "packages/core/src/index.ts",
+        "sha256": "a9a7e9ed56e68c0e3866c17455684d05acac7e55e75c1f046ba5fa49c6068347"
+      },
+      {
+        "path": "packages/core/src/performance.ts",
+        "sha256": "499476a29b6eda2830cc9d476376fbe8cfe64535665fbe5095239dc8c7978942"
+      },
+      {
+        "path": "packages/core/src/prepare.ts",
+        "sha256": "fa30a3559fc4821a8d3598123b0c922762dd8393387ee072bda1a98229077317"
+      },
+      {
+        "path": "packages/core/src/profiles.ts",
+        "sha256": "4a0a2cd9f6feda7323ccd99fe3193cbfc1ead50bb2ffe169af7deaa2dcf69b87"
+      },
+      {
+        "path": "packages/core/src/readable.ts",
+        "sha256": "8d1d0892e09998ced4025323aff73418730c8ab9a165a58427bbdc1861ea53ad"
+      },
+      {
+        "path": "packages/core/src/registry.ts",
+        "sha256": "9570c049cc81d2ead97b06799ea339ca465daf398ff668dfb39e7d91a047d2cd"
+      },
+      {
+        "path": "packages/core/src/resources.ts",
+        "sha256": "879285673c57e5c25d007b355a099d4fe22deed94268f4299e75a7b4d6b42ac1"
+      },
+      {
+        "path": "packages/core/src/types.ts",
+        "sha256": "9374a330208b581586cf4293a937e9f01088b4045f068b0f4b5c6c1ea3aceec0"
+      },
+      {
+        "path": "packages/markdown/src/archive.ts",
+        "sha256": "7d0dcc751a2c31049949498f9859d9acc3987d9fdd81e8ef077856cb6a91b218"
+      },
+      {
+        "path": "packages/markdown/src/codecs.ts",
+        "sha256": "841548823e32923a98e5012f27c90c5cc76a053b909b4f9aca5bb655da72d435"
+      },
+      {
+        "path": "packages/markdown/src/convert.ts",
+        "sha256": "b4989ee2a78c00dcbf359f03fbe449f487e8265a9c6b5ee43159c607203cd0ea"
+      },
+      {
+        "path": "packages/markdown/src/export.ts",
+        "sha256": "0b7e5bea1b208b5ecf608807f8a06ac562aa294ef2089f8f1fcedd68d1a3ac10"
+      },
+      {
+        "path": "packages/markdown/src/id.ts",
+        "sha256": "f984293b13f5187efb33adf648ebdcea5af0720480555d37ddf7271c04952dd8"
+      },
+      {
+        "path": "packages/markdown/src/import.ts",
+        "sha256": "4422a036f504b7fd32dafc7d7c9380e77b3599aecb73670ed76d7032aa803b5a"
+      },
+      {
+        "path": "packages/markdown/src/index.ts",
+        "sha256": "67510e82b3bc3b77af3c04248943c7e7e7a9d5e09e2c1d94ea2b0d6963a42dd9"
+      },
+      {
+        "path": "packages/markdown/src/myst.ts",
+        "sha256": "49f9259e2095f6def6fc662dccf1200fbd7594928fc6242ff4512624f93fde70"
+      },
+      {
+        "path": "packages/markdown/src/source.ts",
+        "sha256": "71e929b7561314c744cedb2b60c259e1d1b48d8188134d2c1a1912bd32c64234"
+      },
+      {
+        "path": "packages/markdown/src/types.ts",
+        "sha256": "608cb7ebd321c869ff8e68df14e679083bf13004c1835ee4cfaaf32254b123da"
+      },
+      {
+        "path": "packages/profiles/src/index.ts",
+        "sha256": "432a78b00815592cb1049a51f2bc0f9ed2a4423b71ef42212521a1837488c4a1"
+      },
+      {
+        "path": "packages/schema/src/block-id.ts",
+        "sha256": "aa5d2fbeeb5a2babd6224c7a0a5b7c79378113413da336a16465cd99938f2317"
+      },
+      {
+        "path": "packages/schema/src/block-type.ts",
+        "sha256": "e82f086c4ac3b3bed0e0037906105e38f6c29d05f158b26199874b454473c54c"
+      },
+      {
+        "path": "packages/schema/src/block.ts",
+        "sha256": "ecd983557bb7bdc338e5e4ad03b9a034f882b94bce78504c90d495c8f67273ad"
+      },
+      {
+        "path": "packages/schema/src/canonical.ts",
+        "sha256": "db2a3a9b4ab911296134773d35412320ca1d3234759e7305e3cac139de92dc29"
+      },
+      {
+        "path": "packages/schema/src/composition.ts",
+        "sha256": "c5b1f9ea863cbc19c95f89e7ca1d38fb2d3270f9e0d7ee024842d139adb87bf6"
+      },
+      {
+        "path": "packages/schema/src/contract.ts",
+        "sha256": "99040c3d6940afc41ae5f5d7ff60b33d17a84d737d67e1b084ba60f5accc984f"
+      },
+      {
+        "path": "packages/schema/src/definition.ts",
+        "sha256": "3c69c78092a7a600ac1f2c46e6313c80a711428041ded58fa0e204b71d0d5696"
+      },
+      {
+        "path": "packages/schema/src/dependencies.ts",
+        "sha256": "c2e1592ac7c00602458a4d95476f16413ae9cd7d691e61d993e173529e91af7e"
+      },
+      {
+        "path": "packages/schema/src/diagnostic.ts",
+        "sha256": "1d5e225b106c3563b298909ea8f8f4aa8e9382a8929657d9d817fbe5648f2256"
+      },
+      {
+        "path": "packages/schema/src/document.ts",
+        "sha256": "09ab96d3a3259c05991c9016d08e4103ce559cb97dd4c6a0d30104106ed47147"
+      },
+      {
+        "path": "packages/schema/src/error.ts",
+        "sha256": "b93c3a551d886f9607f188d6974aa2f8c38adc2632766d95c7e310384b0de281"
+      },
+      {
+        "path": "packages/schema/src/index.ts",
+        "sha256": "9810f40cd6f99b8d803c21878b7bb45e9c2a1dbf42a5277fd9ec33e85669973b"
+      },
+      {
+        "path": "packages/schema/src/island-input.ts",
+        "sha256": "3183931c77ff5956ff1af3d3da3752816962bc62db2d7074264b752f07d735ff"
+      },
+      {
+        "path": "packages/schema/src/json.ts",
+        "sha256": "99494dd9a8a94b90129de42e080389febbec936e81e749145e6fa927fa9a8601"
+      },
+      {
+        "path": "packages/schema/src/metadata.ts",
+        "sha256": "4678f900f030ff9c87359e883d6f84e56b5498e1c1bb4bac561b4fb18739a2fc"
+      },
+      {
+        "path": "packages/schema/src/object.ts",
+        "sha256": "2bce80fa0d80656eb627aba7b91dac358e3ba63fd9f4c86bcea41bbb72441001"
+      },
+      {
+        "path": "packages/schema/src/portable-schema.ts",
+        "sha256": "ff34608a71eca154309eb8d5e690f58bad8b15c14c8036605676196c9f6eeded"
+      },
+      {
+        "path": "packages/schema/src/prepared.ts",
+        "sha256": "b0a02ea89c78c9b9c3f64b98f3d845b960cf6c3a4de2a9e4123fcf80e78e0729"
+      },
+      {
+        "path": "packages/schema/src/profile.ts",
+        "sha256": "e1be045b2281a1fb44666857889952ffad037cde5a60add58d0172ac3583cdc0"
+      },
+      {
+        "path": "packages/schema/src/readable.ts",
+        "sha256": "2c7b5fd6b66035b09e269a37831e7c3478e6dd584fc7b8ecb95a71b1c817bf7d"
+      },
+      {
+        "path": "packages/schema/src/semantics.ts",
+        "sha256": "3f0a4e5861d786895b60f9e25e741c4ed64d86dd57c44f690c7f220bd33e585f"
+      },
+      {
+        "path": "packages/schema/src/strict-json.ts",
+        "sha256": "df5325944deb78e614067bc101daab02b58a8df250bf0d91844820df9a84ff64"
+      },
+      {
+        "path": "packages/schema/src/traversal.ts",
+        "sha256": "1413c464fa30fd286802c255a3ffae2ded4025b2d842ac6328d21fe8f1e0c297"
+      }
+    ],
+    "sha256": "ea26bc500df13374b9390afe444a627a8677bd27df2f0fca95254ed9bd2cf2d7"
+  }
+}

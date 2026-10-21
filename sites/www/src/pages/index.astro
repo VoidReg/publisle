@@ -5,51 +5,43 @@ import { createRegistry } from "@publisle/core";
 import { fromMarkdown } from "@publisle/markdown";
 import { preparePublication } from "@publisle/adapter-astro";
 import Article from "@publisle/adapter-astro/Article.astro";
+import FftShowcase from "../components/FftShowcase.svelte";
+import performance from "../data/performance.json";
+const publisleMeasurement = performance.tools.find(tool => tool.name === "Publisle");
 
-const sample = fromMarkdown(`# A small experiment
+const heroMarkdown = `## Small signals, clear results
 
-Good articles bring **explanations, equations, and evidence** together.
+The transform in Equation :ref[eq\\:signal] turns samples into a spectrum.
 
-The energy of a moving object is $E = \\frac{1}{2}mv^2$.
+:::equation{label="eq:signal"}
+$$
+X_k=\\sum_{n=0}^{N-1} x_n e^{-2\\pi i kn/N}
+$$
+:::
 
-| Speed | Energy (1 kg) |
+| Frequency bin | Magnitude |
 | --- | --- |
-| 2 m/s | 2 J |
-| 4 m/s | 8 J |
+| 2 | 4 |
+| 6 | 4 |
 
-> Double the speed, quadruple the energy.
-`);
+::::figure{src="/fft-spectrum.svg" label="fig:spectrum" alt="Eight frequency bins with magnitude four at bins two and six"}
+:::caption
+A signal becomes two clear peaks.
+:::
+::::
+`;
+const sample = fromMarkdown(heroMarkdown);
 if (!sample.document) throw new Error("Invalid hero example");
 const heroPublication = preparePublication(sample.document, { registry: createRegistry(coreBlockDefinitions) });
 
 const github = "https://github.com/VoidReg/publisle";
 const npmScope = "https://www.npmjs.com/org/publisle";
 
+const formatBytes = (bytes: number) => bytes === 0 ? "0 B" : bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
 const features = [
-  {
-    title: "Author in Markdown or JSON",
-    body: "Write in Markdown with GFM, math, and citations, or typed JSON when you need exact structure. Both compile to the same portable, validated document.",
-  },
-  {
-    title: "Validated against a portable schema",
-    body: "Every document validates against a versioned, frozen wire contract. Contract integers evolve independently of npm releases, so old artifacts stay readable.",
-  },
-  {
-    title: "Compiled to static HTML",
-    body: "The compiler emits self-contained publication fragments: accessible static HTML, deterministic block IDs, and print-ready structure. No runtime framework.",
-  },
-  {
-    title: "Typed interactive islands",
-    body: "Interactive blocks (schematics, visualizations, embeds) hydrate from typed island manifests with declared activation, and degrade to static fallbacks.",
-  },
-  {
-    title: "Host-owned rendering",
-    body: "Your application owns layout, navigation, routing, and metadata. Adapters for Astro, Next.js, React, Svelte, and Vue embed publications without taking over.",
-  },
-  {
-    title: "Scholarly profiles, opt-in",
-    body: "A lean core for everyone; an optional research profile adds citation resolution, journal templates (ACM, IEEE, Elsevier, Springer), and LaTeX/PDF export.",
-  },
+  {title: "Math belongs in the article", body: "Build-time equations, numbered references, captioned figures, and tables. Real text and MathML, with a static reading experience."},
+  {title: "Make the explanation interactive", body: "Give readers a working experiment. Load each interactive island when it is needed, with an authored explanation available before activation."},
+  {title: "Take the same work to publication", body: "Export a research manuscript to LaTeX, JATS, or PDF, with IEEE, ACM, Elsevier, and Springer starter templates."},
 ];
 
 const packages = coreBlockDefinitions.length >= 0
@@ -65,8 +57,8 @@ const packages = coreBlockDefinitions.length >= 0
 ---
 
 <BaseLayout
-  title="Publisle · portable semantic articles, compiled"
-  description="Publisle turns Markdown or typed JSON into validated, portable documents, compiled into static HTML with typed interactive islands."
+  title="Publisle · math, research, and interactive articles"
+  description="Publish equations, research papers, and interactive explanations from Markdown or typed JSON. Static articles, live experiments, and optional journal exports."
 >
   <script
     type="application/ld+json"
@@ -97,50 +89,62 @@ const packages = coreBlockDefinitions.length >= 0
   <section class="grid items-center gap-8 py-10 lg:grid-cols-2 lg:py-14">
     <div class="min-w-0">
       <p class="mb-4 text-sm font-medium text-accent">Open source · Beta</p>
-      <h1 class="text-balance font-display text-4xl font-bold sm:text-5xl">
-        Write once. <span class="text-accent">Publish a better article.</span>
-      </h1>
-      <p class="mt-5 max-w-2xl text-lg text-muted">
-        Turn Markdown into readable web articles, working interactive examples,
-        and print-ready exports. Keep your content in one place and publish it
-        in your own website.
-      </p>
+      <h1 class="text-balance font-display text-4xl font-bold sm:text-5xl">Math, research, and explanations that come alive.</h1>
+      <p class="mt-5 max-w-xl text-lg text-muted">Write in Markdown. Publish a readable article, add a working experiment, and take the same document to a research manuscript.</p>
       <div class="mt-6 flex flex-wrap items-center gap-3">
         <a href="/playground" class="rounded-lg bg-accent px-5 py-2.5 font-medium text-bg hover:opacity-90">Try the playground</a>
         <a href="/docs" class="rounded-lg border border-line px-5 py-2.5 font-medium hover:border-accent">Read the docs</a>
         <a href={github} class="text-sm text-accent underline underline-offset-2" rel="me noopener">Source on GitHub →</a>
       </div>
-      <p class="mt-4 text-sm text-muted">The example beside this text is compiled by Publisle.</p>
+      <p class="mt-4 text-sm text-muted">The example is compiled by Publisle.</p>
     </div>
     <div class="publication-wide min-w-0 rounded-xl border border-line bg-raised p-5 sm:p-6" aria-label="Rendered article example">
       <p class="mb-4 text-xs font-medium tracking-wide text-muted uppercase">Markdown → published article</p>
       <Article publication={heroPublication} instanceId="hero-example" />
+      <details class="mt-5 border-t border-line pt-3">
+        <summary class="cursor-pointer text-sm font-medium text-accent">See the Markdown</summary>
+        <pre class="mt-3 max-w-full overflow-x-auto text-xs"><code>{heroMarkdown}</code></pre>
+      </details>
     </div>
   </section>
 
-  <section aria-label="Pipeline" class="pb-16">
-    <img
-      src="/publisle-system.svg"
-      alt="Publisle pipeline: Markdown or JSON, portable document, preparation, adapter compilation, static article fragment, and host-owned interactive islands."
-      width="1060"
-      height="750"
-      loading="lazy"
-      class="brand-light mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
-    />
-    <img
-      src="/publisle-system-dark.svg"
-      alt=""
-      aria-hidden="true"
-      width="1060"
-      height="750"
-      loading="lazy"
-      class="brand-dark mx-auto w-full max-w-4xl rounded-xl border border-line bg-surface p-4"
-    />
+  <section class="grid gap-6 py-10 lg:grid-cols-2" aria-labelledby="explore">
+    <div class="min-w-0">
+      <h2 id="explore" class="font-display text-3xl font-semibold">From a readable page to a working idea.</h2>
+      <p class="mt-4 text-muted">Readers get the article first. The experiment starts when they choose to explore. Your content stays readable without JavaScript.</p>
+      <p class="mt-4 text-muted">For scholarly work, the same structured content carries its equations, references, figures, and bibliography into print.</p>
+      <div class="mt-6 flex flex-wrap gap-4">
+        <a href="/playground/?example=research-paper" class="text-accent underline underline-offset-4">Edit the Research paper →</a>
+        <a href="/examples/research-paper.pdf" class="text-accent underline underline-offset-4">Read its PDF ↗</a>
+      </div>
+    </div>
+    <FftShowcase client:load />
+  </section>
+
+  <section aria-labelledby="performance" class="py-12">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div><p class="text-xs font-medium tracking-wide text-accent uppercase">Measured performance</p><h2 id="performance" class="mt-2 font-display text-3xl font-semibold">Put the work in the build. Keep the reader lean.</h2></div>
+      <a href="/docs/guides/performance-comparison" class="text-sm text-accent underline underline-offset-4">Methodology and results →</a>
+    </div>
+    <p class="mt-4 max-w-3xl text-muted">Publisle compiles the document before it reaches your reader. Here is the same math-heavy document through popular publishing tools. Reader delivery is measured separately, with static hosts and default documentation themes identified.</p>
+    {publisleMeasurement && <dl class="mt-7 grid gap-4 sm:grid-cols-3">
+      <div class="rounded-xl border border-line bg-raised p-5"><dt class="text-sm text-muted">20 displayed equations · warm compile</dt><dd class="mt-2 font-display text-3xl font-semibold">{publisleMeasurement.compileMs.toFixed(1)} ms</dd></div>
+      <div class="rounded-xl border border-line bg-raised p-5"><dt class="text-sm text-muted">Static publication JavaScript</dt><dd class="mt-2 font-display text-3xl font-semibold">0 B</dd></div>
+      <div class="rounded-xl border border-line bg-raised p-5"><dt class="text-sm text-muted">Installed Core CLI + dependencies</dt><dd class="mt-2 font-display text-3xl font-semibold">{formatBytes(publisleMeasurement.installedBytes)}</dd></div>
+    </dl>}
+    <div class="mt-6 max-w-full overflow-x-auto rounded-xl border border-line">
+      <table class="w-full text-left text-sm">
+        <caption class="p-4 text-left text-xs text-muted">{performance.samples} recorded samples per compiler after five warmups. Compilation uses twenty displayed equations plus inline math; reader JavaScript uses the separate prose/code article.</caption>
+        <thead class="border-b border-line bg-raised"><tr><th class="p-4">Tool</th><th class="p-4">Math compilation · median</th><th class="p-4">Reader JS</th><th class="p-4">Installed tools</th></tr></thead>
+        <tbody>{performance.tools.map((tool) => <tr class:list={["border-b border-line last:border-0", {"bg-raised":tool.name === "Publisle"}]}><th class="p-4 font-medium">{tool.name}<span class="mt-1 block text-xs font-normal text-muted">{tool.host}</span></th><td class="p-4">{tool.compileMs.toFixed(2)} ms<span class="block text-xs text-muted">{tool.operation}</span></td><td class="p-4 font-mono">{formatBytes(tool.readerJsGzipBytes)}</td><td class="p-4 font-mono">{formatBytes(tool.installedBytes)}</td></tr>)}</tbody>
+      </table>
+    </div>
+    <p class="mt-3 text-xs text-muted">MDX and Pandoc can also publish static HTML without reader JavaScript. Docusaurus compilation here produces a module; its default site theme and VitePress include navigation and framework code. JavaScript compilers are warm; Pandoc includes process startup. Prose and large-document results are in the full report.</p>
   </section>
 
   <section aria-labelledby="features" class="py-16">
     <h2 id="features" class="font-display text-3xl font-semibold">
-      One document, every host
+      One document, more ways to publish
     </h2>
     <div class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {

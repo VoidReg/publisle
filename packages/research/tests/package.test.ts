@@ -22,6 +22,20 @@ async function fixture(name = "ieee-journal") {
 }
 
 describe("IEEE journal source packages", () => {
+  it("declares color support only when authored math uses it", () => {
+    const article = fromMarkdown(
+      "---\ntitle: Colored math\nauthors:\n  - name: Ada\n---\n\n$$\n\\textcolor{RoyalBlue}{x}+\\color{ForestGreen} y\n$$\n",
+    ).document;
+    if (!article) throw new Error("Fixture import failed");
+    const source = createPackage(article);
+    expect(source.files["manuscript.tex"]).toContain(
+      "\\PassOptionsToPackage{dvipsnames,svgnames}{xcolor}",
+    );
+    expect(source.requirements).toContain("xcolor.sty");
+    const plain = createPackage({ ...article, blocks: [] });
+    expect(plain.requirements).not.toContain("xcolor.sty");
+  });
+
   it("preserves journal structure, assets, captions, affiliations and source references", async () => {
     const result = createLatexPackage(await fixture());
     const tex = result.files["manuscript.tex"] ?? "";

@@ -1,0 +1,1991 @@
+{
+  "pdf-baseline": {
+    "backend": "LaTeX",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "complete": true,
+    "image": "sha256:deef9d4489a778d42321a1a698851e2e572bc762e171d22f20d1dfa1fbb30dfa",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 5,
+    "samples": 30,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "research",
+        "sourceSha256": "fd3da4ca21cfcb8ee5be4f132a89d869087820e949edf81adf1e7c4364030c26",
+        "observations": [
+          {
+            "elapsedMs": 19631.853032,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 53251451\nuser_usec 44647653\nsystem_usec 8603798\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1070\nnr_throttled 1036\nthrottled_usec 50680024\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 63032039\nuser_usec 52515017\nsystem_usec 10517021\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1267\nnr_throttled 1224\nthrottled_usec 60287449\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17617.11894900001,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 63032389\nuser_usec 52515309\nsystem_usec 10517079\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1267\nnr_throttled 1224\nthrottled_usec 60287449\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 71842665\nuser_usec 60330311\nsystem_usec 11512354\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1443\nnr_throttled 1399\nthrottled_usec 68665192\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17484.366851999992,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 71842997\nuser_usec 60330590\nsystem_usec 11512407\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1443\nnr_throttled 1399\nthrottled_usec 68665192\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 80589369\nuser_usec 68018502\nsystem_usec 12570867\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1618\nnr_throttled 1574\nthrottled_usec 77551803\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17861.256892999983,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 80590860\nuser_usec 68019078\nsystem_usec 12571782\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1618\nnr_throttled 1574\nthrottled_usec 77551803\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 89522392\nuser_usec 75891882\nsystem_usec 13630509\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1797\nnr_throttled 1752\nthrottled_usec 87108781\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17384.26376,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 89523061\nuser_usec 75892551\nsystem_usec 13630509\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1797\nnr_throttled 1752\nthrottled_usec 87108781\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 98219496\nuser_usec 83581884\nsystem_usec 14637611\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1971\nnr_throttled 1926\nthrottled_usec 95909103\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17530.598025000014,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 98219887\nuser_usec 83582217\nsystem_usec 14637669\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1971\nnr_throttled 1926\nthrottled_usec 95909103\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 106984116\nuser_usec 91241634\nsystem_usec 15742481\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2146\nnr_throttled 2098\nthrottled_usec 104669968\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17336.982170000003,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 106984470\nuser_usec 91241936\nsystem_usec 15742533\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2146\nnr_throttled 2098\nthrottled_usec 104669968\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 115660027\nuser_usec 98906375\nsystem_usec 16753651\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2320\nnr_throttled 2272\nthrottled_usec 113207128\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17515.777532000007,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 115660406\nuser_usec 98906699\nsystem_usec 16753706\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2320\nnr_throttled 2272\nthrottled_usec 113207128\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 124428155\nuser_usec 106610115\nsystem_usec 17818039\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2495\nnr_throttled 2446\nthrottled_usec 122757879\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17476.058602999983,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 124428595\nuser_usec 106610492\nsystem_usec 17818102\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2495\nnr_throttled 2446\nthrottled_usec 122757879\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 133156156\nuser_usec 114302766\nsystem_usec 18853389\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2670\nnr_throttled 2619\nthrottled_usec 131554044\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17633.940091000026,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 133156568\nuser_usec 114302766\nsystem_usec 18853802\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2670\nnr_throttled 2619\nthrottled_usec 131554044\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 141977347\nuser_usec 122133198\nsystem_usec 19844148\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2847\nnr_throttled 2796\nthrottled_usec 140360407\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17500.866349999967,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 141977748\nuser_usec 122133544\nsystem_usec 19844204\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2847\nnr_throttled 2796\nthrottled_usec 140360407\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 150740825\nuser_usec 129856035\nsystem_usec 20884790\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3022\nnr_throttled 2966\nthrottled_usec 148780793\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17324.71741099999,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 150741190\nuser_usec 129856035\nsystem_usec 20885154\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3022\nnr_throttled 2966\nthrottled_usec 148780793\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 159412744\nuser_usec 137536271\nsystem_usec 21876473\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3196\nnr_throttled 3140\nthrottled_usec 157549012\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17228.187303000013,
+            "bytes": 95094,
+            "timings": {},
+            "cpuBefore": "usage_usec 159413287\nuser_usec 137536814\nsystem_usec 21876473\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3196\nnr_throttled 3140\nthrottled_usec 157549012\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 168041678\nuser_usec 145197384\nsystem_usec 22844294\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3368\nnr_throttled 3312\nthrottled_usec 165690576\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 18169.540637,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 168042017\nuser_usec 145197676\nsystem_usec 22844340\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3368\nnr_throttled 3312\nthrottled_usec 165690576\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 177088665\nuser_usec 152875995\nsystem_usec 24212670\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3550\nnr_throttled 3491\nthrottled_usec 174224283\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17435.88971899997,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 177089362\nuser_usec 152876692\nsystem_usec 24212670\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3550\nnr_throttled 3491\nthrottled_usec 174224283\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 185816145\nuser_usec 160593877\nsystem_usec 25222267\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3725\nnr_throttled 3666\nthrottled_usec 183107053\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17435.649529999995,
+            "bytes": 95104,
+            "timings": {},
+            "cpuBefore": "usage_usec 185816543\nuser_usec 160593877\nsystem_usec 25222665\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3725\nnr_throttled 3666\nthrottled_usec 183107053\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 194557497\nuser_usec 168349727\nsystem_usec 26207769\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3899\nnr_throttled 3840\nthrottled_usec 191417831\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17459.090711999976,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 194557867\nuser_usec 168350048\nsystem_usec 26207819\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3899\nnr_throttled 3840\nthrottled_usec 191417831\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 203273501\nuser_usec 176089045\nsystem_usec 27184455\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4074\nnr_throttled 4013\nthrottled_usec 199579256\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17988.621222999995,
+            "bytes": 95094,
+            "timings": {},
+            "cpuBefore": "usage_usec 203274123\nuser_usec 176089667\nsystem_usec 27184455\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4074\nnr_throttled 4013\nthrottled_usec 199579256\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 212263251\nuser_usec 184035896\nsystem_usec 28227355\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4254\nnr_throttled 4192\nthrottled_usec 208451189\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17386.280303000007,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 212263894\nuser_usec 184036454\nsystem_usec 28227440\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4254\nnr_throttled 4192\nthrottled_usec 208451189\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 220958629\nuser_usec 191734847\nsystem_usec 29223781\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4428\nnr_throttled 4359\nthrottled_usec 216532257\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17446.990867999964,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 220959210\nuser_usec 191734847\nsystem_usec 29224362\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4428\nnr_throttled 4359\nthrottled_usec 216532257\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 229561877\nuser_usec 199381010\nsystem_usec 30180867\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4602\nnr_throttled 4531\nthrottled_usec 225413021\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17613.320536000014,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 229562648\nuser_usec 199381010\nsystem_usec 30181637\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4602\nnr_throttled 4531\nthrottled_usec 225413021\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 238384576\nuser_usec 207169588\nsystem_usec 31214987\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4778\nnr_throttled 4706\nthrottled_usec 234584043\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17466.083440999966,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 238384985\nuser_usec 207169944\nsystem_usec 31215041\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4778\nnr_throttled 4706\nthrottled_usec 234584043\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 247109545\nuser_usec 214863769\nsystem_usec 32245775\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4953\nnr_throttled 4881\nthrottled_usec 243632743\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17578.907484000025,
+            "bytes": 95104,
+            "timings": {},
+            "cpuBefore": "usage_usec 247110501\nuser_usec 214864600\nsystem_usec 32245900\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4953\nnr_throttled 4881\nthrottled_usec 243632743\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 255896365\nuser_usec 222618951\nsystem_usec 33277414\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5129\nnr_throttled 5056\nthrottled_usec 251933298\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17443.913230000006,
+            "bytes": 95103,
+            "timings": {},
+            "cpuBefore": "usage_usec 255896751\nuser_usec 222619287\nsystem_usec 33277464\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5129\nnr_throttled 5056\nthrottled_usec 251933298\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 264617044\nuser_usec 230358998\nsystem_usec 34258045\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5303\nnr_throttled 5230\nthrottled_usec 260675270\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17301.116533000022,
+            "bytes": 95097,
+            "timings": {},
+            "cpuBefore": "usage_usec 264617437\nuser_usec 230359391\nsystem_usec 34258045\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5303\nnr_throttled 5230\nthrottled_usec 260675270\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 273277868\nuser_usec 238033561\nsystem_usec 35244307\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5477\nnr_throttled 5404\nthrottled_usec 268936671\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17089.72041499999,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 273278313\nuser_usec 238033948\nsystem_usec 35244365\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5477\nnr_throttled 5404\nthrottled_usec 268936671\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 281839068\nuser_usec 245587326\nsystem_usec 36251741\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5648\nnr_throttled 5574\nthrottled_usec 277223914\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17247.763135000016,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 281839655\nuser_usec 245587838\nsystem_usec 36251817\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5648\nnr_throttled 5574\nthrottled_usec 277223914\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 290460171\nuser_usec 253213302\nsystem_usec 37246868\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5821\nnr_throttled 5747\nthrottled_usec 286214871\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16864.084157000063,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 290460548\nuser_usec 253213632\nsystem_usec 37246916\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5821\nnr_throttled 5747\nthrottled_usec 286214871\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 298915618\nuser_usec 260703485\nsystem_usec 38212133\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5990\nnr_throttled 5916\nthrottled_usec 294633742\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17393.875921000028,
+            "bytes": 95102,
+            "timings": {},
+            "cpuBefore": "usage_usec 298917610\nuser_usec 260705476\nsystem_usec 38212133\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5990\nnr_throttled 5916\nthrottled_usec 294633742\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 307618494\nuser_usec 268427247\nsystem_usec 39191246\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 6164\nnr_throttled 6089\nthrottled_usec 303479995\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17519.598326000036,
+            "bytes": 95100,
+            "timings": {},
+            "cpuBefore": "usage_usec 307619088\nuser_usec 268427766\nsystem_usec 39191322\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 6164\nnr_throttled 6089\nthrottled_usec 303479995\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 316254527\nuser_usec 276093137\nsystem_usec 40161389\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 6338\nnr_throttled 6260\nthrottled_usec 312079235\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          }
+        ],
+        "medianMs": 17459.090711999976,
+        "p95Ms": 18169.540637
+      }
+    ],
+    "passed": true,
+    "memoryEvents": "low 0\nhigh 0\nmax 83552\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "pdf-optimized": {
+    "backend": "LaTeX",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "complete": true,
+    "image": "sha256:a48fd1cf71ee783c71562bb97c24f147e21b5f37171d45ab6b579459ea89b5ef",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 5,
+    "samples": 30,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "research",
+        "sourceSha256": "fd3da4ca21cfcb8ee5be4f132a89d869087820e949edf81adf1e7c4364030c26",
+        "observations": [
+          {
+            "elapsedMs": 16612.477792000005,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 906,
+              "prepareMs": 473,
+              "prepareStartupAndCleanupMs": 433,
+              "fetchMs": 0,
+              "compileWorkerMs": 15705,
+              "imagesMs": 101,
+              "sourceMs": 30,
+              "latexMs": 15036,
+              "latexPasses": 3,
+              "workerMs": 15170,
+              "compileStartupAndCleanupMs": 535
+            },
+            "cpuBefore": "usage_usec 55287601\nuser_usec 42087374\nsystem_usec 13200227\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1124\nnr_throttled 997\nthrottled_usec 47734051\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 63552829\nuser_usec 49455155\nsystem_usec 14097673\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1290\nnr_throttled 1154\nthrottled_usec 54785402\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16401.203875000007,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 933,
+              "prepareMs": 412,
+              "prepareStartupAndCleanupMs": 521,
+              "fetchMs": 0,
+              "compileWorkerMs": 15467,
+              "imagesMs": 119,
+              "sourceMs": 81,
+              "latexMs": 14796,
+              "latexPasses": 3,
+              "workerMs": 15000,
+              "compileStartupAndCleanupMs": 467
+            },
+            "cpuBefore": "usage_usec 63553305\nuser_usec 49455526\nsystem_usec 14097778\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1290\nnr_throttled 1154\nthrottled_usec 54785402\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 71747632\nuser_usec 56791837\nsystem_usec 14955795\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1454\nnr_throttled 1318\nthrottled_usec 62918184\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16692.975294000003,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 935,
+              "prepareMs": 416,
+              "prepareStartupAndCleanupMs": 519,
+              "fetchMs": 0,
+              "compileWorkerMs": 15757,
+              "imagesMs": 175,
+              "sourceMs": 30,
+              "latexMs": 15080,
+              "latexPasses": 3,
+              "workerMs": 15288,
+              "compileStartupAndCleanupMs": 469
+            },
+            "cpuBefore": "usage_usec 71747983\nuser_usec 56792114\nsystem_usec 14955868\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1454\nnr_throttled 1318\nthrottled_usec 62918184\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 80115188\nuser_usec 64278135\nsystem_usec 15837053\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1622\nnr_throttled 1486\nthrottled_usec 71764020\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16429.906810999993,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 902,
+              "prepareMs": 417,
+              "prepareStartupAndCleanupMs": 485,
+              "fetchMs": 1,
+              "compileWorkerMs": 15526,
+              "imagesMs": 111,
+              "sourceMs": 72,
+              "latexMs": 14878,
+              "latexPasses": 3,
+              "workerMs": 15064,
+              "compileStartupAndCleanupMs": 462
+            },
+            "cpuBefore": "usage_usec 80115597\nuser_usec 64278463\nsystem_usec 15837133\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1622\nnr_throttled 1486\nthrottled_usec 71764020\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 88356097\nuser_usec 71661811\nsystem_usec 16694286\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1786\nnr_throttled 1650\nthrottled_usec 79821106\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16656.014963000023,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 962,
+              "prepareMs": 405,
+              "prepareStartupAndCleanupMs": 557,
+              "fetchMs": 0,
+              "compileWorkerMs": 15693,
+              "imagesMs": 100,
+              "sourceMs": 34,
+              "latexMs": 15027,
+              "latexPasses": 3,
+              "workerMs": 15220,
+              "compileStartupAndCleanupMs": 473
+            },
+            "cpuBefore": "usage_usec 88356436\nuser_usec 71662086\nsystem_usec 16694350\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1786\nnr_throttled 1650\nthrottled_usec 79821106\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 96679485\nuser_usec 79122344\nsystem_usec 17557140\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1953\nnr_throttled 1817\nthrottled_usec 88175742\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16455.629026999988,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 946,
+              "prepareMs": 412,
+              "prepareStartupAndCleanupMs": 534,
+              "fetchMs": 0,
+              "compileWorkerMs": 15509,
+              "imagesMs": 120,
+              "sourceMs": 75,
+              "latexMs": 14855,
+              "latexPasses": 3,
+              "workerMs": 15053,
+              "compileStartupAndCleanupMs": 456
+            },
+            "cpuBefore": "usage_usec 96679974\nuser_usec 79122833\nsystem_usec 17557140\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1953\nnr_throttled 1817\nthrottled_usec 88175742\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 104915678\nuser_usec 86470377\nsystem_usec 18445300\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2118\nnr_throttled 1982\nthrottled_usec 96516573\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16225.151352000015,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 894,
+              "prepareMs": 460,
+              "prepareStartupAndCleanupMs": 434,
+              "fetchMs": 0,
+              "compileWorkerMs": 15330,
+              "imagesMs": 157,
+              "sourceMs": 31,
+              "latexMs": 14662,
+              "latexPasses": 3,
+              "workerMs": 14853,
+              "compileStartupAndCleanupMs": 477
+            },
+            "cpuBefore": "usage_usec 104916024\nuser_usec 86470662\nsystem_usec 18445361\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2118\nnr_throttled 1982\nthrottled_usec 96516573\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 113036730\nuser_usec 93718327\nsystem_usec 19318402\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2280\nnr_throttled 2143\nthrottled_usec 104223538\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16561.63161500002,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 913,
+              "prepareMs": 411,
+              "prepareStartupAndCleanupMs": 502,
+              "fetchMs": 0,
+              "compileWorkerMs": 15647,
+              "imagesMs": 113,
+              "sourceMs": 91,
+              "latexMs": 14941,
+              "latexPasses": 3,
+              "workerMs": 15152,
+              "compileStartupAndCleanupMs": 495
+            },
+            "cpuBefore": "usage_usec 113037103\nuser_usec 93718327\nsystem_usec 19318775\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2280\nnr_throttled 2143\nthrottled_usec 104223538\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 121329260\nuser_usec 101164051\nsystem_usec 20165209\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2446\nnr_throttled 2309\nthrottled_usec 112883065\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 17333.287897000002,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 936,
+              "prepareMs": 410,
+              "prepareStartupAndCleanupMs": 526,
+              "fetchMs": 0,
+              "compileWorkerMs": 16395,
+              "imagesMs": 117,
+              "sourceMs": 75,
+              "latexMs": 15620,
+              "latexPasses": 3,
+              "workerMs": 15814,
+              "compileStartupAndCleanupMs": 581
+            },
+            "cpuBefore": "usage_usec 121329636\nuser_usec 101164365\nsystem_usec 20165271\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2446\nnr_throttled 2309\nthrottled_usec 112883065\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 129976408\nuser_usec 108856117\nsystem_usec 21120291\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2619\nnr_throttled 2480\nthrottled_usec 121687640\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16428.41709599996,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 930,
+              "prepareMs": 408,
+              "prepareStartupAndCleanupMs": 522,
+              "fetchMs": 1,
+              "compileWorkerMs": 15477,
+              "imagesMs": 182,
+              "sourceMs": 33,
+              "latexMs": 14764,
+              "latexPasses": 3,
+              "workerMs": 15028,
+              "compileStartupAndCleanupMs": 449
+            },
+            "cpuBefore": "usage_usec 129976805\nuser_usec 108856449\nsystem_usec 21120355\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2619\nnr_throttled 2480\nthrottled_usec 121687640\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 138156980\nuser_usec 116188623\nsystem_usec 21968357\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2784\nnr_throttled 2637\nthrottled_usec 129447427\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16028.387309000012,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 890,
+              "prepareMs": 408,
+              "prepareStartupAndCleanupMs": 482,
+              "fetchMs": 0,
+              "compileWorkerMs": 15138,
+              "imagesMs": 115,
+              "sourceMs": 73,
+              "latexMs": 14518,
+              "latexPasses": 3,
+              "workerMs": 14709,
+              "compileStartupAndCleanupMs": 429
+            },
+            "cpuBefore": "usage_usec 138157305\nuser_usec 116188896\nsystem_usec 21968408\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2784\nnr_throttled 2637\nthrottled_usec 129447427\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 146179113\nuser_usec 123412713\nsystem_usec 22766400\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2944\nnr_throttled 2796\nthrottled_usec 137429777\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16308.037803000014,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 895,
+              "prepareMs": 412,
+              "prepareStartupAndCleanupMs": 483,
+              "fetchMs": 0,
+              "compileWorkerMs": 15412,
+              "imagesMs": 102,
+              "sourceMs": 31,
+              "latexMs": 14750,
+              "latexPasses": 3,
+              "workerMs": 14951,
+              "compileStartupAndCleanupMs": 461
+            },
+            "cpuBefore": "usage_usec 146179543\nuser_usec 123413143\nsystem_usec 22766400\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2944\nnr_throttled 2796\nthrottled_usec 137429777\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 154336148\nuser_usec 130760005\nsystem_usec 23576143\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3107\nnr_throttled 2958\nthrottled_usec 145744455\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16354.468764999998,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 888,
+              "prepareMs": 413,
+              "prepareStartupAndCleanupMs": 475,
+              "fetchMs": 36,
+              "compileWorkerMs": 15429,
+              "imagesMs": 117,
+              "sourceMs": 77,
+              "latexMs": 14760,
+              "latexPasses": 3,
+              "workerMs": 14957,
+              "compileStartupAndCleanupMs": 472
+            },
+            "cpuBefore": "usage_usec 154336478\nuser_usec 130760285\nsystem_usec 23576193\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3107\nnr_throttled 2958\nthrottled_usec 145744455\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 162521491\nuser_usec 138108513\nsystem_usec 24412977\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3271\nnr_throttled 3122\nthrottled_usec 153993132\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16160.62818,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 886,
+              "prepareMs": 407,
+              "prepareStartupAndCleanupMs": 479,
+              "fetchMs": 0,
+              "compileWorkerMs": 15274,
+              "imagesMs": 122,
+              "sourceMs": 71,
+              "latexMs": 14623,
+              "latexPasses": 3,
+              "workerMs": 14819,
+              "compileStartupAndCleanupMs": 455
+            },
+            "cpuBefore": "usage_usec 162521986\nuser_usec 138108934\nsystem_usec 24413052\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3271\nnr_throttled 3122\nthrottled_usec 153993132\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 170597263\nuser_usec 145288986\nsystem_usec 25308277\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3433\nnr_throttled 3282\nthrottled_usec 162363159\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16167.11907200003,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 889,
+              "prepareMs": 406,
+              "prepareStartupAndCleanupMs": 483,
+              "fetchMs": 0,
+              "compileWorkerMs": 15277,
+              "imagesMs": 113,
+              "sourceMs": 79,
+              "latexMs": 14612,
+              "latexPasses": 3,
+              "workerMs": 14809,
+              "compileStartupAndCleanupMs": 468
+            },
+            "cpuBefore": "usage_usec 170597697\nuser_usec 145289420\nsystem_usec 25308277\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3433\nnr_throttled 3282\nthrottled_usec 162363159\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 178684394\nuser_usec 152541329\nsystem_usec 26143064\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3595\nnr_throttled 3444\nthrottled_usec 170624051\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 18299.27645799995,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 860,
+              "prepareMs": 416,
+              "prepareStartupAndCleanupMs": 444,
+              "fetchMs": 0,
+              "compileWorkerMs": 17438,
+              "imagesMs": 119,
+              "sourceMs": 74,
+              "latexMs": 16738,
+              "latexPasses": 3,
+              "workerMs": 16935,
+              "compileStartupAndCleanupMs": 503
+            },
+            "cpuBefore": "usage_usec 178684739\nuser_usec 152541329\nsystem_usec 26143409\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3595\nnr_throttled 3444\nthrottled_usec 170624051\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 187799245\nuser_usec 159854988\nsystem_usec 27944256\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3778\nnr_throttled 3614\nthrottled_usec 179651568\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16889.349730000016,
+            "bytes": 95108,
+            "timings": {
+              "prepareWorkerMs": 898,
+              "prepareMs": 463,
+              "prepareStartupAndCleanupMs": 435,
+              "fetchMs": 0,
+              "compileWorkerMs": 15990,
+              "imagesMs": 103,
+              "sourceMs": 30,
+              "latexMs": 15317,
+              "latexPasses": 3,
+              "workerMs": 15511,
+              "compileStartupAndCleanupMs": 479
+            },
+            "cpuBefore": "usage_usec 187799648\nuser_usec 159855331\nsystem_usec 27944316\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3778\nnr_throttled 3614\nthrottled_usec 179651568\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 196243559\nuser_usec 167422644\nsystem_usec 28820914\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3947\nnr_throttled 3783\nthrottled_usec 188349233\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16414.525055000035,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 891,
+              "prepareMs": 401,
+              "prepareStartupAndCleanupMs": 490,
+              "fetchMs": 0,
+              "compileWorkerMs": 15523,
+              "imagesMs": 100,
+              "sourceMs": 30,
+              "latexMs": 14886,
+              "latexPasses": 3,
+              "workerMs": 15086,
+              "compileStartupAndCleanupMs": 437
+            },
+            "cpuBefore": "usage_usec 196243896\nuser_usec 167422932\nsystem_usec 28820964\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 3947\nnr_throttled 3783\nthrottled_usec 188349233\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 204458010\nuser_usec 174751530\nsystem_usec 29706480\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4111\nnr_throttled 3946\nthrottled_usec 196512238\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16274.016984999995,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 915,
+              "prepareMs": 413,
+              "prepareStartupAndCleanupMs": 502,
+              "fetchMs": 0,
+              "compileWorkerMs": 15358,
+              "imagesMs": 120,
+              "sourceMs": 72,
+              "latexMs": 14686,
+              "latexPasses": 3,
+              "workerMs": 14881,
+              "compileStartupAndCleanupMs": 477
+            },
+            "cpuBefore": "usage_usec 204458339\nuser_usec 174751811\nsystem_usec 29706528\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4111\nnr_throttled 3946\nthrottled_usec 196512238\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 212593307\nuser_usec 182022967\nsystem_usec 30570340\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4274\nnr_throttled 4107\nthrottled_usec 204487038\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16245.34418200003,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 923,
+              "prepareMs": 409,
+              "prepareStartupAndCleanupMs": 514,
+              "fetchMs": 0,
+              "compileWorkerMs": 15322,
+              "imagesMs": 114,
+              "sourceMs": 76,
+              "latexMs": 14647,
+              "latexPasses": 3,
+              "workerMs": 14840,
+              "compileStartupAndCleanupMs": 482
+            },
+            "cpuBefore": "usage_usec 212593626\nuser_usec 182023240\nsystem_usec 30570386\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4274\nnr_throttled 4107\nthrottled_usec 204487038\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 220718861\nuser_usec 189280281\nsystem_usec 31438579\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4437\nnr_throttled 4270\nthrottled_usec 212795154\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16151.092589000007,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 899,
+              "prepareMs": 466,
+              "prepareStartupAndCleanupMs": 433,
+              "fetchMs": 0,
+              "compileWorkerMs": 15251,
+              "imagesMs": 100,
+              "sourceMs": 30,
+              "latexMs": 14598,
+              "latexPasses": 3,
+              "workerMs": 14784,
+              "compileStartupAndCleanupMs": 467
+            },
+            "cpuBefore": "usage_usec 220719188\nuser_usec 189280562\nsystem_usec 31438626\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4437\nnr_throttled 4270\nthrottled_usec 212795154\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 228809473\nuser_usec 196518789\nsystem_usec 32290684\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4599\nnr_throttled 4432\nthrottled_usec 220726026\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16280.731264000002,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 901,
+              "prepareMs": 460,
+              "prepareStartupAndCleanupMs": 441,
+              "fetchMs": 0,
+              "compileWorkerMs": 15379,
+              "imagesMs": 117,
+              "sourceMs": 82,
+              "latexMs": 14731,
+              "latexPasses": 3,
+              "workerMs": 14933,
+              "compileStartupAndCleanupMs": 446
+            },
+            "cpuBefore": "usage_usec 228809861\nuser_usec 196519176\nsystem_usec 32290684\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4599\nnr_throttled 4432\nthrottled_usec 220726026\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 236964854\nuser_usec 203821609\nsystem_usec 33143244\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4762\nnr_throttled 4594\nthrottled_usec 228691010\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16331.525296000007,
+            "bytes": 95102,
+            "timings": {
+              "prepareWorkerMs": 896,
+              "prepareMs": 393,
+              "prepareStartupAndCleanupMs": 503,
+              "fetchMs": 0,
+              "compileWorkerMs": 15434,
+              "imagesMs": 172,
+              "sourceMs": 31,
+              "latexMs": 14802,
+              "latexPasses": 3,
+              "workerMs": 15008,
+              "compileStartupAndCleanupMs": 426
+            },
+            "cpuBefore": "usage_usec 236965262\nuser_usec 203821960\nsystem_usec 33143301\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4762\nnr_throttled 4594\nthrottled_usec 228691010\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 245138300\nuser_usec 211168694\nsystem_usec 33969605\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4925\nnr_throttled 4756\nthrottled_usec 237065868\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16755.35171800002,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 900,
+              "prepareMs": 410,
+              "prepareStartupAndCleanupMs": 490,
+              "fetchMs": 0,
+              "compileWorkerMs": 15855,
+              "imagesMs": 139,
+              "sourceMs": 65,
+              "latexMs": 15140,
+              "latexPasses": 3,
+              "workerMs": 15347,
+              "compileStartupAndCleanupMs": 508
+            },
+            "cpuBefore": "usage_usec 245138691\nuser_usec 211169031\nsystem_usec 33969660\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 4925\nnr_throttled 4756\nthrottled_usec 237065868\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 253525943\nuser_usec 218684024\nsystem_usec 34841919\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5093\nnr_throttled 4923\nthrottled_usec 244753145\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16682.639009000035,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 936,
+              "prepareMs": 402,
+              "prepareStartupAndCleanupMs": 534,
+              "fetchMs": 0,
+              "compileWorkerMs": 15746,
+              "imagesMs": 119,
+              "sourceMs": 72,
+              "latexMs": 15045,
+              "latexPasses": 3,
+              "workerMs": 15239,
+              "compileStartupAndCleanupMs": 507
+            },
+            "cpuBefore": "usage_usec 253526400\nuser_usec 218684481\nsystem_usec 34841919\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5093\nnr_throttled 4923\nthrottled_usec 244753145\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 261880659\nuser_usec 226144979\nsystem_usec 35735679\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5260\nnr_throttled 5090\nthrottled_usec 253229707\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16646.795807999966,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 942,
+              "prepareMs": 413,
+              "prepareStartupAndCleanupMs": 529,
+              "fetchMs": 0,
+              "compileWorkerMs": 15704,
+              "imagesMs": 122,
+              "sourceMs": 73,
+              "latexMs": 15018,
+              "latexPasses": 3,
+              "workerMs": 15215,
+              "compileStartupAndCleanupMs": 489
+            },
+            "cpuBefore": "usage_usec 261881081\nuser_usec 226145343\nsystem_usec 35735737\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5260\nnr_throttled 5090\nthrottled_usec 253229707\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 270200250\nuser_usec 233611571\nsystem_usec 36588679\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5426\nnr_throttled 5256\nthrottled_usec 261712863\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16344.675985000096,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 857,
+              "prepareMs": 399,
+              "prepareStartupAndCleanupMs": 458,
+              "fetchMs": 0,
+              "compileWorkerMs": 15487,
+              "imagesMs": 117,
+              "sourceMs": 75,
+              "latexMs": 14814,
+              "latexPasses": 3,
+              "workerMs": 15009,
+              "compileStartupAndCleanupMs": 478
+            },
+            "cpuBefore": "usage_usec 270200911\nuser_usec 233611571\nsystem_usec 36589339\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5427\nnr_throttled 5257\nthrottled_usec 261731508\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 278392076\nuser_usec 240931103\nsystem_usec 37460973\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5590\nnr_throttled 5420\nthrottled_usec 269603178\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16343.490763999987,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 905,
+              "prepareMs": 407,
+              "prepareStartupAndCleanupMs": 498,
+              "fetchMs": 0,
+              "compileWorkerMs": 15438,
+              "imagesMs": 127,
+              "sourceMs": 69,
+              "latexMs": 14726,
+              "latexPasses": 3,
+              "workerMs": 14925,
+              "compileStartupAndCleanupMs": 513
+            },
+            "cpuBefore": "usage_usec 278392504\nuser_usec 240931473\nsystem_usec 37461030\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5590\nnr_throttled 5420\nthrottled_usec 269603178\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 286570421\nuser_usec 248217850\nsystem_usec 38352571\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5754\nnr_throttled 5584\nthrottled_usec 278132527\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16266.167822999996,
+            "bytes": 95105,
+            "timings": {
+              "prepareWorkerMs": 884,
+              "prepareMs": 397,
+              "prepareStartupAndCleanupMs": 487,
+              "fetchMs": 0,
+              "compileWorkerMs": 15381,
+              "imagesMs": 161,
+              "sourceMs": 31,
+              "latexMs": 14725,
+              "latexPasses": 3,
+              "workerMs": 14920,
+              "compileStartupAndCleanupMs": 461
+            },
+            "cpuBefore": "usage_usec 286570879\nuser_usec 248218246\nsystem_usec 38352632\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5754\nnr_throttled 5584\nthrottled_usec 278132527\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 294705419\nuser_usec 255512608\nsystem_usec 39192811\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5917\nnr_throttled 5746\nthrottled_usec 286343427\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 16598.451699999976,
+            "bytes": 95106,
+            "timings": {
+              "prepareWorkerMs": 899,
+              "prepareMs": 403,
+              "prepareStartupAndCleanupMs": 496,
+              "fetchMs": 0,
+              "compileWorkerMs": 15699,
+              "imagesMs": 113,
+              "sourceMs": 31,
+              "latexMs": 15018,
+              "latexPasses": 3,
+              "workerMs": 15164,
+              "compileStartupAndCleanupMs": 535
+            },
+            "cpuBefore": "usage_usec 294706242\nuser_usec 255513321\nsystem_usec 39192920\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 5917\nnr_throttled 5746\nthrottled_usec 286343427\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 302946140\nuser_usec 262889091\nsystem_usec 40057048\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 6083\nnr_throttled 5910\nthrottled_usec 294988993\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          }
+        ],
+        "medianMs": 16401.203875000007,
+        "p95Ms": 17333.287897000002,
+        "readingContent": {
+          "sameText": false,
+          "sameTokens": true,
+          "note": "Token inventory normalizes line-wrap hyphenation; float reading order may differ."
+        }
+      }
+    ],
+    "passed": true,
+    "memoryEvents": "low 0\nhigh 0\nmax 153274\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "pdf-native": {
+    "backend": "Typst feasibility via Pandoc",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "nativeBinaries": [
+      {
+        "name": "pandoc",
+        "sha256": "10a980df73e7fea52904375d4de731c4ed61fd1c45fa0900facd2a5972ff0ee1"
+      },
+      {
+        "name": "typst",
+        "sha256": "29273eaa04f6d00edd0c2bec578f565fc9c65be856bfbffc894567c68ed0b237"
+      }
+    ],
+    "complete": true,
+    "image": "sha256:deef9d4489a778d42321a1a698851e2e572bc762e171d22f20d1dfa1fbb30dfa",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 5,
+    "samples": 30,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "research",
+        "sourceSha256": "fd3da4ca21cfcb8ee5be4f132a89d869087820e949edf81adf1e7c4364030c26",
+        "observations": [
+          {
+            "elapsedMs": 1610.2982459999985,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 164.1346510000003,
+              "conversionMs": 122.2384320000001,
+              "nativeCompileMs": 1322.8984569999993
+            },
+            "cpuBefore": "usage_usec 10749774\nuser_usec 6643009\nsystem_usec 4106764\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 245\nnr_throttled 158\nthrottled_usec 11391204\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 11301886\nuser_usec 6858204\nsystem_usec 4443682\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 262\nnr_throttled 162\nthrottled_usec 11632133\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 2032.4623119999997,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 137.5891530000008,
+              "conversionMs": 197.41976000000068,
+              "nativeCompileMs": 1696.0274139999983
+            },
+            "cpuBefore": "usage_usec 11302337\nuser_usec 6858655\nsystem_usec 4443682\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 262\nnr_throttled 162\nthrottled_usec 11632133\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 11910289\nuser_usec 7113449\nsystem_usec 4796839\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 282\nnr_throttled 165\nthrottled_usec 12102691\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1678.2765280000003,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 179.78263200000038,
+              "conversionMs": 122.01778899999954,
+              "nativeCompileMs": 1375.1822009999996
+            },
+            "cpuBefore": "usage_usec 11910760\nuser_usec 7113731\nsystem_usec 4797029\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 282\nnr_throttled 165\nthrottled_usec 12102691\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 12487087\nuser_usec 7364371\nsystem_usec 5122715\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 299\nnr_throttled 169\nthrottled_usec 12714523\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1834.5145379999994,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 192.88159599999926,
+              "conversionMs": 275.5225210000008,
+              "nativeCompileMs": 1364.3403240000007
+            },
+            "cpuBefore": "usage_usec 12487772\nuser_usec 7364775\nsystem_usec 5122997\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 299\nnr_throttled 169\nthrottled_usec 12714523\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 13125702\nuser_usec 7655405\nsystem_usec 5470297\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 318\nnr_throttled 175\nthrottled_usec 13348513\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1637.2769970000008,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 206.44685899999968,
+              "conversionMs": 98.76228400000036,
+              "nativeCompileMs": 1330.915194000001
+            },
+            "cpuBefore": "usage_usec 13126132\nuser_usec 7655835\nsystem_usec 5470297\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 318\nnr_throttled 175\nthrottled_usec 13348513\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 13697645\nuser_usec 7893203\nsystem_usec 5804442\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 334\nnr_throttled 178\nthrottled_usec 13800654\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1604.1218179999996,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 139.6273280000023,
+              "conversionMs": 116.32689199999731,
+              "nativeCompileMs": 1347.0406889999977
+            },
+            "cpuBefore": "usage_usec 13698011\nuser_usec 7893413\nsystem_usec 5804597\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 334\nnr_throttled 178\nthrottled_usec 13800654\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 14257145\nuser_usec 8123716\nsystem_usec 6133428\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 351\nnr_throttled 182\nthrottled_usec 13983823\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1648.0977700000003,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 195.23549600000115,
+              "conversionMs": 128.58876299999974,
+              "nativeCompileMs": 1323.3107640000017
+            },
+            "cpuBefore": "usage_usec 14257626\nuser_usec 8123990\nsystem_usec 6133636\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 351\nnr_throttled 182\nthrottled_usec 13983823\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 14836110\nuser_usec 8379605\nsystem_usec 6456505\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 367\nnr_throttled 185\nthrottled_usec 14230528\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1653.391713000001,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 170.34609600000113,
+              "conversionMs": 105.72644099999889,
+              "nativeCompileMs": 1376.015835000002
+            },
+            "cpuBefore": "usage_usec 14836486\nuser_usec 8379980\nsystem_usec 6456505\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 367\nnr_throttled 185\nthrottled_usec 14230528\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 15421278\nuser_usec 8628770\nsystem_usec 6792507\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 384\nnr_throttled 189\nthrottled_usec 14822197\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1860.9159280000022,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 366.26745799999844,
+              "conversionMs": 125.22288800000024,
+              "nativeCompileMs": 1367.4926129999985
+            },
+            "cpuBefore": "usage_usec 15421687\nuser_usec 8628999\nsystem_usec 6792687\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 384\nnr_throttled 189\nthrottled_usec 14822197\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 16109515\nuser_usec 8965468\nsystem_usec 7144046\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 403\nnr_throttled 196\nthrottled_usec 15442820\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1657.3756729999986,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 214.3179940000009,
+              "conversionMs": 105.99348600000303,
+              "nativeCompileMs": 1335.836309000002
+            },
+            "cpuBefore": "usage_usec 16110076\nuser_usec 8965781\nsystem_usec 7144295\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 403\nnr_throttled 196\nthrottled_usec 15442820\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 16679839\nuser_usec 9184764\nsystem_usec 7495074\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 420\nnr_throttled 200\nthrottled_usec 15844524\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1569.3049109999993,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 113.90663000000131,
+              "conversionMs": 126.7687619999997,
+              "nativeCompileMs": 1327.2722109999995
+            },
+            "cpuBefore": "usage_usec 16680244\nuser_usec 9184988\nsystem_usec 7495256\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 420\nnr_throttled 200\nthrottled_usec 15844524\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 17228729\nuser_usec 9393045\nsystem_usec 7835684\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 436\nnr_throttled 203\nthrottled_usec 15971480\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1724.348277000001,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 125.60410300000149,
+              "conversionMs": 116.06996000000072,
+              "nativeCompileMs": 1481.4358070000017
+            },
+            "cpuBefore": "usage_usec 17229202\nuser_usec 9393302\nsystem_usec 7835899\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 436\nnr_throttled 203\nthrottled_usec 15971480\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 17807805\nuser_usec 9625539\nsystem_usec 8182266\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 453\nnr_throttled 206\nthrottled_usec 16459001\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1689.4101179999998,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 252.1519960000005,
+              "conversionMs": 56.10747700000138,
+              "nativeCompileMs": 1379.4730999999992
+            },
+            "cpuBefore": "usage_usec 17808160\nuser_usec 9625731\nsystem_usec 8182429\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 453\nnr_throttled 206\nthrottled_usec 16459001\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 18396560\nuser_usec 9879797\nsystem_usec 8516762\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 470\nnr_throttled 210\nthrottled_usec 17038262\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1680.2928199999988,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 185.11994400000185,
+              "conversionMs": 113.99870899999951,
+              "nativeCompileMs": 1380.0656600000002
+            },
+            "cpuBefore": "usage_usec 18397102\nuser_usec 9880089\nsystem_usec 8517013\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 470\nnr_throttled 210\nthrottled_usec 17038262\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 18986408\nuser_usec 10122271\nsystem_usec 8864137\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 487\nnr_throttled 214\nthrottled_usec 17738754\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 2157.5546629999953,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 364.21850200000335,
+              "conversionMs": 206.00101300000097,
+              "nativeCompileMs": 1585.5918470000033
+            },
+            "cpuBefore": "usage_usec 18986915\nuser_usec 10122271\nsystem_usec 8864643\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 487\nnr_throttled 214\nthrottled_usec 17738754\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 19879675\nuser_usec 10523968\nsystem_usec 9355707\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 509\nnr_throttled 222\nthrottled_usec 18856731\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1677.209483000006,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 215.532478000001,
+              "conversionMs": 100.90846899999451,
+              "nativeCompileMs": 1359.7084539999996
+            },
+            "cpuBefore": "usage_usec 19880075\nuser_usec 10524179\nsystem_usec 9355895\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 509\nnr_throttled 222\nthrottled_usec 18856731\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 20453494\nuser_usec 10771290\nsystem_usec 9682204\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 526\nnr_throttled 227\nthrottled_usec 19136436\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1591.993570999999,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 113.61155500000314,
+              "conversionMs": 125.50210499999957,
+              "nativeCompileMs": 1351.8507290000052
+            },
+            "cpuBefore": "usage_usec 20453927\nuser_usec 10771518\nsystem_usec 9682409\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 526\nnr_throttled 227\nthrottled_usec 19136436\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 20997163\nuser_usec 10978468\nsystem_usec 10018694\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 542\nnr_throttled 231\nthrottled_usec 19420476\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1624.1933809999973,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 189.02737799999886,
+              "conversionMs": 127.511391,
+              "nativeCompileMs": 1306.1324499999973
+            },
+            "cpuBefore": "usage_usec 20997647\nuser_usec 10978721\nsystem_usec 10018925\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 542\nnr_throttled 231\nthrottled_usec 19420476\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 21563239\nuser_usec 11228484\nsystem_usec 10334755\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 558\nnr_throttled 235\nthrottled_usec 19674395\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1671.6488230000032,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 164.2761309999987,
+              "conversionMs": 117.50997899999493,
+              "nativeCompileMs": 1387.9490310000037
+            },
+            "cpuBefore": "usage_usec 21563644\nuser_usec 11228694\nsystem_usec 10334949\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 558\nnr_throttled 235\nthrottled_usec 19674395\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 22135792\nuser_usec 11453145\nsystem_usec 10682646\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 575\nnr_throttled 239\nthrottled_usec 20198826\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1696.8204049999986,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 243.05468200000178,
+              "conversionMs": 119.9791120000009,
+              "nativeCompileMs": 1332.7598309999958
+            },
+            "cpuBefore": "usage_usec 22136297\nuser_usec 11453375\nsystem_usec 10682921\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 575\nnr_throttled 239\nthrottled_usec 20198826\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 22718560\nuser_usec 11683909\nsystem_usec 11034650\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 592\nnr_throttled 243\nthrottled_usec 20490695\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1751.818309000002,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 246.57444499999838,
+              "conversionMs": 119.7833249999967,
+              "nativeCompileMs": 1383.0705469999957
+            },
+            "cpuBefore": "usage_usec 22719004\nuser_usec 11684138\nsystem_usec 11034866\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 592\nnr_throttled 243\nthrottled_usec 20490695\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 23344817\nuser_usec 11969795\nsystem_usec 11375022\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 611\nnr_throttled 249\nthrottled_usec 20950988\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1639.5965670000005,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 194.24996999999712,
+              "conversionMs": 55.639954999998736,
+              "nativeCompileMs": 1388.9545570000046
+            },
+            "cpuBefore": "usage_usec 23345418\nuser_usec 11970396\nsystem_usec 11375022\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 611\nnr_throttled 249\nthrottled_usec 20950988\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 23923753\nuser_usec 12188287\nsystem_usec 11735465\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 628\nnr_throttled 253\nthrottled_usec 21200052\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1567.3325609999956,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 119.74311700000544,
+              "conversionMs": 125.83523599999899,
+              "nativeCompileMs": 1320.653277999998
+            },
+            "cpuBefore": "usage_usec 23924178\nuser_usec 12188504\nsystem_usec 11735674\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 628\nnr_throttled 253\nthrottled_usec 21200052\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 24477586\nuser_usec 12405249\nsystem_usec 12072337\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 644\nnr_throttled 256\nthrottled_usec 21337120\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1664.8851409999988,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 130.66501900000003,
+              "conversionMs": 115.74180000000342,
+              "nativeCompileMs": 1417.132110999999
+            },
+            "cpuBefore": "usage_usec 24478042\nuser_usec 12405705\nsystem_usec 12072337\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 644\nnr_throttled 256\nthrottled_usec 21337120\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 25075758\nuser_usec 12645341\nsystem_usec 12430417\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 661\nnr_throttled 261\nthrottled_usec 21840815\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1670.3191149999984,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 202.41432799999893,
+              "conversionMs": 114.03882899999735,
+              "nativeCompileMs": 1352.2677169999952
+            },
+            "cpuBefore": "usage_usec 25076447\nuser_usec 12646030\nsystem_usec 12430417\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 661\nnr_throttled 261\nthrottled_usec 21840815\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 25684706\nuser_usec 12903100\nsystem_usec 12781606\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 678\nnr_throttled 265\nthrottled_usec 22062186\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1651.9049670000022,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 197.08194999999978,
+              "conversionMs": 118.4362140000012,
+              "nativeCompileMs": 1334.992366999999
+            },
+            "cpuBefore": "usage_usec 25685239\nuser_usec 12903368\nsystem_usec 12781871\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 678\nnr_throttled 265\nthrottled_usec 22062186\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 26251800\nuser_usec 13133173\nsystem_usec 13118627\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 695\nnr_throttled 270\nthrottled_usec 22270990\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1724.5845139999947,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 136.74681599999894,
+              "conversionMs": 161.00497800000448,
+              "nativeCompileMs": 1424.8589429999993
+            },
+            "cpuBefore": "usage_usec 26252318\nuser_usec 13133173\nsystem_usec 13119144\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 695\nnr_throttled 270\nthrottled_usec 22270990\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 26887242\nuser_usec 13398923\nsystem_usec 13488319\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 713\nnr_throttled 275\nthrottled_usec 22701705\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1621.6963699999978,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 196.10383400000137,
+              "conversionMs": 49.59007399999973,
+              "nativeCompileMs": 1374.6350579999998
+            },
+            "cpuBefore": "usage_usec 26887747\nuser_usec 13398923\nsystem_usec 13488824\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 713\nnr_throttled 275\nthrottled_usec 22701705\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 27457590\nuser_usec 13612536\nsystem_usec 13845054\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 729\nnr_throttled 278\nthrottled_usec 22848242\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1629.0424070000008,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 160.19284999999945,
+              "conversionMs": 121.81905900000129,
+              "nativeCompileMs": 1345.744286000001
+            },
+            "cpuBefore": "usage_usec 27458045\nuser_usec 13612536\nsystem_usec 13845509\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 729\nnr_throttled 278\nthrottled_usec 22848242\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 28008411\nuser_usec 13823679\nsystem_usec 14184731\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 746\nnr_throttled 283\nthrottled_usec 23036466\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 1673.277678999999,
+            "bytes": 57493,
+            "timings": {
+              "projectionMs": 132.53460999999515,
+              "conversionMs": 120.2518659999987,
+              "nativeCompileMs": 1418.0645220000006
+            },
+            "cpuBefore": "usage_usec 28008860\nuser_usec 13823679\nsystem_usec 14185181\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 746\nnr_throttled 283\nthrottled_usec 23036466\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 28591686\nuser_usec 14052605\nsystem_usec 14539080\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 763\nnr_throttled 287\nthrottled_usec 23658294\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 1664.8851409999988,
+        "p95Ms": 2032.4623119999997
+      }
+    ],
+    "passed": true,
+    "memoryEvents": "low 0\nhigh 0\nmax 163643\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "pdf-baseline-diagnostics": {
+    "backend": "LaTeX",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "complete": true,
+    "image": "sha256:deef9d4489a778d42321a1a698851e2e572bc762e171d22f20d1dfa1fbb30dfa",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 1,
+    "samples": 5,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "starter",
+        "sourceSha256": "b54367ee424ef7a7f9624cebc2ba4451132d45537d4409731bb0cba3dd18941b",
+        "observations": [
+          {
+            "elapsedMs": 13033.116314,
+            "bytes": 35677,
+            "timings": {},
+            "cpuBefore": "usage_usec 13575063\nuser_usec 10671215\nsystem_usec 2903847\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 277\nnr_throttled 257\nthrottled_usec 13302358\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 20104887\nuser_usec 16506775\nsystem_usec 3598112\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 407\nnr_throttled 387\nthrottled_usec 20311542\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 12960.106719999996,
+            "bytes": 35681,
+            "timings": {},
+            "cpuBefore": "usage_usec 20105298\nuser_usec 16507186\nsystem_usec 3598112\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 407\nnr_throttled 387\nthrottled_usec 20311542\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 26592019\nuser_usec 22310990\nsystem_usec 4281029\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 537\nnr_throttled 517\nthrottled_usec 27329588\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 12907.667002000002,
+            "bytes": 35678,
+            "timings": {},
+            "cpuBefore": "usage_usec 26592381\nuser_usec 22311293\nsystem_usec 4281087\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 537\nnr_throttled 517\nthrottled_usec 27329588\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 33054643\nuser_usec 28068307\nsystem_usec 4986336\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 666\nnr_throttled 646\nthrottled_usec 34126631\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 12898.929643000003,
+            "bytes": 35680,
+            "timings": {},
+            "cpuBefore": "usage_usec 33055004\nuser_usec 28068614\nsystem_usec 4986390\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 666\nnr_throttled 646\nthrottled_usec 34126631\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 39513048\nuser_usec 33856061\nsystem_usec 5656987\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 795\nnr_throttled 775\nthrottled_usec 40700516\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 13259.226594999993,
+            "bytes": 35678,
+            "timings": {},
+            "cpuBefore": "usage_usec 39513430\nuser_usec 33856388\nsystem_usec 5657041\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 795\nnr_throttled 775\nthrottled_usec 40700516\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 46142036\nuser_usec 39729056\nsystem_usec 6412980\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 928\nnr_throttled 908\nthrottled_usec 47845412\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 12960.106719999996,
+        "p95Ms": 13259.226594999993
+      },
+      {
+        "name": "fourier",
+        "sourceSha256": "ce8d01758529e6d52cd2a9bcbb17f40f8717e316f9f9cded220fb7770ceb9091",
+        "observations": [],
+        "failure": {
+          "code": "compilation-failed",
+          "message": "PDF compilation failed. Check figures, math, citations, and document size."
+        }
+      },
+      {
+        "name": "arabic",
+        "sourceSha256": "98aad8ca796761c1723ee1b40827d74d04d07f284f1d091ecd4747cdc59bf095",
+        "observations": [
+          {
+            "elapsedMs": 15930.615577999997,
+            "bytes": 123384,
+            "timings": {},
+            "cpuBefore": "usage_usec 57548186\nuser_usec 49637912\nsystem_usec 7910274\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1156\nnr_throttled 1136\nthrottled_usec 60006511\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 65518954\nuser_usec 56678698\nsystem_usec 8840255\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1316\nnr_throttled 1296\nthrottled_usec 68443169\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 15793.065359,
+            "bytes": 123387,
+            "timings": {},
+            "cpuBefore": "usage_usec 65519423\nuser_usec 56679167\nsystem_usec 8840255\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1316\nnr_throttled 1296\nthrottled_usec 68443169\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 73418414\nuser_usec 63608912\nsystem_usec 9809501\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1474\nnr_throttled 1454\nthrottled_usec 76886113\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 16184.247896000015,
+            "bytes": 123384,
+            "timings": {},
+            "cpuBefore": "usage_usec 73418773\nuser_usec 63609223\nsystem_usec 9809549\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1474\nnr_throttled 1454\nthrottled_usec 76886113\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 81368129\nuser_usec 70605729\nsystem_usec 10762399\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1635\nnr_throttled 1612\nthrottled_usec 84186532\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 15945.744081000012,
+            "bytes": 123388,
+            "timings": {},
+            "cpuBefore": "usage_usec 81368772\nuser_usec 70605729\nsystem_usec 10763042\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1635\nnr_throttled 1612\nthrottled_usec 84186532\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 89338184\nuser_usec 77638155\nsystem_usec 11700029\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1794\nnr_throttled 1771\nthrottled_usec 91750955\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 15932.574779000017,
+            "bytes": 123388,
+            "timings": {},
+            "cpuBefore": "usage_usec 89338572\nuser_usec 77638492\nsystem_usec 11700080\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1794\nnr_throttled 1771\nthrottled_usec 91750955\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 97316989\nuser_usec 84677741\nsystem_usec 12639247\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1954\nnr_throttled 1931\nthrottled_usec 98465985\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 15932.574779000017,
+        "p95Ms": 16184.247896000015
+      }
+    ],
+    "passed": false,
+    "memoryEvents": "low 0\nhigh 0\nmax 12999\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "pdf-optimized-diagnostics": {
+    "backend": "LaTeX",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "complete": true,
+    "image": "sha256:a48fd1cf71ee783c71562bb97c24f147e21b5f37171d45ab6b579459ea89b5ef",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 1,
+    "samples": 5,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "starter",
+        "sourceSha256": "b54367ee424ef7a7f9624cebc2ba4451132d45537d4409731bb0cba3dd18941b",
+        "observations": [
+          {
+            "elapsedMs": 12784.822578,
+            "bytes": 35680,
+            "timings": {
+              "prepareWorkerMs": 786,
+              "prepareMs": 283,
+              "prepareStartupAndCleanupMs": 503,
+              "fetchMs": 0,
+              "compileWorkerMs": 11998,
+              "imagesMs": 0,
+              "sourceMs": 16,
+              "latexMs": 11491,
+              "latexPasses": 3,
+              "workerMs": 11510,
+              "compileStartupAndCleanupMs": 488
+            },
+            "cpuBefore": "usage_usec 13652823\nuser_usec 10713842\nsystem_usec 2938980\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 276\nnr_throttled 256\nthrottled_usec 14472730\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 20041704\nuser_usec 16385130\nsystem_usec 3656574\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 404\nnr_throttled 384\nthrottled_usec 21320915\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 12936.357824999996,
+            "bytes": 35681,
+            "timings": {
+              "prepareWorkerMs": 760,
+              "prepareMs": 293,
+              "prepareStartupAndCleanupMs": 467,
+              "fetchMs": 0,
+              "compileWorkerMs": 12175,
+              "imagesMs": 0,
+              "sourceMs": 17,
+              "latexMs": 11603,
+              "latexPasses": 3,
+              "workerMs": 11682,
+              "compileStartupAndCleanupMs": 493
+            },
+            "cpuBefore": "usage_usec 20042083\nuser_usec 16385439\nsystem_usec 3656643\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 404\nnr_throttled 384\nthrottled_usec 21320915\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 26517918\nuser_usec 22142717\nsystem_usec 4375200\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 534\nnr_throttled 514\nthrottled_usec 27846265\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 13287.432033000005,
+            "bytes": 35678,
+            "timings": {
+              "prepareWorkerMs": 789,
+              "prepareMs": 292,
+              "prepareStartupAndCleanupMs": 497,
+              "fetchMs": 0,
+              "compileWorkerMs": 12498,
+              "imagesMs": 0,
+              "sourceMs": 22,
+              "latexMs": 11875,
+              "latexPasses": 3,
+              "workerMs": 11899,
+              "compileStartupAndCleanupMs": 599
+            },
+            "cpuBefore": "usage_usec 26518635\nuser_usec 22142717\nsystem_usec 4375918\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 534\nnr_throttled 514\nthrottled_usec 27846265\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 33165092\nuser_usec 28032251\nsystem_usec 5132841\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 667\nnr_throttled 647\nthrottled_usec 34577296\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 13508.943332000003,
+            "bytes": 35676,
+            "timings": {
+              "prepareWorkerMs": 893,
+              "prepareMs": 318,
+              "prepareStartupAndCleanupMs": 575,
+              "fetchMs": 0,
+              "compileWorkerMs": 12615,
+              "imagesMs": 0,
+              "sourceMs": 17,
+              "latexMs": 12040,
+              "latexPasses": 3,
+              "workerMs": 12116,
+              "compileStartupAndCleanupMs": 499
+            },
+            "cpuBefore": "usage_usec 33165496\nuser_usec 28032251\nsystem_usec 5133244\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 667\nnr_throttled 647\nthrottled_usec 34577296\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 39931698\nuser_usec 34046122\nsystem_usec 5885576\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 802\nnr_throttled 781\nthrottled_usec 41048654\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 13087.327720000001,
+            "bytes": 35679,
+            "timings": {
+              "prepareWorkerMs": 870,
+              "prepareMs": 326,
+              "prepareStartupAndCleanupMs": 544,
+              "fetchMs": 0,
+              "compileWorkerMs": 12216,
+              "imagesMs": 0,
+              "sourceMs": 65,
+              "latexMs": 11641,
+              "latexPasses": 3,
+              "workerMs": 11708,
+              "compileStartupAndCleanupMs": 508
+            },
+            "cpuBefore": "usage_usec 39932104\nuser_usec 34046467\nsystem_usec 5885636\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 802\nnr_throttled 781\nthrottled_usec 41048654\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 46471015\nuser_usec 39868401\nsystem_usec 6602613\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 933\nnr_throttled 912\nthrottled_usec 46943456\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 13087.327720000001,
+        "p95Ms": 13508.943332000003
+      },
+      {
+        "name": "fourier",
+        "sourceSha256": "ce8d01758529e6d52cd2a9bcbb17f40f8717e316f9f9cded220fb7770ceb9091",
+        "observations": [
+          {
+            "elapsedMs": 17670.987762000004,
+            "bytes": 94735,
+            "timings": {
+              "prepareWorkerMs": 1025,
+              "prepareMs": 500,
+              "prepareStartupAndCleanupMs": 525,
+              "fetchMs": 1,
+              "compileWorkerMs": 16644,
+              "imagesMs": 113,
+              "sourceMs": 80,
+              "latexMs": 15939,
+              "latexPasses": 3,
+              "workerMs": 16134,
+              "compileStartupAndCleanupMs": 510
+            },
+            "cpuBefore": "usage_usec 55271700\nuser_usec 47786123\nsystem_usec 7485576\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1109\nnr_throttled 1088\nthrottled_usec 55920528\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 64108486\nuser_usec 55727856\nsystem_usec 8380629\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1286\nnr_throttled 1265\nthrottled_usec 65186250\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 17121.96811800002,
+            "bytes": 94731,
+            "timings": {
+              "prepareWorkerMs": 959,
+              "prepareMs": 426,
+              "prepareStartupAndCleanupMs": 533,
+              "fetchMs": 0,
+              "compileWorkerMs": 16161,
+              "imagesMs": 115,
+              "sourceMs": 78,
+              "latexMs": 15499,
+              "latexPasses": 3,
+              "workerMs": 15694,
+              "compileStartupAndCleanupMs": 467
+            },
+            "cpuBefore": "usage_usec 64109436\nuser_usec 55728682\nsystem_usec 8380753\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1286\nnr_throttled 1265\nthrottled_usec 65186250\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 72687574\nuser_usec 63406849\nsystem_usec 9280725\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1458\nnr_throttled 1437\nthrottled_usec 73954926\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 18189.73184599998,
+            "bytes": 94736,
+            "timings": {
+              "prepareWorkerMs": 932,
+              "prepareMs": 482,
+              "prepareStartupAndCleanupMs": 450,
+              "fetchMs": 0,
+              "compileWorkerMs": 17256,
+              "imagesMs": 118,
+              "sourceMs": 88,
+              "latexMs": 16509,
+              "latexPasses": 3,
+              "workerMs": 16719,
+              "compileStartupAndCleanupMs": 537
+            },
+            "cpuBefore": "usage_usec 72688289\nuser_usec 63407472\nsystem_usec 9280816\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1458\nnr_throttled 1437\nthrottled_usec 73954926\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 81793746\nuser_usec 71617682\nsystem_usec 10176064\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1640\nnr_throttled 1619\nthrottled_usec 83642117\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 17415.328385,
+            "bytes": 94735,
+            "timings": {
+              "prepareWorkerMs": 927,
+              "prepareMs": 477,
+              "prepareStartupAndCleanupMs": 450,
+              "fetchMs": 0,
+              "compileWorkerMs": 16487,
+              "imagesMs": 125,
+              "sourceMs": 74,
+              "latexMs": 15744,
+              "latexPasses": 3,
+              "workerMs": 15947,
+              "compileStartupAndCleanupMs": 540
+            },
+            "cpuBefore": "usage_usec 81794393\nuser_usec 71618248\nsystem_usec 10176144\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1640\nnr_throttled 1619\nthrottled_usec 83642117\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 90524096\nuser_usec 79506078\nsystem_usec 11018017\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1814\nnr_throttled 1793\nthrottled_usec 92620000\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 17692.151916000003,
+            "bytes": 94731,
+            "timings": {
+              "prepareWorkerMs": 988,
+              "prepareMs": 483,
+              "prepareStartupAndCleanupMs": 505,
+              "fetchMs": 0,
+              "compileWorkerMs": 16703,
+              "imagesMs": 157,
+              "sourceMs": 34,
+              "latexMs": 16064,
+              "latexPasses": 3,
+              "workerMs": 16259,
+              "compileStartupAndCleanupMs": 444
+            },
+            "cpuBefore": "usage_usec 90524563\nuser_usec 79506489\nsystem_usec 11018074\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1814\nnr_throttled 1793\nthrottled_usec 92620000\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 99375035\nuser_usec 87483956\nsystem_usec 11891078\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 1991\nnr_throttled 1970\nthrottled_usec 101879202\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 17670.987762000004,
+        "p95Ms": 18189.73184599998
+      },
+      {
+        "name": "arabic",
+        "sourceSha256": "98aad8ca796761c1723ee1b40827d74d04d07f284f1d091ecd4747cdc59bf095",
+        "observations": [
+          {
+            "elapsedMs": 15919.24841500001,
+            "bytes": 123384,
+            "timings": {
+              "prepareWorkerMs": 886,
+              "prepareMs": 398,
+              "prepareStartupAndCleanupMs": 488,
+              "fetchMs": 0,
+              "compileWorkerMs": 15032,
+              "imagesMs": 133,
+              "sourceMs": 74,
+              "latexMs": 14370,
+              "latexPasses": 3,
+              "workerMs": 14581,
+              "compileStartupAndCleanupMs": 451
+            },
+            "cpuBefore": "usage_usec 107271043\nuser_usec 94523567\nsystem_usec 12747475\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2152\nnr_throttled 2127\nthrottled_usec 109281047\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 115245896\nuser_usec 101599521\nsystem_usec 13646374\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2312\nnr_throttled 2287\nthrottled_usec 117877310\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 15815.142881000007,
+            "bytes": 123384,
+            "timings": {
+              "prepareWorkerMs": 828,
+              "prepareMs": 381,
+              "prepareStartupAndCleanupMs": 447,
+              "fetchMs": 1,
+              "compileWorkerMs": 14986,
+              "imagesMs": 120,
+              "sourceMs": 76,
+              "latexMs": 14246,
+              "latexPasses": 3,
+              "workerMs": 14445,
+              "compileStartupAndCleanupMs": 541
+            },
+            "cpuBefore": "usage_usec 115246367\nuser_usec 101599937\nsystem_usec 13646430\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2312\nnr_throttled 2287\nthrottled_usec 117877310\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 123174774\nuser_usec 108645506\nsystem_usec 14529268\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2470\nnr_throttled 2445\nthrottled_usec 126359294\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 16070.756043000001,
+            "bytes": 123384,
+            "timings": {
+              "prepareWorkerMs": 930,
+              "prepareMs": 389,
+              "prepareStartupAndCleanupMs": 541,
+              "fetchMs": 1,
+              "compileWorkerMs": 15139,
+              "imagesMs": 167,
+              "sourceMs": 29,
+              "latexMs": 14202,
+              "latexPasses": 3,
+              "workerMs": 14400,
+              "compileStartupAndCleanupMs": 739
+            },
+            "cpuBefore": "usage_usec 123175196\nuser_usec 108645878\nsystem_usec 14529318\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2470\nnr_throttled 2445\nthrottled_usec 126359294\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 131077757\nuser_usec 115708771\nsystem_usec 15368986\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2630\nnr_throttled 2602\nthrottled_usec 134400335\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 16596.609615000023,
+            "bytes": 123387,
+            "timings": {
+              "prepareWorkerMs": 889,
+              "prepareMs": 338,
+              "prepareStartupAndCleanupMs": 551,
+              "fetchMs": 1,
+              "compileWorkerMs": 15706,
+              "imagesMs": 128,
+              "sourceMs": 75,
+              "latexMs": 15002,
+              "latexPasses": 3,
+              "workerMs": 15209,
+              "compileStartupAndCleanupMs": 497
+            },
+            "cpuBefore": "usage_usec 131078260\nuser_usec 115708771\nsystem_usec 15369489\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2630\nnr_throttled 2602\nthrottled_usec 134400335\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 139389761\nuser_usec 123155786\nsystem_usec 16233974\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2796\nnr_throttled 2767\nthrottled_usec 141887985\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          },
+          {
+            "elapsedMs": 15747.772278000019,
+            "bytes": 123384,
+            "timings": {
+              "prepareWorkerMs": 1008,
+              "prepareMs": 392,
+              "prepareStartupAndCleanupMs": 616,
+              "fetchMs": 0,
+              "compileWorkerMs": 14739,
+              "imagesMs": 118,
+              "sourceMs": 76,
+              "latexMs": 14001,
+              "latexPasses": 3,
+              "workerMs": 14200,
+              "compileStartupAndCleanupMs": 539
+            },
+            "cpuBefore": "usage_usec 139390427\nuser_usec 123156452\nsystem_usec 16233974\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2796\nnr_throttled 2767\nthrottled_usec 141887985\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 147261037\nuser_usec 130152556\nsystem_usec 17108480\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 2953\nnr_throttled 2924\nthrottled_usec 149267910\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536875008
+          }
+        ],
+        "medianMs": 15919.24841500001,
+        "p95Ms": 16596.609615000023
+      }
+    ],
+    "passed": true,
+    "memoryEvents": "low 0\nhigh 0\nmax 19501\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "pdf-native-diagnostics": {
+    "backend": "Typst feasibility via Pandoc",
+    "schemaVersion": 1,
+    "environment": {
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "kernel": "7.0.11-100.fc43.x86_64"
+    },
+    "nativeBinaries": [
+      {
+        "name": "pandoc",
+        "sha256": "10a980df73e7fea52904375d4de731c4ed61fd1c45fa0900facd2a5972ff0ee1"
+      },
+      {
+        "name": "typst",
+        "sha256": "29273eaa04f6d00edd0c2bec578f565fc9c65be856bfbffc894567c68ed0b237"
+      }
+    ],
+    "complete": true,
+    "image": "sha256:deef9d4489a778d42321a1a698851e2e572bc762e171d22f20d1dfa1fbb30dfa",
+    "node": "v24.21.0",
+    "cpu": 0.5,
+    "memoryMiB": 512,
+    "warmups": 1,
+    "samples": 5,
+    "assets": "local fixture bytes via the normal validated download path; no network variability",
+    "results": [
+      {
+        "name": "starter",
+        "sourceSha256": "b54367ee424ef7a7f9624cebc2ba4451132d45537d4409731bb0cba3dd18941b",
+        "observations": [
+          {
+            "elapsedMs": 610.7221650000001,
+            "bytes": 14220,
+            "timings": {
+              "projectionMs": 171.17085300000008,
+              "conversionMs": 115.36293899999964,
+              "nativeCompileMs": 323.3135749999997
+            },
+            "cpuBefore": "usage_usec 8386249\nuser_usec 5632906\nsystem_usec 2753342\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 175\nnr_throttled 148\nthrottled_usec 9167906\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 8691006\nuser_usec 5811582\nsystem_usec 2879423\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 182\nnr_throttled 153\nthrottled_usec 9503014\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 519.9939629999999,
+            "bytes": 14220,
+            "timings": {
+              "projectionMs": 123.18977500000028,
+              "conversionMs": 91.85116400000015,
+              "nativeCompileMs": 303.56072300000005
+            },
+            "cpuBefore": "usage_usec 8691532\nuser_usec 5812109\nsystem_usec 2879423\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 182\nnr_throttled 153\nthrottled_usec 9503014\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 8974540\nuser_usec 6009351\nsystem_usec 2965188\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 187\nnr_throttled 158\nthrottled_usec 10120085\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 478.5481170000003,
+            "bytes": 14220,
+            "timings": {
+              "projectionMs": 98.51925399999982,
+              "conversionMs": 84.2581009999999,
+              "nativeCompileMs": 294.546922
+            },
+            "cpuBefore": "usage_usec 8974913\nuser_usec 6009601\nsystem_usec 2965312\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 187\nnr_throttled 158\nthrottled_usec 10120085\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 9211216\nuser_usec 6162070\nsystem_usec 3049145\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 192\nnr_throttled 163\nthrottled_usec 10620282\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 491.6328249999997,
+            "bytes": 14220,
+            "timings": {
+              "projectionMs": 172.44405800000004,
+              "conversionMs": 25.356112999999823,
+              "nativeCompileMs": 292.39928000000054
+            },
+            "cpuBefore": "usage_usec 9211596\nuser_usec 6162324\nsystem_usec 3049271\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 192\nnr_throttled 163\nthrottled_usec 10620282\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 9466837\nuser_usec 6331441\nsystem_usec 3135396\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 197\nnr_throttled 168\nthrottled_usec 10951068\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 499.96722300000056,
+            "bytes": 14220,
+            "timings": {
+              "projectionMs": 104.10437000000002,
+              "conversionMs": 85.20278899999994,
+              "nativeCompileMs": 308.8263500000003
+            },
+            "cpuBefore": "usage_usec 9467463\nuser_usec 6332066\nsystem_usec 3135396\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 197\nnr_throttled 168\nthrottled_usec 10951068\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 9757628\nuser_usec 6556030\nsystem_usec 3201597\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 203\nnr_throttled 174\nthrottled_usec 11689066\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          }
+        ],
+        "medianMs": 499.96722300000056,
+        "p95Ms": 610.7221650000001
+      },
+      {
+        "name": "fourier",
+        "sourceSha256": "ce8d01758529e6d52cd2a9bcbb17f40f8717e316f9f9cded220fb7770ceb9091",
+        "observations": [],
+        "failure": {
+          "code": "unsupported-fixture",
+          "message": "[WARNING] Could not convert TeX math X[k]=\\sum_{n=0}^{N-1}\\,\\textcolor{RoyalBlue}{x[n]}\\;e^{-2\\pi ikn/N},\\qquad k=0,1,\\dots,N-1., rendering as TeX:"
+        }
+      },
+      {
+        "name": "arabic",
+        "sourceSha256": "98aad8ca796761c1723ee1b40827d74d04d07f284f1d091ecd4747cdc59bf095",
+        "observations": [
+          {
+            "elapsedMs": 803.4903250000007,
+            "bytes": 70392,
+            "timings": {
+              "projectionMs": 239.79101999999966,
+              "conversionMs": 168.78591599999982,
+              "nativeCompileMs": 331.1255310000006
+            },
+            "cpuBefore": "usage_usec 10464390\nuser_usec 7135045\nsystem_usec 3329344\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 218\nnr_throttled 189\nthrottled_usec 14180160\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 10928381\nuser_usec 7500141\nsystem_usec 3428240\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 227\nnr_throttled 198\nthrottled_usec 15476446\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 789.9052379999994,
+            "bytes": 70392,
+            "timings": {
+              "projectionMs": 299.461628,
+              "conversionMs": 99.53167899999971,
+              "nativeCompileMs": 334.31893200000013
+            },
+            "cpuBefore": "usage_usec 10933414\nuser_usec 7505174\nsystem_usec 3428240\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 227\nnr_throttled 198\nthrottled_usec 15476446\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 11363580\nuser_usec 7839656\nsystem_usec 3523923\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 235\nnr_throttled 206\nthrottled_usec 16261456\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 804.916353999999,
+            "bytes": 70392,
+            "timings": {
+              "projectionMs": 324.82059200000003,
+              "conversionMs": 94.40287200000057,
+              "nativeCompileMs": 383.1593260000009
+            },
+            "cpuBefore": "usage_usec 11381074\nuser_usec 7854408\nsystem_usec 3526665\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 236\nnr_throttled 207\nthrottled_usec 16637707\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 11801634\nuser_usec 8186362\nsystem_usec 3615271\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 244\nnr_throttled 215\nthrottled_usec 17451103\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 796.0733039999996,
+            "bytes": 70392,
+            "timings": {
+              "projectionMs": 372.63811499999974,
+              "conversionMs": 100.87785500000064,
+              "nativeCompileMs": 320.47283699999934
+            },
+            "cpuBefore": "usage_usec 11804795\nuser_usec 8189484\nsystem_usec 3615311\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 244\nnr_throttled 215\nthrottled_usec 17451103\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 12214970\nuser_usec 8512554\nsystem_usec 3702416\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 253\nnr_throttled 224\nthrottled_usec 18693919\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          },
+          {
+            "elapsedMs": 738.2503519999991,
+            "bytes": 70392,
+            "timings": {
+              "projectionMs": 227.54195199999958,
+              "conversionMs": 165.39262600000075,
+              "nativeCompileMs": 343.4512419999992
+            },
+            "cpuBefore": "usage_usec 12220255\nuser_usec 8517767\nsystem_usec 3702487\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 253\nnr_throttled 224\nthrottled_usec 18693919\nnr_bursts 0\nburst_usec 0\n",
+            "cpuAfter": "usage_usec 12631674\nuser_usec 8829102\nsystem_usec 3802572\nnice_usec 0\ncore_sched.force_idle_usec 0\nnr_periods 261\nnr_throttled 232\nthrottled_usec 19823567\nnr_bursts 0\nburst_usec 0\n",
+            "peakMemoryBytes": 536879104
+          }
+        ],
+        "medianMs": 796.0733039999996,
+        "p95Ms": 804.916353999999
+      }
+    ],
+    "passed": false,
+    "memoryEvents": "low 0\nhigh 0\nmax 7640\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n"
+  },
+  "candidateVerification": {
+    "image": "sha256:6ed5290f27fd1122e34b9b699974965f86ebbae91f1f96529c2bdb6142317727",
+    "passed": true,
+    "aggregateCpu": 0.5,
+    "aggregateMemoryMiB": 512,
+    "sampledPeakMiB": 512,
+    "beforeEvents": "low 0\nhigh 0\nmax 3923\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "afterEvents": "low 0\nhigh 0\nmax 7557\noom 0\noom_kill 0\noom_group_kill 0\nsock_throttled 0\n",
+    "samples": [
+      {
+        "template": "article",
+        "durationMs": 20497,
+        "pdfBytes": 67864
+      },
+      {
+        "template": "article-arabic",
+        "durationMs": 18449,
+        "pdfBytes": 75851
+      },
+      {
+        "template": "ieee-journal",
+        "durationMs": 4153,
+        "pdfBytes": 124131
+      },
+      {
+        "template": "acm-journal",
+        "durationMs": 6780,
+        "pdfBytes": 382887
+      },
+      {
+        "template": "springer-journal",
+        "durationMs": 4430,
+        "pdfBytes": 269123
+      },
+      {
+        "template": "elsevier-numeric",
+        "durationMs": 4293,
+        "pdfBytes": 210905
+      },
+      {
+        "template": "elsevier-author-date",
+        "durationMs": 4941,
+        "pdfBytes": 210891
+      }
+    ]
+  }
+}

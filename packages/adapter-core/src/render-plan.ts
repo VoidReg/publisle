@@ -112,7 +112,7 @@ function inline(
   block: Block<BlockType, unknown>,
   references: readonly ReferenceTarget[] = [],
 ): RenderNode[] {
-  return nodes.flatMap((node): RenderNode[] => {
+  return nodes.flatMap((node, index): RenderNode[] => {
     switch (node.type) {
       case "text": {
         const value = String(node["value"] ?? "");
@@ -211,9 +211,29 @@ function inline(
       case "crossReference": {
         const target = String(node["target"] ?? "");
         const resolved = references.find((entry) => entry.label === target);
+        const preceding = nodes
+          .slice(0, index)
+          .map(function plain(item): string {
+            return item.type === "text"
+              ? String(item["value"] ?? "")
+              : Array.isArray(item["children"])
+                ? (item["children"] as Inline[]).map(plain).join("")
+                : "";
+          })
+          .join("");
+        const kind = resolved?.kind;
+        const authoredKind =
+          kind &&
+          kind !== "heading" &&
+          new RegExp(`\\b${kind}\\s+$`, "iu").test(preceding);
+        const label = resolved
+          ? authoredKind
+            ? String(resolved.ordinal ?? resolved.label)
+            : referenceText(resolved)
+          : target;
         const children = Array.isArray(node["children"])
           ? inline(node["children"] as Inline[], diagnostics, block, references)
-          : [text(resolved ? referenceText(resolved) : target)];
+          : [text(label)];
         return [
           element(
             "a",
@@ -656,7 +676,10 @@ function blockNodes(
         element(
           data["display"] === true ? "div" : "span",
           {
-            class: "publisle-math",
+            class:
+              data["display"] === true && reference?.ordinal
+                ? "publisle-math publisle-math-numbered"
+                : "publisle-math",
             ...(typeof data["label"] === "string"
               ? { id: `reference-${data["label"]}` }
               : {}),
