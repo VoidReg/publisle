@@ -306,6 +306,28 @@ describe("createRenderPlan", () => {
     expect(plan.diagnostics).toEqual([]);
   });
 
+  it("renders figure renditions for hosts to map onto their themes", () => {
+    const prepared = prepare(
+      document({
+        blocks: [
+          figure({
+            src: "flow.svg",
+            alt: "Flow",
+            variants: { dark: "flow-dark.svg" },
+          }),
+        ],
+      }),
+      { registry },
+    ).document;
+    if (!prepared) throw new Error("Expected prepared document.");
+    const html = compilePublication(prepared).html;
+    expect(html).toContain('class="publisle-figure-themed"');
+    expect(html).toContain('src="flow.svg"');
+    expect(html).toContain('src="flow-dark.svg"');
+    expect(html).toContain('data-publisle-variant="dark"');
+    expect(html).toContain('aria-hidden="true"');
+  });
+
   it("renders restricted embeds and diagram fallbacks", () => {
     const prepared = prepare(
       document({

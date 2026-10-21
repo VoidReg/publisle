@@ -448,6 +448,17 @@ function attrs(node: unknown): Record<string, string> {
   );
 }
 
+/** Collect `variant-<name>` attributes into the figure variants map. */
+function variantAttributes(attributes: Record<string, string>) {
+  const variants: Record<string, string> = {};
+  for (const [key, src] of Object.entries(attributes)) {
+    if (!key.startsWith("variant-")) continue;
+    const name = key.slice("variant-".length);
+    if (/^[a-z][a-z0-9-]*$/u.test(name) && src) variants[name] = src;
+  }
+  return Object.keys(variants).length > 0 ? { variants } : {};
+}
+
 function blockFor(
   node: Node,
   source: string,
@@ -595,6 +606,7 @@ function blockFor(
             ...(attributes["alt"] === undefined
               ? {}
               : { alt: attributes["alt"] }),
+            ...variantAttributes(attributes),
             ...(attributes["title"] ? { title: attributes["title"] } : {}),
             ...(attributes["label"] ? { label: attributes["label"] } : {}),
             ...(caption ? { caption: flow(children(caption)) } : {}),

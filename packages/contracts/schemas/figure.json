@@ -10,6 +10,12 @@
     "alt": {
       "type": "string"
     },
+    "variants": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "title": {
       "type": "string"
     },

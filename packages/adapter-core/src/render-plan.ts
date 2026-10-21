@@ -717,12 +717,35 @@ function blockNodes(
           message: "An unsafe figure URL was removed.",
           blockId: block.id,
         });
+      // Alternative renditions keyed by variant name ("dark", …). The host's
+      // CSS decides which variant its active theme consumes; hosts without a
+      // mapping keep the base rendition.
+      const variants = Object.entries(
+        (data["variants"] ?? {}) as Record<string, unknown>,
+      ).flatMap(([name, value]): [string, string][] => {
+        if (typeof value !== "string") return [];
+        const variantSrc = safeUrl(value);
+        if (!variantSrc) {
+          diagnostics.push({
+            level: "warning",
+            code: "unsafe-url",
+            message: `An unsafe figure ${name} variant URL was removed.`,
+            blockId: block.id,
+          });
+          return [];
+        }
+        return [[name, variantSrc]];
+      });
+      const themed = src !== undefined && variants.length > 0;
       return [
         element(
           "figure",
-          typeof data["label"] === "string"
-            ? { id: `reference-${data["label"]}` }
-            : {},
+          {
+            ...(typeof data["label"] === "string"
+              ? { id: `reference-${data["label"]}` }
+              : {}),
+            ...(themed ? { class: "publisle-figure-themed" } : {}),
+          },
           [
             element(
               "img",
@@ -731,6 +754,19 @@ function blockNodes(
                 alt: String(data["alt"] ?? "Figure description missing."),
               },
               [],
+            ),
+            ...variants.map(([name, variantSrc]) =>
+              // The base image carries the description; renditions are decorative.
+              element(
+                "img",
+                {
+                  src: variantSrc,
+                  alt: "",
+                  "data-publisle-variant": name,
+                  "aria-hidden": "true",
+                },
+                [],
+              ),
             ),
             ...(data["alt"] === undefined
               ? [

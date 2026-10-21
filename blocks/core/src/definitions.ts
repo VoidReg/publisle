@@ -46,6 +46,26 @@ function optionalString(data: Record<string, unknown>, key: string) {
   return typeof data[key] === "string" ? { [key]: data[key] } : {};
 }
 
+/** Figure variant renditions: lowercase variant name → source URL. */
+function optionalVariants(data: Record<string, unknown>) {
+  if (data["variants"] === undefined) return {};
+  if (typeof data["variants"] !== "object" || data["variants"] === null)
+    throw new SchemaParseError(
+      "invalid-block-data",
+      "figure variants must map variant names to source strings.",
+    );
+  const variants: Record<string, string> = {};
+  for (const [name, src] of Object.entries(data["variants"])) {
+    if (!/^[a-z][a-z0-9-]*$/u.test(name) || typeof src !== "string")
+      throw new SchemaParseError(
+        "invalid-block-data",
+        `figure variant "${name}" must be a lowercase name mapping to a source string.`,
+      );
+    variants[name] = src;
+  }
+  return { variants };
+}
+
 function optionalLabel(data: Record<string, unknown>) {
   if (data["label"] === undefined) return {};
   const label = nonemptyString(data["label"], "label");
@@ -194,6 +214,7 @@ export const figureDefinition = definePortableBlock({
         ...(data["alt"] === undefined
           ? {}
           : { alt: string(data["alt"], "figure.alt") }),
+        ...optionalVariants(data),
         ...optionalString(data, "title"),
         ...optionalLabel(data),
         ...(data["caption"] === undefined

@@ -19,7 +19,10 @@
   {#if Implementation}
     <div class="mt-5"><Implementation payload={{source:"/fft-butterfly.json"}} accessibility={{label:"Interactive eight-point FFT butterfly"}} /></div>
   {:else}
-    <img src="/fft-spectrum.svg" alt="The output spectrum has magnitude four in bins two and six, and zero in the other bins." width="760" height="360" loading="lazy" class="mt-4 w-full rounded-lg bg-white" />
+    <span class="publisle-figure-themed mt-4 block">
+      <img src="/fft-spectrum.svg" alt="The output spectrum has magnitude four in bins two and six, and zero in the other bins." width="760" height="360" loading="lazy" class="w-full rounded-lg" />
+      <img src="/fft-spectrum-dark.svg" alt="" aria-hidden="true" data-publisle-variant="dark" width="760" height="360" loading="lazy" class="w-full rounded-lg" />
+    </span>
     <button type="button" onclick={activate} disabled={busy} class="mt-4 rounded-lg bg-accent px-4 py-2 font-medium text-bg disabled:opacity-60">{busy ? "Loading experiment…" : "Explore the FFT butterfly"}</button>
   {/if}
   {#if error}<p role="status" class="mt-3 text-sm text-muted">{error}</p>{/if}

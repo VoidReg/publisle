@@ -112,6 +112,12 @@ export interface FigureData {
   readonly src: string;
   /** Omitted means undescribed; an explicit empty string marks a decorative image. */
   readonly alt?: string;
+  /**
+   * Alternative renditions of the same figure, keyed by variant name (for
+   * example "dark"). Hosts decide which variant their active theme consumes;
+   * hosts without a mapping keep the base rendition.
+   */
+  readonly variants?: Readonly<Record<string, string>>;
   readonly title?: string;
   readonly label?: string;
   readonly caption?: readonly FlowNode[];

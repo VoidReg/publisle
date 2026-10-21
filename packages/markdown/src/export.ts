@@ -631,6 +631,7 @@ function knownBlock(
       const value = data<{
         src: string;
         alt?: string;
+        variants?: Readonly<Record<string, string>>;
         title?: string;
         label?: string;
         caption?: readonly FlowNode[];
@@ -639,6 +640,7 @@ function knownBlock(
       }>(block);
       if (
         value.alt !== undefined &&
+        !value.variants &&
         !value.caption &&
         !value.credit &&
         !value.label &&
@@ -661,6 +663,11 @@ function knownBlock(
         attributes: {
           src: value.src,
           ...(value.alt === undefined ? {} : { alt: value.alt }),
+          ...Object.fromEntries(
+            Object.entries(value.variants ?? {}).map(
+              ([name, src]) => [`variant-${name}`, src] as const,
+            ),
+          ),
           ...(value.title === undefined ? {} : { title: value.title }),
           ...(value.label === undefined ? {} : { label: value.label }),
           ...(value.original === undefined

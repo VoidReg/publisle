@@ -256,6 +256,7 @@ describe("complete portable Markdown model", () => {
           data: {
             src: "flow.svg",
             alt: "Flow",
+            variants: { dark: "flow-dark.svg" },
             label: "fig:flow",
             caption: [
               {

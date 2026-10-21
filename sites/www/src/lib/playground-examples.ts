@@ -183,7 +183,7 @@ $$
 
 so the periodicity shows up as exactly two nonzero bins: $|X[2]| = |X[6]| = 4$. Figure :ref[fig\:spectrum] plots those magnitudes.
 
-::::figure{src="/fft-spectrum.svg" alt="Bar chart of eight DFT magnitudes; only the bars at frequency bins 2 and 6 rise to 4" label="fig:spectrum"}
+::::figure{src="/fft-spectrum.svg" variant-dark="/fft-spectrum-dark.svg" alt="Bar chart of eight DFT magnitudes; only the bars at frequency bins 2 and 6 rise to 4" label="fig:spectrum"}
 :::caption
 The magnitude spectrum of the sampled square wave. Energy sits in bins 2 and 6 because the signal repeats every four samples.
 :::
@@ -366,7 +366,7 @@ $$
 
 Figure :ref[fig\:gibbs] shows the fifteen-term partial sum against the square wave. The curve tracks the function away from the jump and overshoots it near $x=\pi/16$, consistent with Equation :ref[eq\:overshoot].
 
-::::figure{src="/gibbs-overshoot.svg" alt="Line plot of a fifteen-term Fourier partial sum overshooting the square wave to about 1.179 near the jump at the origin" label="fig:gibbs"}
+::::figure{src="/gibbs-overshoot.svg" variant-dark="/gibbs-overshoot-dark.svg" alt="Line plot of a fifteen-term Fourier partial sum overshooting the square wave to about 1.179 near the jump at the origin" label="fig:gibbs"}
 :::caption
 The fifteen-term partial sum $S_{15}$ (solid) against the square wave (dashed). The maximum occurs near $x=\pi/16$ and approaches the Wilbraham-Gibbs value as terms accumulate.
 :::
