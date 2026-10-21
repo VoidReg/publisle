@@ -49,6 +49,7 @@ export async function runWorker(
   action,
   signal,
   onContainer = () => {},
+  onPrepared = undefined,
 ) {
   signal.throwIfAborted();
   const name = `publisle-pdf-${randomUUID()}`;
@@ -56,7 +57,13 @@ export async function runWorker(
   const chunks = [];
   let size = 0;
   let failure;
-  const maxBytes = action === "prepare" ? 1024 * 1024 : LIMITS.pdfBytes + 65536;
+  const maxBytes =
+    action === "prepare"
+      ? 1024 * 1024
+      : LIMITS.pdfBytes + 65536 + (onPrepared ? 1024 * 1024 : 0);
+  let prefix = Buffer.alloc(0);
+  let preparedSeen = false;
+  let preparing = Promise.resolve();
   const cleanup = () =>
     execute("docker", ["rm", "--force", name], { timeout: 5000 }).catch(
       () => undefined,
@@ -81,10 +88,42 @@ export async function runWorker(
             "Compiler output exceeds its limit.",
           );
           abort();
+        } else if (onPrepared && !preparedSeen) {
+          prefix = Buffer.concat([prefix, chunk]);
+          const end = prefix.indexOf(10);
+          if (end < 0) {
+            if (prefix.length > 1024 * 1024) {
+              failure = new ServiceError(
+                "output-limit",
+                "Preparation output exceeds its limit.",
+              );
+              abort();
+            }
+            return;
+          }
+          if (end > 1024 * 1024) {
+            failure = new ServiceError(
+              "output-limit",
+              "Preparation output exceeds its limit.",
+            );
+            abort();
+            return;
+          }
+          preparedSeen = true;
+          const header = prefix.subarray(0, end);
+          chunks.push(prefix.subarray(end + 1));
+          prefix = Buffer.alloc(0);
+          preparing = Promise.resolve()
+            .then(() => onPrepared(JSON.parse(header.toString("utf8"))))
+            .catch((error) => {
+              failure = error;
+              abort();
+            });
         } else chunks.push(chunk);
       });
       child.on("error", reject);
-      child.on("close", (code) => {
+      child.on("close", async (code) => {
+        await preparing;
         signal.removeEventListener("abort", abort);
         if (signal.aborted) {
           reject(signal.reason);
@@ -94,7 +133,7 @@ export async function runWorker(
           reject(failure);
           return;
         }
-        const body = Buffer.concat(chunks);
+        const body = Buffer.concat(preparedSeen ? chunks : [prefix, ...chunks]);
         if (code === 137) {
           reject(
             new ServiceError(
@@ -115,6 +154,12 @@ export async function runWorker(
             /* bounded generic failure */
           }
           reject(new ServiceError(errorCode, message));
+          return;
+        }
+        if (onPrepared && !preparedSeen) {
+          reject(
+            new ServiceError("invalid-worker", "Missing preparation record."),
+          );
           return;
         }
         resolve(body);

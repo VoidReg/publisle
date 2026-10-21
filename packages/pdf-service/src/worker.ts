@@ -1,4 +1,5 @@
-import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir, copyFile, access } from "node:fs/promises";
+import { setTimeout as delay } from "node:timers/promises";
 import { join } from "node:path";
 import { once } from "node:events";
 import { execFile } from "node:child_process";
@@ -14,7 +15,13 @@ import { fromMarkdown } from "@publisle/markdown";
 import { prepare, createRegistry } from "@publisle/core";
 import { coreBlockDefinitions } from "@publisle/blocks-core";
 import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
-import { createLatexPackage } from "@publisle/research";
+import {
+  createLatexPackage,
+  createNativePdfPackage,
+  type NativeFont,
+  type NativePdfTemplate,
+} from "@publisle/research";
+import { compileNativePdf } from "@publisle/research/node";
 import { template as ieee } from "@publisle/template-ieee";
 import { template as acm } from "@publisle/template-acm";
 import { template as springer } from "@publisle/template-springer";
@@ -31,11 +38,16 @@ const templates = {
   "elsevier-author-date": authorDateTemplate,
 };
 const execute = promisify(execFile);
+async function nativeFonts(): Promise<readonly NativeFont[]> {
+  return JSON.parse(
+    await readFile("/app/native-fonts.json", "utf8"),
+  ) as NativeFont[];
+}
 interface Job {
   document?: unknown;
   markdown?: string;
   template: string;
-  engine: "pdflatex" | "lualatex";
+  engine: "pdflatex" | "lualatex" | "rust";
   style: string;
   data: { country?: string };
 }
@@ -179,7 +191,9 @@ async function main(): Promise<void> {
     maxNodes: 20000,
   });
   const job = raw as unknown as Job;
-  if (action === "prepare") {
+  if (action === "prepare" || action === "session") {
+    if (action === "session" && job.engine !== "rust")
+      throw new Error("Sessions require the native engine.");
     const imported =
       job.markdown === undefined
         ? { document: parseDocument(job.document), diagnostics: [] }
@@ -208,10 +222,19 @@ async function main(): Promise<void> {
         `image-${String(index)}.png`,
       ]),
     );
-    createLatexPackage(replaceFigures(lowered.document, fake), {
-      ...job,
-      templates,
-    });
+    if (job.engine === "rust") {
+      createNativePdfPackage(replaceFigures(lowered.document, fake), {
+        template: job.template as NativePdfTemplate,
+        style: job.style,
+        fonts: await nativeFonts(),
+        data: job.data,
+      });
+    } else
+      createLatexPackage(replaceFigures(lowered.document, fake), {
+        ...job,
+        engine: job.engine,
+        templates,
+      });
     if (lowered.sources.length > 12)
       throw new Error("At most 12 distinct images are supported.");
     process.stdout.write(
@@ -219,11 +242,21 @@ async function main(): Promise<void> {
         document: lowered.document,
         sources: lowered.sources,
         timings: { prepareMs: performance.now() - started },
-      }),
+      }) + (action === "session" ? "\n" : ""),
     );
-    return;
+    if (action === "prepare") return;
+    for (;;) {
+      try {
+        await access(join(inputDirectory, "ready"));
+        break;
+      } catch {
+        if (performance.now() - started > 170000)
+          throw new Error("Asset acquisition timed out.");
+        await delay(20);
+      }
+    }
   }
-  if (action !== "compile" && action !== "images")
+  if (action !== "compile" && action !== "images" && action !== "session")
     throw new Error("Unknown worker operation.");
   const normalized = JSON.parse(
     await readFile(join(inputDirectory, "prepared.json"), "utf8"),
@@ -277,7 +310,36 @@ async function main(): Promise<void> {
   timings["imagesMs"] = performance.now() - imagesStarted;
   const sourceStarted = performance.now();
   const document = replaceFigures(normalized.document, paths);
-  const source = createLatexPackage(document, { ...job, templates });
+  if (job.engine === "rust") {
+    const native = await compileNativePdf(document, {
+      template: job.template as NativePdfTemplate,
+      style: job.style,
+      sourceDirectory: buildDirectory,
+      fonts: await nativeFonts(),
+      executable: "/usr/local/bin/publisle-pdf",
+      timeoutMs: 170000,
+      data: job.data,
+    });
+    Object.assign(timings, native.timings, {
+      workerMs: performance.now() - started,
+    });
+    const diagnostics = native.diagnostics
+      .slice(0, 30)
+      .map(({ code, message }) => ({ code, message: message.slice(0, 200) }));
+    if (
+      !process.stdout.write(
+        JSON.stringify({ ok: true, diagnostics, timings }) + "\n",
+      )
+    )
+      await once(process.stdout, "drain");
+    process.stdout.write(native.pdf);
+    return;
+  }
+  const source = createLatexPackage(document, {
+    ...job,
+    engine: job.engine,
+    templates,
+  });
   timings["sourceMs"] = performance.now() - sourceStarted;
   const cacheDirectory = join(buildDirectory, "cache");
   await mkdir(cacheDirectory);

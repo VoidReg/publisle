@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "deploy/vps/**"
+      - "native/pdf/**"
       - "packages/pdf-service/**"
       - "packages/research/**"
       - "packages/template-*/**"
@@ -47,4 +48,38 @@ jobs:
         with:
           name: internal-pdf-service-validation
           path: ${{ runner.temp }}/pdf-service-artifacts
+          if-no-files-found: ignore
+
+  native-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
+      - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
+      - run: cargo +1.90.0 test --locked --manifest-path native/pdf/Cargo.toml
+      - run: cargo +1.90.0 clippy --locked --manifest-path native/pdf/Cargo.toml --all-targets -- -D warnings
+      - run: pnpm --filter @publisle/pdf-service build
+      - run: docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-native:local .
+      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - name: Validate every native candidate independently
+        shell: bash
+        run: |
+          export PDF_TEST_NATIVE_WORKER_IMAGE="$(docker image inspect publisle-pdf-native:local --format '{{.Id}}')"
+          export PDF_TEST_VERAPDF="$RUNNER_TEMP/verapdf/verapdf"
+          export PDF_TEST_ARTIFACTS="$RUNNER_TEMP/native-pdf-artifacts"
+          node --test deploy/vps/tests/native.test.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: native-pdf-validation
+          path: ${{ runner.temp }}/native-pdf-artifacts
           if-no-files-found: ignore

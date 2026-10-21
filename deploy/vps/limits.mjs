@@ -68,7 +68,16 @@ export const TEMPLATES = Object.freeze([
   },
 ]);
 
-export function validateRequest(value) {
+export function availableTemplates(nativeTemplates = []) {
+  return TEMPLATES.map((template) => ({
+    ...template,
+    engines: nativeTemplates.includes(template.id)
+      ? ["rust", ...template.engines]
+      : [...template.engines],
+  }));
+}
+
+export function validateRequest(value, nativeTemplates = []) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new ServiceError("invalid-request", "Expected a JSON object.", 400);
   const hasDocument = Object.hasOwn(value, "document");
@@ -82,7 +91,7 @@ export function validateRequest(value) {
       "Supply exactly one document or Markdown source.",
       400,
     );
-  const template = TEMPLATES.find(
+  const template = availableTemplates(nativeTemplates).find(
     (entry) => entry.id === (value.template ?? "article"),
   );
   if (

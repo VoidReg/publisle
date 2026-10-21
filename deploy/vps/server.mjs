@@ -16,7 +16,13 @@ import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
-import { LIMITS, TEMPLATES, ServiceError, validateRequest } from "./limits.mjs";
+import {
+  LIMITS,
+  TEMPLATES,
+  availableTemplates,
+  ServiceError,
+  validateRequest,
+} from "./limits.mjs";
 import { Admission } from "./queue.mjs";
 import { fetchImages } from "./images.mjs";
 import { runWorker } from "./worker.mjs";
@@ -120,7 +126,11 @@ export async function cgroupSubtreePopulated(directory) {
   return false;
 }
 
-export async function checkReadiness(image, allowUnverified = false) {
+export async function checkReadiness(
+  image,
+  allowUnverified = false,
+  native = undefined,
+) {
   if (!/^sha256:[a-f0-9]{64}$/.test(image ?? "")) return false;
   try {
     await execute("docker", ["image", "inspect", image], {
@@ -140,7 +150,9 @@ export async function checkReadiness(image, allowUnverified = false) {
     const base = `/sys/fs/cgroup${cgroup.slice(0, cgroup.indexOf("/publisle-pdf.slice/") + "/publisle-pdf.slice".length)}`;
     const verification = JSON.parse(
       await readFile(
-        process.env.PDF_VERIFICATION_FILE ?? "/etc/publisle-pdf-verified.json",
+        native?.verificationFile ??
+          process.env.PDF_VERIFICATION_FILE ??
+          "/etc/publisle-pdf-verified.json",
         "utf8",
       ),
     );
@@ -149,11 +161,27 @@ export async function checkReadiness(image, allowUnverified = false) {
       verification.passed !== true ||
       verification.aggregateCpu !== 0.5 ||
       verification.aggregateMemoryMiB !== 512 ||
-      TEMPLATES.some(
+      (native &&
+        native.templates.some(
+          (id) =>
+            !verification.native?.templates?.some(
+              (record) =>
+                record.id === id &&
+                record.contentParity === true &&
+                record.layoutReviewed === true &&
+                record.pdfUa2 === true &&
+                record.uncachedSamples >= 30 &&
+                record.uncachedP95Ms < 5000,
+            ),
+        )) ||
+      TEMPLATES.filter(
+        (template) => !native || native.templates.includes(template.id),
+      ).some(
         (template) =>
           !verification.samples?.some(
             (sample) =>
               sample.template === template.id &&
+              (!native || sample.engine === "rust") &&
               sample.pdfBytes > 0 &&
               !sample.failure,
           ),
@@ -260,12 +288,22 @@ async function storeCachedPdf(cacheDirectory, key, result) {
 }
 
 export async function compileJob(request, signal, options) {
+  const image = request.engine === "rust" ? options.nativeImage : options.image;
+  if (
+    request.engine === "rust" &&
+    (!image || !options.nativeTemplates?.includes(request.template))
+  )
+    throw new ServiceError(
+      "engine-unavailable",
+      "The native compiler has not been verified for this template.",
+      400,
+    );
   const worker = options.runWorker ?? runWorker;
   const cacheDirectory = options.pdfCacheDirectory;
   if (cacheDirectory) {
     const cached = await readCachedPdf(
       cacheDirectory,
-      cacheKey(request, options.image),
+      cacheKey(request, image),
     );
     if (cached) {
       console.log(
@@ -312,46 +350,70 @@ export async function compileJob(request, signal, options) {
       flag: "wx",
       mode: 0o644,
     });
-    const prepared = JSON.parse(
-      (
-        await measured("prepareWorkerMs", () =>
-          worker(options.image, directory, "prepare", deadline),
-        )
-      ).toString("utf8"),
-    );
-    if (
-      typeof prepared.timings?.prepareMs === "number" &&
-      Number.isFinite(prepared.timings.prepareMs) &&
-      prepared.timings.prepareMs >= 0
-    ) {
-      timings.prepareMs = Math.round(prepared.timings.prepareMs);
-      timings.prepareStartupAndCleanupMs = Math.max(
-        0,
-        timings.prepareWorkerMs - timings.prepareMs,
+    const stageAssets = async (prepared) => {
+      if (
+        typeof prepared.timings?.prepareMs === "number" &&
+        Number.isFinite(prepared.timings.prepareMs) &&
+        prepared.timings.prepareMs >= 0
+      ) {
+        timings.prepareMs = Math.round(prepared.timings.prepareMs);
+        timings.prepareStartupAndCleanupMs = Math.max(
+          0,
+          timings.prepareWorkerMs - timings.prepareMs,
+        );
+      }
+      if (
+        !Array.isArray(prepared.sources) ||
+        prepared.sources.some((source) => typeof source !== "string")
+      )
+        throw new Error("Invalid worker output");
+      const assets = await measured("fetchMs", () =>
+        fetchImages(
+          prepared.sources,
+          directory,
+          deadline,
+          options.assetBase,
+          options.imageDependencies,
+        ),
+      );
+      await writeFile(
+        join(directory, "prepared.json"),
+        JSON.stringify({ document: prepared.document, assets }),
+        { flag: "wx", mode: 0o644 },
+      );
+    };
+    let output;
+    if (request.engine === "rust") {
+      output = await measured("nativeSessionMs", () =>
+        worker(
+          image,
+          directory,
+          "session",
+          deadline,
+          undefined,
+          async (prepared) => {
+            timings.prepareWorkerMs = Math.round(performance.now() - started);
+            await stageAssets(prepared);
+            await writeFile(join(directory, "ready"), "", {
+              flag: "wx",
+              mode: 0o644,
+            });
+          },
+        ),
+      );
+    } else {
+      const prepared = JSON.parse(
+        (
+          await measured("prepareWorkerMs", () =>
+            worker(image, directory, "prepare", deadline),
+          )
+        ).toString("utf8"),
+      );
+      await stageAssets(prepared);
+      output = await measured("compileWorkerMs", () =>
+        worker(image, directory, "compile", deadline),
       );
     }
-    if (
-      !Array.isArray(prepared.sources) ||
-      prepared.sources.some((source) => typeof source !== "string")
-    )
-      throw new Error("Invalid worker output");
-    const assets = await measured("fetchMs", () =>
-      fetchImages(
-        prepared.sources,
-        directory,
-        deadline,
-        options.assetBase,
-        options.imageDependencies,
-      ),
-    );
-    await writeFile(
-      join(directory, "prepared.json"),
-      JSON.stringify({ document: prepared.document, assets }),
-      { flag: "wx", mode: 0o644 },
-    );
-    const output = await measured("compileWorkerMs", () =>
-      worker(options.image, directory, "compile", deadline),
-    );
     const line = output.indexOf(10);
     if (line < 0 || line > 16384) throw new Error("Invalid worker output");
     const metadata = JSON.parse(output.subarray(0, line).toString("utf8"));
@@ -364,7 +426,7 @@ export async function compileJob(request, signal, options) {
         value >= 0
       )
         timings[key] = Math.round(value);
-    if (timings.workerMs !== undefined)
+    if (timings.workerMs !== undefined && timings.compileWorkerMs !== undefined)
       timings.compileStartupAndCleanupMs = Math.max(
         0,
         timings.compileWorkerMs - timings.workerMs,
@@ -372,7 +434,7 @@ export async function compileJob(request, signal, options) {
     if (!metadata.ok || pdf.subarray(0, 5).toString() !== "%PDF-")
       throw new Error("Invalid worker output");
     if (cacheDirectory)
-      await storeCachedPdf(cacheDirectory, cacheKey(request, options.image), {
+      await storeCachedPdf(cacheDirectory, cacheKey(request, image), {
         pdf,
         diagnostics: metadata.diagnostics,
       });
@@ -463,7 +525,9 @@ export function createApi(options = {}) {
       if (request.method === "GET" && pathname === "/pdf/capabilities") {
         json(response, 200, {
           enabled: ready,
-          templates: TEMPLATES,
+          templates: availableTemplates(
+            options.nativeImage ? options.nativeTemplates : [],
+          ),
           requiredMetadata: ["title", "authors"],
           limits: LIMITS,
         });
@@ -559,7 +623,10 @@ export function createApi(options = {}) {
               400,
             );
           }
-          const input = validateRequest(value);
+          const input = validateRequest(
+            value,
+            options.nativeImage ? options.nativeTemplates : [],
+          );
           const result = await (
             options.compile ??
             ((job, signal) => compileJob(job, signal, options))
@@ -625,11 +692,33 @@ if (
   const enabled = process.env.PDF_ENABLED === "true";
   const image = process.env.PDF_WORKER_IMAGE;
   const localQa = process.env.PDF_LOCAL_QA === "true";
+  const nativeTemplates = (process.env.PDF_NATIVE_TEMPLATES ?? "")
+    .split(",")
+    .filter(Boolean);
+  if (
+    nativeTemplates.some(
+      (id) => !TEMPLATES.some((template) => template.id === id),
+    )
+  )
+    throw new Error("Unknown PDF_NATIVE_TEMPLATES entry.");
+  const nativeImage = process.env.PDF_NATIVE_WORKER_IMAGE;
+  const nativeVerification = {
+    templates: nativeTemplates,
+    verificationFile:
+      process.env.PDF_NATIVE_VERIFICATION_FILE ??
+      "/etc/publisle-native-pdf-verified.json",
+  };
   const bind = process.env.PDF_BIND ?? "127.0.0.1";
   if (isIP(bind) === 0)
     throw new Error("PDF_BIND must be an IP address for the API listener.");
   const options = {
     image,
+    nativeImage:
+      nativeTemplates.length &&
+      (await checkReadiness(nativeImage, localQa, nativeVerification))
+        ? nativeImage
+        : undefined,
+    nativeTemplates,
     assetBase: process.env.PDF_ASSET_BASE ?? "https://publisle.xyz/",
     jobDirectory: process.env.PDF_JOB_DIRECTORY,
     pdfCacheDirectory: process.env.PDF_CACHE_DIR

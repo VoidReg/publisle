@@ -178,3 +178,38 @@ checks every resolved address and redirect and pins connections to validated IPs
 Relative references resolve against `PDF_ASSET_BASE`. SVG scripts, external file
 references, CSS imports and external resources are rejected. The independent
 bibliography-fetching API is not used by this public service.
+
+## Native Rust candidate and rollout gate
+
+The native worker uses a single sandbox session for preparation and compilation.
+It waits for the API to stage validated assets, then produces a tagged PDF using
+the pinned Rust binary and fonts. Its image contains no TeX runtime. The existing
+LaTeX worker remains available for source-compatible journal exports and rollback.
+See [native compiler setup and limitations](../../native/pdf/README.md).
+
+```sh
+pnpm --filter @publisle/pdf-service build
+docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-native:local .
+export PDF_TEST_NATIVE_WORKER_IMAGE="$(docker image inspect publisle-pdf-native:local --format '{{.Id}}')"
+export PDF_TEST_VERAPDF=/absolute/path/to/verapdf
+node --test deploy/vps/tests/native.test.mjs
+PDF_QA_IMAGE=publisle-pdf-native:local PDF_QA_BENCHMARK=true PDF_BENCH_RUST=true \
+  PDF_BENCH_SAMPLES=30 PDF_BENCH_WARMUPS=5 node deploy/vps/budget-check.mjs
+```
+
+Configure `PDF_NATIVE_WORKER_IMAGE` with an immutable local image ID,
+`PDF_NATIVE_TEMPLATES` with a comma-separated list of independently verified
+profile IDs, and `PDF_NATIVE_VERIFICATION_FILE` with its verification record.
+Without all three and a passing readiness check the API advertises only the
+existing engines. Do not reuse the legacy image's verification record.
+
+The record retains `image`, `passed`, `aggregateCpu: 0.5`,
+`aggregateMemoryMiB: 512` and successful `samples` for each enabled profile
+(`template`, `engine: "rust"`, `pdfBytes`). It additionally requires
+`native.templates` entries with `id`, `contentParity`, `layoutReviewed`,
+`pdfUa2`, `uncachedSamples` (at least 30) and `uncachedP95Ms` (below 5000).
+Visual and content review must be real; passing a validator alone is insufficient.
+Once verified, Rust becomes the default for those profiles. Explicit legacy
+engine requests continue to work. Changing the image requires fresh evidence.
+Rollback removes the native environment settings and restarts the API; retain
+the previous image and its verification file.

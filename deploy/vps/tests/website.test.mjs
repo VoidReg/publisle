@@ -32,6 +32,12 @@ test(
     const api = createApi({
       ready: true,
       image: process.env.PDF_TEST_WORKER_IMAGE,
+      ...(process.env.PDF_TEST_NATIVE_WORKER_IMAGE
+        ? {
+            nativeImage: process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+            nativeTemplates: ["article"],
+          }
+        : {}),
       assetBase: "https://publisle.xyz/",
       origins: ["http://127.0.0.1"],
       limits: { ...LIMITS, attempts: 30 },
@@ -178,7 +184,9 @@ test(
         .fill("Ada Example");
       await page
         .getByLabel("PDF layout", { exact: true })
-        .selectOption("ieee-journal");
+        .selectOption(
+          process.env.PDF_TEST_NATIVE_WORKER_IMAGE ? "article" : "ieee-journal",
+        );
       const exportButton = page.getByRole("button", {
         name: "Export PDF",
         exact: true,

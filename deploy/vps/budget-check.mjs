@@ -220,6 +220,7 @@ if (
         "PDF_QA_BENCHMARK",
         "PDF_BENCH_SERVER",
         "PDF_BENCH_NATIVE",
+        "PDF_BENCH_RUST",
         "PDF_BENCH_SAMPLES",
         "PDF_BENCH_WARMUPS",
         "PDF_BENCH_CASES",

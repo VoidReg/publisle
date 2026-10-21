@@ -1,0 +1,13 @@
+[
+  { "path": "/app/fonts/NotoSerif-Regular.ttf", "role": "regular" },
+  { "path": "/app/fonts/NotoSerif-Bold.ttf", "role": "bold" },
+  { "path": "/app/fonts/NotoSerif-Italic.ttf", "role": "italic" },
+  { "path": "/app/fonts/DejaVuSansMono.ttf", "role": "mono" },
+  { "path": "/app/fonts/DejaVuSans.ttf", "role": "fallback" },
+  { "path": "/app/fonts/NotoNaskhArabic-Regular.ttf", "role": "fallback" },
+  {
+    "path": "/app/fonts/NotoSansCJK-Regular.ttc",
+    "role": "fallback",
+    "index": 2
+  }
+]

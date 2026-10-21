@@ -1,11 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { once } from "node:events";
-import { mkdtemp, readdir, rm, mkdir, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  readdir,
+  rm,
+  mkdir,
+  writeFile,
+  readFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Admission } from "../queue.mjs";
-import { LIMITS, validateRequest } from "../limits.mjs";
+import { LIMITS, validateRequest, availableTemplates } from "../limits.mjs";
 import { imageDestination, isPublicAddress, fetchImages } from "../images.mjs";
 import {
   createApi,
@@ -16,6 +23,88 @@ import {
   trustedProxyCheck,
 } from "../server.mjs";
 import { workerArguments } from "../worker.mjs";
+
+test("native engines are advertised and accepted only for explicitly verified templates", () => {
+  assert.throws(() => validateRequest({ markdown: "x", engine: "rust" }));
+  assert.equal(
+    validateRequest({ markdown: "x", engine: "rust" }, ["article"]).engine,
+    "rust",
+  );
+  assert.throws(() =>
+    validateRequest(
+      { markdown: "x", template: "ieee-journal", engine: "rust" },
+      ["article"],
+    ),
+  );
+  assert.deepEqual(
+    availableTemplates().find((template) => template.id === "article").engines,
+    ["lualatex", "pdflatex"],
+  );
+  assert.deepEqual(
+    availableTemplates(["article"]).find(
+      (template) => template.id === "article",
+    ).engines,
+    ["rust", "lualatex", "pdflatex"],
+  );
+});
+
+test("native jobs use one sandbox session and stage assets before releasing compilation", async () => {
+  const directory = await mkdtemp(
+    join(tmpdir(), "publisle-native-session-test-"),
+  );
+  const image = `sha256:${"a".repeat(64)}`;
+  let calls = 0;
+  try {
+    const result = await compileJob(
+      validateRequest({ markdown: "hello", engine: "rust" }, ["article"]),
+      new AbortController().signal,
+      {
+        nativeImage: image,
+        nativeTemplates: ["article"],
+        jobDirectory: directory,
+        runWorker: async (
+          selected,
+          job,
+          action,
+          _signal,
+          _onContainer,
+          onPrepared,
+        ) => {
+          calls++;
+          assert.equal(selected, image);
+          assert.equal(action, "session");
+          await onPrepared({
+            document: { schemaVersion: 1, blocks: [] },
+            sources: [],
+            timings: { prepareMs: 1 },
+          });
+          assert.equal(await readFile(join(job, "ready"), "utf8"), "");
+          assert.deepEqual(
+            JSON.parse(await readFile(join(job, "prepared.json"), "utf8"))
+              .assets,
+            [],
+          );
+          return Buffer.from(
+            '{"ok":true,"diagnostics":[],"timings":{"compilerMs":2}}\n%PDF-2.0\nnative',
+          );
+        },
+      },
+    );
+    assert.equal(calls, 1);
+    assert.ok(result.pdf.toString().startsWith("%PDF-2.0"));
+    assert.deepEqual(await readdir(directory), []);
+    await assert.rejects(
+      compileJob(
+        { engine: "rust", template: "article" },
+        new AbortController().signal,
+        { jobDirectory: directory },
+      ),
+      /not been verified/,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
 
 test("request contract restricts templates, engines and metadata", () => {
   for (const value of [

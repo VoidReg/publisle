@@ -7,9 +7,11 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { pathToFileURL } from "node:url";
 import { playgroundExamples } from "../../sites/www/src/lib/playground-examples.ts";
-import { validateRequest } from "./limits.mjs";
+import { validateRequest, TEMPLATES } from "./limits.mjs";
 const execute = promisify(execFile);
 const root = resolve(import.meta.dirname, "../..");
+const rust = process.env.PDF_BENCH_RUST === "true";
+const nativeTemplates = rust ? TEMPLATES.map((template) => template.id) : [];
 const { compileJob: latexCompile } = await import(
   pathToFileURL(
     process.env.PDF_BENCH_SERVER ?? join(root, "deploy/vps/server.mjs"),
@@ -56,13 +58,7 @@ const corpus = {
       .markdown,
   },
   fourier: {
-    // Add the author required by journal export to this tutorial fixture.
-    markdown: playgroundExamples
-      .find((x) => x.id === "fft")
-      .markdown.replace(
-        "documentType: tutorial",
-        "documentType: tutorial\nauthors:\n  - name: Ada Example",
-      ),
+    markdown: playgroundExamples.find((x) => x.id === "fft").markdown,
   },
   arabic: {
     // Hosted figures accept raster/SVG inputs, rather than embedded PDFs.
@@ -96,8 +92,9 @@ const assets = {
   },
 };
 const report = {
-  backend:
-    process.env.PDF_BENCH_NATIVE === "true"
+  backend: rust
+    ? "Publisle custom Rust engine"
+    : process.env.PDF_BENCH_NATIVE === "true"
       ? "Typst feasibility via Pandoc"
       : "LaTeX",
   schemaVersion: 1,
@@ -129,7 +126,10 @@ const percentile = (values, p) =>
     Math.max(0, Math.ceil(values.length * p) - 1)
   ];
 for (const name of selected) {
-  const request = validateRequest(corpus[name]);
+  const request = validateRequest(
+    { ...corpus[name], ...(rust ? { engine: "rust" } : {}) },
+    nativeTemplates,
+  );
   const row = {
     name,
     sourceSha256: createHash("sha256").update(request.markdown).digest("hex"),
@@ -144,6 +144,7 @@ for (const name of selected) {
     try {
       result = await compileJob(request, new AbortController().signal, {
         image,
+        ...(rust ? { nativeImage: image, nativeTemplates } : {}),
         assetBase: "https://fixture.invalid/",
         imageDependencies: assets,
         studyDirectory:
@@ -201,7 +202,10 @@ for (const name of selected) {
     0.95,
   );
 }
-report.passed = report.results.every((row) => !row.failure);
+report.passed = report.results.every(
+  (row) => !row.failure && (!rust || row.p95Ms < 5000),
+);
 report.complete = true;
 report.memoryEvents = await readFile(`${cgroup}/memory.events`, "utf8");
 await writeFile(join(output, "results.json"), JSON.stringify(report, null, 2));
+if (!report.passed) process.exitCode = 1;
