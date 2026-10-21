@@ -123,6 +123,9 @@ documentType: tutorial
 title: "The FFT: From Sums to Butterflies"
 description: "A worked tour of the discrete Fourier transform and the Cooley-Tukey butterfly, exercising every Publisle block in one document."
 language: en
+authors:
+  - name: Ada Example
+    affiliation: Illustrative Signal Processing Laboratory
 subjects:
   - Signal processing
   - Fourier analysis

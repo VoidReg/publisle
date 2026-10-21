@@ -147,6 +147,9 @@
 @layer components {
   .publisle-document {
     @apply max-w-[72ch];
+    /* Long inline code and URLs must never push the page wider than the
+       viewport on phones; `anywhere` only breaks words that would overflow. */
+    overflow-wrap: anywhere;
   }
 
   .publisle-document > :first-child {
@@ -199,6 +202,7 @@
 
   .publisle-document :not(pre) > code {
     @apply rounded border border-line bg-raised px-1.5 py-0.5 font-mono text-[0.85em];
+    overflow-wrap: anywhere;
   }
 
   .publisle-document blockquote {
