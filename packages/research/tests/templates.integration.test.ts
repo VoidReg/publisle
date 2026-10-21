@@ -36,6 +36,40 @@ async function fixture(name = "ieee-journal") {
   return result.document;
 }
 describe("publisher starter packages", () => {
+  it("reduces diagrams to one readable text without repeating alternatives", () => {
+    const parsed = fromMarkdown(
+      [
+        "---",
+        "title: Diagram export",
+        "authors:",
+        "  - name: Ada Example",
+        "---",
+        "",
+        "Intro.",
+        "",
+        ':::diagram{engine="mermaid" alt="Sample indices enter bit-reversed"}',
+        "flowchart LR",
+        '  A["x"] --> B["y"]',
+        ":::caption",
+        "Dataflow of the transform.",
+        ":::",
+        ":::fallback",
+        "Eight samples pass through three butterfly stages.",
+        ":::",
+        "::::",
+        "",
+      ].join("\n"),
+    );
+    if (!parsed.document) throw new Error("Invalid diagram fixture");
+    const pkg = createLatexPackage(parsed.document, {
+      template: article,
+      style: "numeric",
+    });
+    const tex = String(pkg.files["manuscript.tex"]);
+    expect(tex).toContain("Eight samples pass through three butterfly stages.");
+    expect(tex).not.toContain("Sample indices enter bit-reversed");
+  });
+
   for (const template of [article, acm, elsevier, authorDateTemplate, springer])
     it(`compiles and rebuilds ${template.id} from a clean source package`, async () => {
       const output = await mkdtemp(join(tmpdir(), "publisle-profile-"));

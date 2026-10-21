@@ -1263,16 +1263,19 @@ export function createRenderPlan(
   options: AdapterCompilerOptions = {},
 ): RenderPlan {
   const diagnostics: Diagnostic[] = [];
-  const nodes = document.blocks.flatMap((block) =>
-    blockNodes(
-      block,
-      options,
-      diagnostics,
-      document.references.targets,
-      document.islands.find((island) => island.blockId === block.id)
-        ?.displayName,
-      document.dependencies ?? [],
+  const nodes = applyFootnoteNumbers(
+    document.blocks.flatMap((block) =>
+      blockNodes(
+        block,
+        options,
+        diagnostics,
+        document.references.targets,
+        document.islands.find((island) => island.blockId === block.id)
+          ?.displayName,
+        document.dependencies ?? [],
+      ),
     ),
+    collectFootnoteNumbers(document.blocks),
   );
   const base = {
     document,
@@ -1284,6 +1287,80 @@ export function createRenderPlan(
   return document.metadata === undefined
     ? base
     : { ...base, metadata: document.metadata };
+}
+
+/** Footnote numbers by first-reference order, over the raw block payloads. */
+function collectFootnoteNumbers(
+  blocks: readonly { readonly data: unknown }[],
+): ReadonlyMap<string, number> {
+  const numbers = new Map<string, number>();
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    const node = value as Record<string, unknown>;
+    if (
+      node["type"] === "footnoteReference" &&
+      typeof node["identifier"] === "string" &&
+      !numbers.has(node["identifier"])
+    )
+      numbers.set(node["identifier"], numbers.size + 1);
+    for (const child of Object.values(node)) visit(child);
+  };
+  for (const block of blocks) visit(block.data);
+  return numbers;
+}
+
+/** Replace raw footnote labels with numbers on markers and definitions. */
+function applyFootnoteNumbers(
+  nodes: readonly RenderNode[],
+  numbers: ReadonlyMap<string, number>,
+): RenderNode[] {
+  return nodes.map((node) => {
+    if (node.kind !== "element") return node;
+    const reference = node.tag === "sup" ? node : undefined;
+    const anchor = reference?.children.find(
+      (child): child is Extract<RenderNode, { kind: "element" }> =>
+        child.kind === "element" &&
+        child.tag === "a" &&
+        typeof child.attributes["data-publisle-ref"] === "string" &&
+        child.attributes["data-publisle-ref"].startsWith("footnote-"),
+    );
+    if (anchor) {
+      const identifier = String(anchor.attributes["data-publisle-ref"]).slice(
+        "footnote-".length,
+      );
+      const number = numbers.get(identifier);
+      return number === undefined
+        ? node
+        : {
+            ...node,
+            children: node.children.map((child) =>
+              child === anchor
+                ? { ...anchor, children: [text(String(number))] }
+                : child,
+            ),
+          };
+    }
+    if (node.tag === "aside" && typeof node.attributes["id"] === "string") {
+      const number = numbers.get(
+        node.attributes["id"].slice("footnote-".length),
+      );
+      if (number !== undefined)
+        return {
+          ...node,
+          children: [
+            element("span", { class: "publisle-footnote-number" }, [
+              text(`${String(number)}. `),
+            ]),
+            ...node.children,
+          ],
+        };
+    }
+    return { ...node, children: applyFootnoteNumbers(node.children, numbers) };
+  });
 }
 
 function resolveCitations(

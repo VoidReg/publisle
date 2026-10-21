@@ -3,6 +3,15 @@
   "version": "0.1.1",
   "description": "Citation resolution and BibTeX, CSL, LaTeX, JATS, and PDF export. Tooling only; readers must not import it.",
   "license": "MIT",
+  "keywords": [
+    "publisle",
+    "latex",
+    "pdf",
+    "citations",
+    "csl",
+    "jats",
+    "scholarly"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {

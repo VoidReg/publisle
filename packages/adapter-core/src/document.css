@@ -150,6 +150,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.publisle-document .publisle-footnote-number {
+  margin-inline-end: 0.25em;
+  font-variant-numeric: tabular-nums;
+}
+
 .publisle-document .katex-display {
   min-width: 0;
   max-width: 100%;

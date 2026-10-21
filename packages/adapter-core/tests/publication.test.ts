@@ -208,6 +208,61 @@ describe("publication artifact", () => {
     expect(first.html).toContain("See the note.");
   });
 
+  it("numbers footnote markers and definitions by first reference", () => {
+    const registry = createRegistry([
+      ...coreBlockDefinitions,
+      interactiveSchematicDefinition,
+    ]);
+    const note = (identifier: string) =>
+      createBlock({
+        type: "publisle:footnote",
+        schemaVersion: 1,
+        data: {
+          identifier,
+          children: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", value: `Note ${identifier}.` }],
+            },
+          ],
+        },
+      });
+    const prepared = prepare(
+      document({
+        metadata: { title: "Notes" },
+        blocks: [
+          paragraph({
+            content: [
+              { type: "text", value: "First" },
+              { type: "footnoteReference", identifier: "beta" },
+              { type: "text", value: " second" },
+              { type: "footnoteReference", identifier: "alpha" },
+              { type: "text", value: " repeat" },
+              { type: "footnoteReference", identifier: "beta" },
+            ],
+          }),
+          note("alpha"),
+          note("beta"),
+        ],
+      }),
+      { registry },
+    ).document!;
+    const publication = compilePublication(prepared);
+    expect(publication.html).toContain(
+      'data-publisle-ref="footnote-beta">1</a>',
+    );
+    expect(publication.html).toContain(
+      'data-publisle-ref="footnote-alpha">2</a>',
+    );
+    expect(publication.html).not.toContain(">beta</a>");
+    expect(publication.html).toContain(
+      '<aside data-publisle-id="footnote-alpha"><span class="publisle-footnote-number">2. </span>',
+    );
+    expect(publication.html).toContain(
+      '<aside data-publisle-id="footnote-beta"><span class="publisle-footnote-number">1. </span>',
+    );
+  });
+
   it("attaches islands inside one root and preserves the fallback on failure", async () => {
     const publication = compilePublication(preparedArticle());
     const island = publication.islands[0];

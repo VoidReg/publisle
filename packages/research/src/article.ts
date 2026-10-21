@@ -390,18 +390,19 @@ export function projectArticle(
       const fallback = flowParagraphs(data["fallback"], losses).flat();
       const alt = textOf(data["alt"]) ?? textOf(data["title"]);
       const source = textOf(data["value"]);
-      const inlines: ArticleInline[] = [];
-      if (alt) inlines.push({ type: "text", value: alt });
-      if (fallback.length && inlines.length)
-        inlines.push({ type: "text", value: " " });
-      inlines.push(...fallback);
-      if (source) {
-        if (inlines.length) inlines.push({ type: "text", value: " " });
+      // One readable reduction: the authored fallback already describes the
+      // block, so appending the alternative text would repeat it. Strip tags
+      // from raw HTML only when nothing authored describes it.
+      const inlines: ArticleInline[] = fallback.length
+        ? [...fallback]
+        : alt
+          ? [{ type: "text", value: alt }]
+          : [];
+      if (source && !inlines.length)
         inlines.push({
           type: "text",
           value: source.replace(/<[^>]*>/gu, ""),
         });
-      }
       blocks.push({
         kind: "paragraph",
         inlines,
