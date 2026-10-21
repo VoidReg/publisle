@@ -63,20 +63,21 @@ jobs:
           echo "commit=$(jq -r .sourceCommit "${MANIFESTS[0]}")" >> "$GITHUB_OUTPUT"
       - name: Verify retained tarballs against immutable registry versions
         env:
-          GITHUB_SHA: ${{ steps.original.outputs.commit }}
+          ORIGINAL_COMMIT: ${{ steps.original.outputs.commit }}
           RELEASE_MANIFEST: ${{ steps.original.outputs.manifest }}
-        run: node tools/npm-release.ts verify "$RELEASE_MANIFEST"
+        run: GITHUB_SHA="$ORIGINAL_COMMIT" node tools/npm-release.ts verify "$RELEASE_MANIFEST"
       - name: Recheck fresh registry consumers and showcase
         env:
-          GITHUB_SHA: ${{ steps.original.outputs.commit }}
+          ORIGINAL_COMMIT: ${{ steps.original.outputs.commit }}
           RELEASE_MANIFEST: ${{ steps.original.outputs.manifest }}
-        run: node tools/npm-registry-consumers.ts "$RELEASE_MANIFEST"
+        run: GITHUB_SHA="$ORIGINAL_COMMIT" node tools/npm-registry-consumers.ts "$RELEASE_MANIFEST"
       - name: Publish GitHub prerelease and retained evidence
         env:
           GH_TOKEN: ${{ github.token }}
-          GITHUB_SHA: ${{ steps.original.outputs.commit }}
+          ORIGINAL_COMMIT: ${{ steps.original.outputs.commit }}
           RELEASE_STAGE: ${{ steps.original.outputs.stage }}
         run: |
+          export GITHUB_SHA="$ORIGINAL_COMMIT"
           TAG=$(node -p "require('./.release/plan.json').id")
           node --input-type=module <<'JS'
           import {execFileSync} from 'node:child_process';
