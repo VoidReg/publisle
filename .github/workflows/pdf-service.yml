@@ -13,6 +13,10 @@ on:
       - ".github/workflows/pdf-service.yml"
   workflow_dispatch:
 
+concurrency:
+  group: pdf-service-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
