@@ -44,7 +44,7 @@ test("native engines are advertised and accepted only for explicitly verified te
     availableTemplates(["article"]).find(
       (template) => template.id === "article",
     ).engines,
-    ["rust", "lualatex", "pdflatex"],
+    ["lualatex", "pdflatex", "rust"],
   );
 });
 

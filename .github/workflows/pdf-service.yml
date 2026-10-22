@@ -1,21 +1,12 @@
 name: Internal website PDF service
 
 on:
-  pull_request:
-    paths:
-      - "deploy/vps/**"
-      - "native/pdf/**"
-      - "packages/pdf-service/**"
-      - "packages/research/**"
-      - "packages/template-*/**"
-      - "sites/www/**"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/pdf-service.yml"
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
   group: pdf-service-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

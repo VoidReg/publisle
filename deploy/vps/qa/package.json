@@ -1,0 +1,9 @@
+{
+  "name": "publisle-release-validation",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "sax": "1.6.1",
+    "fflate": "0.8.3"
+  }
+}

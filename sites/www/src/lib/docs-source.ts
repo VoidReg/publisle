@@ -99,7 +99,7 @@ export function docRepoPath(id: string): string {
 
 /** On-site raw route serving the exact Markdown source. */
 export function docRawRoute(id: string): string {
-  return `/docs/${docRepoPath(id)}/`;
+  return `/docs/${docRepoPath(id)}`;
 }
 
 /** First prose paragraph of a document, flattened to ~155 plain characters. */

@@ -1,6 +1,6 @@
 # Publisle beta standards
 
-These documents define the implemented portable subset independently of SDK types. They are not a claim that the entire standardization roadmap is complete. Start with the [documentation index](../README.md) and [governance/versioning policy](../governance.md).
+These documents define the implemented portable subset without relying on SDK types. They are not a claim that the entire standardization roadmap is complete. Start with the [documentation index](../README.md) and [governance/versioning policy](../governance.md).
 
 ## Core and profiles
 

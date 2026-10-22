@@ -15,7 +15,7 @@ booleans are supported in this initial profile. Numeric bounds and finite enums
 are optional; strings are limited to 4096 Unicode scalar values, matching JSON
 Schema length semantics. Invalid Unicode is rejected. Objects, datasets,
 ephemeral requests, pointer positions and service handles are not writable state.
-Hosts can keep those independently without putting them in canonical source.
+Hosts can keep those separately without putting them in canonical source.
 
 - Authored configuration stays untouched. Compiled sessions retain a frozen
   scalar baseline; no full payload or schema is copied into the reader.

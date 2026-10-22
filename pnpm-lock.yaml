@@ -671,6 +671,16 @@ importers:
         specifier: ^3.5.0
         version: 3.5.43(typescript@6.0.3)
 
+  native/packages/pdf-native-darwin-arm64: {}
+
+  native/packages/pdf-native-darwin-x64: {}
+
+  native/packages/pdf-native-linux-arm64: {}
+
+  native/packages/pdf-native-linux-x64: {}
+
+  native/packages/pdf-native-win32-x64: {}
+
   packages/adapter-astro:
     dependencies:
       '@publisle/adapter-core':
@@ -1041,6 +1051,22 @@ importers:
       fflate:
         specifier: 0.8.3
         version: 0.8.3
+    optionalDependencies:
+      '@publisle/pdf-native-darwin-arm64':
+        specifier: workspace:*
+        version: link:../../native/packages/pdf-native-darwin-arm64
+      '@publisle/pdf-native-darwin-x64':
+        specifier: workspace:*
+        version: link:../../native/packages/pdf-native-darwin-x64
+      '@publisle/pdf-native-linux-arm64':
+        specifier: workspace:*
+        version: link:../../native/packages/pdf-native-linux-arm64
+      '@publisle/pdf-native-linux-x64':
+        specifier: workspace:*
+        version: link:../../native/packages/pdf-native-linux-x64
+      '@publisle/pdf-native-win32-x64':
+        specifier: workspace:*
+        version: link:../../native/packages/pdf-native-win32-x64
 
   packages/schema: {}
 

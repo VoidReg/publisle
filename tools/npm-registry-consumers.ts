@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { npmCli, reviewedTarballs } from "./npm-release.ts";
+import { npmCli, reviewedTarballs } from "./release.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const [manifestPath] = process.argv.slice(2);

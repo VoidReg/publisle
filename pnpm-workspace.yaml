@@ -3,6 +3,7 @@ packages:
   - blocks/*
   - examples/*
   - sites/*
+  - native/packages/*
 
 allowBuilds:
   esbuild: true

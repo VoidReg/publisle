@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# PR checks may cancel; main publication and recovery must retain their artifacts.
+concurrency:
+  group: release-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  queue: ${{ github.event_name == 'pull_request' && 'single' || 'max' }}
+
+jobs:
+  changeset:
+    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node tools/check-changeset.ts
+  check:
+    needs: changeset
+    uses: ./.github/workflows/check.yml
+  research:
+    needs: changeset
+    uses: ./.github/workflows/research.yml
+  native:
+    needs: changeset
+    uses: ./.github/workflows/native-pdf-artifacts.yml
+  pdf:
+    needs: changeset
+    uses: ./.github/workflows/pdf-service.yml
+  distribution:
+    needs: native
+    uses: ./.github/workflows/distribution.yml
+  validate:
+    needs: [check, research, distribution, pdf]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo 'All required checks and packed consumers passed before publication.'
+
+  version:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    outputs:
+      publish: ${{ steps.mode.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Select version PR or publication
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = workflow_dispatch ] || ! git diff --quiet HEAD^ HEAD -- .release/plan.json; then
+            echo publish=true >> "$GITHUB_OUTPUT"
+          else
+            echo publish=false >> "$GITHUB_OUTPUT"
+          fi
+      - uses: changesets/action@v1
+        id: changesets
+        if: steps.mode.outputs.publish != 'true'
+        with:
+          version: pnpm release:version
+          title: Version packages
+          commit: Version packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GITHUB_TOKEN-created PRs do not trigger pull_request workflows. Explicitly
+      # dispatch the validation workflow at the bot branch's exact commit.
+      - name: Validate the generated version PR
+        if: steps.mode.outputs.publish != 'true' && steps.changesets.outputs.pullRequestNumber != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run release.yml --ref changeset-release/main
+
+  publish:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install trusted publishing support
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@12.2.0
+      - name: Restore exact validated source artifacts and prior upload progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/release.ts promote
+      - name: Publish and reconcile package releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/release.ts publish
+      - name: Registry installation smoke tests
+        run: node tools/npm-registry-consumers.ts .local/release/release-manifest.json
+      - name: Finalize package GitHub releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/release.ts finalize
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: publication-progress-${{ github.run_attempt }}
+          path: |
+            .local/release/accepted-uploads.json
+            .local/release/publication-record.json
+            .local/release/registry-consumers.json
+          if-no-files-found: ignore
+          retention-days: 90
+  deploy:
+    needs: publish
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Deploy and validate PDF service
+        env:
+          PDF_DEPLOY_HOST: ${{ vars.PDF_DEPLOY_HOST }}
+          PDF_DEPLOY_USER: ${{ vars.PDF_DEPLOY_USER }}
+          PDF_DEPLOY_KEY: ${{ secrets.PDF_DEPLOY_KEY }}
+          PDF_DEPLOY_HOST_KEY: ${{ vars.PDF_DEPLOY_HOST_KEY }}
+        run: bash deploy/vps/release.sh

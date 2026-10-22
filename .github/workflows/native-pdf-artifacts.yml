@@ -1,23 +1,13 @@
 name: Native PDF platform artifacts
 
 on:
-  pull_request:
-    paths:
-      - "native/pdf/**"
-      - "packages/research/src/native*.ts"
-      - "tools/*native*"
-      - ".github/workflows/native-pdf-artifacts.yml"
   workflow_call:
   workflow_dispatch:
-    inputs:
-      publish:
-        description: Publish all five validated native packages to npm
-        type: boolean
-        default: false
 
 concurrency:
   group: native-artifacts-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  queue: ${{ github.event_name == 'pull_request' && 'single' || 'max' }}
 
 permissions:
   contents: read
@@ -88,6 +78,13 @@ jobs:
           CID=$(docker create native-pdf-compiler)
           docker cp "$CID:/publisle-pdf" "$RUNNER_TEMP/publisle-pdf"
           docker rm "$CID"
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/pdf/target
+          key: native-release-${{ runner.os }}-${{ matrix.architecture }}-${{ hashFiles('native/pdf/Cargo.lock') }}
       - name: Build macOS and Windows binaries with the pinned toolchain
         if: matrix.platform != 'linux'
         shell: bash
@@ -112,31 +109,3 @@ jobs:
         with:
           name: native-pdf-${{ matrix.platform }}-${{ matrix.architecture }}
           path: ${{ runner.temp }}/publisle-pdf-native-*.tgz
-
-  publish:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
-    needs: binary
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: native-pdf-*
-          path: ${{ runner.temp }}/native-release
-      - name: Install trusted-publishing npm
-        working-directory: ${{ runner.temp }}
-        run: npm install --global npm@12.2.0
-      - name: Publish exact validated platform archives
-        run: node tools/publish-native-pdf.mjs "$RUNNER_TEMP/native-release"
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: native-npm-publication
-          path: ${{ runner.temp }}/native-release/publication.json
-          if-no-files-found: ignore

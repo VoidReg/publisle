@@ -6,7 +6,11 @@ import {
   createLatexPackage,
   resolvePortableCitations,
 } from "@publisle/research";
-import { setupCompiler, writeLatexPackage } from "@publisle/research/node";
+import {
+  compileNativePdf,
+  setupCompiler,
+  writeLatexPackage,
+} from "@publisle/research/node";
 import type { SourcePackage, PublishingTemplate } from "@publisle/template-sdk";
 import { template as article } from "@publisle/template-article";
 import { template as ieee } from "@publisle/template-ieee";
@@ -91,3 +95,37 @@ await assert.rejects(
 console.log(
   "Packed Research article tagging, five templates, Springer resources, citations, CLI plugin and compiler manifest resolution pass.",
 );
+
+// With no external programs available, the installed optional binary and its
+// bundled fonts must produce a PDF without Python, TeX or Docker.
+const previousPath = process.env["PATH"];
+const previousCompiler = process.env["PUBLISLE_NATIVE_COMPILER"];
+const previousFonts = process.env["PUBLISLE_NATIVE_FONTS"];
+try {
+  process.env["PATH"] = "";
+  delete process.env["PUBLISLE_NATIVE_COMPILER"];
+  delete process.env["PUBLISLE_NATIVE_FONTS"];
+  const result = await compileNativePdf(input, { sourceDirectory: "." });
+  assert.equal(new TextDecoder().decode(result.pdf.slice(0, 5)), "%PDF-");
+  assert(result.pages >= 1);
+  const manifest = JSON.parse(
+    await readFile(
+      new URL(
+        "./node_modules/@publisle/research/package.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ) as { version: string };
+  assert.equal(result.compilerVersion, manifest.version);
+} finally {
+  for (const [key, value] of [
+    ["PATH", previousPath],
+    ["PUBLISLE_NATIVE_COMPILER", previousCompiler],
+    ["PUBLISLE_NATIVE_FONTS", previousFonts],
+  ] as const) {
+    if (value === undefined) Reflect.deleteProperty(process.env, key);
+    else process.env[key] = value;
+  }
+}
+console.log("Installed native compiler works without Python, TeX or Docker.");
