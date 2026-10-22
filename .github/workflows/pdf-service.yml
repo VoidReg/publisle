@@ -26,6 +26,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs tools/tests/native-pdf-readiness.test.mjs
+      - run: bash tools/ci-apt-sources.sh
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/worker.Dockerfile -t publisle-pdf-worker:local .
@@ -60,6 +61,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs tools/tests/native-pdf-readiness.test.mjs
+      - run: bash tools/ci-apt-sources.sh
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - uses: actions/cache@v5

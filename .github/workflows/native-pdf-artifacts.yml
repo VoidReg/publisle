@@ -85,6 +85,7 @@ jobs:
             ~/.cargo/git
             native/pdf/target
           key: native-release-${{ runner.os }}-${{ matrix.architecture }}-${{ hashFiles('native/pdf/Cargo.lock') }}
+          restore-keys: native-release-${{ runner.os }}-${{ matrix.architecture }}-
       - name: Build macOS and Windows binaries with the pinned toolchain
         if: matrix.platform != 'linux'
         shell: bash

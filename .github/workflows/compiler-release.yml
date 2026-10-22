@@ -63,6 +63,7 @@ jobs:
           echo "PUBLISLE_COMPILER_IMAGE=$COMPILER_IMAGE" >> "$GITHUB_ENV"
       - name: Install validator and PDF inspection tools
         run: |
+          bash tools/ci-apt-sources.sh
           sudo apt-get update
           sudo apt-get install -y default-jre-headless poppler-utils
           node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"

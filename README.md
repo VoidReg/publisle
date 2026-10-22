@@ -5,7 +5,7 @@
   </picture>
   <p><strong>Portable semantic articles, compiled into static content with optional interactive islands.</strong></p>
   <p>
-    <a href="https://github.com/VoidReg/publisle/actions/workflows/check.yml"><img src="https://github.com/VoidReg/publisle/actions/workflows/check.yml/badge.svg" alt="Check status" /></a>
+    <a href="https://github.com/VoidReg/publisle/actions/workflows/release.yml"><img src="https://github.com/VoidReg/publisle/actions/workflows/release.yml/badge.svg" alt="Release validation status" /></a>
     <img src="https://img.shields.io/badge/status-beta-9B3214" alt="beta" />
     <img src="https://img.shields.io/badge/node-24%2B-1A1513" alt="Node 24+" />
   </p>
