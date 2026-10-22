@@ -52,7 +52,9 @@ export async function install(destination) {
     for await (const part of response.body) {
       size += part.length;
       if (size > 32 * 1024 * 1024) {
-        await response.body.cancel().catch(() => {});
+        await response.body.cancel().catch(() => {
+          /* The iterator may still hold the reader lock. */
+        });
         throw new Error("veraPDF installer exceeds 32 MiB");
       }
       parts.push(part);

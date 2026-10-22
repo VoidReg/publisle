@@ -81,6 +81,7 @@ test(
         assert.ok(text.includes("1949"), "Resolved bibliography must survive");
         if (arabic) {
           assert.ok(text.includes("اختبار النشر العلمي وإتاحة المحتوى"), text);
+          assert.ok(text.includes("العَرَبِيَّة لا للاختبار."), text);
           const structure = (await execute("pdfinfo", ["-struct-text", path]))
             .stdout;
           assert.ok(structure.includes("العَرَبِيَّة"), structure);

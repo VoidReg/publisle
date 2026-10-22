@@ -72,6 +72,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - uses: actions/cache@v5
+        id: rust-cache
         with:
           path: |
             ~/.cargo/registry
@@ -128,6 +129,14 @@ jobs:
           export PDF_TEST_NATIVE_WORKER_IMAGE="$(docker image inspect publisle-pdf-native:local --format '{{.Id}}')"
           export PDF_TEST_ARTIFACTS="$RUNNER_TEMP/native-pdf-artifacts/parity"
           node tools/native-pdf-corpus.mjs
+      - uses: actions/cache/save@v5
+        if: always() && steps.rust-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/pdf/target
+          key: native-pdf-rust-1.90-${{ runner.os }}-${{ hashFiles('native/pdf/Cargo.lock') }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:
