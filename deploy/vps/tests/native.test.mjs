@@ -82,10 +82,40 @@ test(
         if (arabic) {
           assert.ok(text.includes("اختبار النشر العلمي وإتاحة المحتوى"), text);
           assert.ok(text.includes("العَرَبِيَّة لا للاختبار."), text);
-          const structure = (await execute("pdfinfo", ["-struct-text", path]))
-            .stdout;
-          assert.ok(structure.includes("العَرَبِيَّة"), structure);
-          assert.ok(structure.includes("للاختبار"), structure);
+          const { getDocument } =
+            await import("pdfjs-dist/legacy/build/pdf.mjs");
+          const loading = getDocument({
+            data: new Uint8Array(result.pdf),
+            useSystemFonts: false,
+            isEvalSupported: false,
+          });
+          try {
+            const document = await loading.promise;
+            const pages = [];
+            const structure = [];
+            for (let page = 1; page <= document.numPages; page++) {
+              const pdfPage = await document.getPage(page);
+              const content = await pdfPage.getTextContent();
+              structure.push(await pdfPage.getStructTree());
+              pages.push(content.items.map((item) => item.str ?? "").join(" "));
+            }
+            // Check ActualText directly; pdfinfo -struct-text prints the
+            // visual content sequence rather than these structure values.
+            const logical = JSON.stringify(structure);
+            assert.ok(logical.includes("العَرَبِيَّة"), logical);
+            assert.ok(logical.includes("للاختبار"), logical);
+            const copied = pages
+              .join(" ")
+              .normalize("NFKC")
+              .replace(/\s+/gu, " ");
+            for (const expected of [
+              "اختبار النشر العلمي وإتاحة المحتوى",
+              "العَرَبِيَّة لا للاختبار.",
+            ])
+              assert.ok(copied.includes(expected.normalize("NFKC")), copied);
+          } finally {
+            await loading.destroy();
+          }
         } else assert.ok(text.includes("office affinity"), text);
         const info = (await execute("pdfinfo", [path])).stdout;
         assert.match(info, /Tagged:\s+yes/);
@@ -134,11 +164,10 @@ test(
   },
 );
 
-// Poppler reorders characters inside Arabic ligature/mark clusters in geometry-based
-// extraction, despite correct logical structure. Keep Arabic on the legacy engine
-// until viewer copy/paste parity is independently established.
+// Poppler and PDF.js extraction are checked above. Interactive Acrobat selection
+// still needs independent evidence before the full Arabic readiness gate closes.
 test.todo(
-  "native Arabic copy/paste preserves ligatures and diacritics across PDF viewers",
+  "native Arabic selection preserves ligatures and diacritics in Acrobat",
 );
 
 test(
