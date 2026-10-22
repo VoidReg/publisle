@@ -1,6 +1,9 @@
 import { expect, it } from "vitest";
 import { document, createBlock } from "@publisle/schema";
-import { checkSvg, lowerImages } from "../src/worker.ts";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { convertAssets, checkSvg, lowerImages } from "../src/worker.ts";
 
 it("rejects SVG active content, file references, CSS imports and decoder escapes", () => {
   checkSvg(
@@ -53,10 +56,6 @@ it("embeds inline Markdown images as adjacent figures without mutating editor da
 });
 
 it("passes validated native SVGs through without replacing text with raster glyph boxes", async () => {
-  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
-  const { tmpdir } = await import("node:os");
-  const { join } = await import("node:path");
-  const { convertAssets } = await import("../src/worker.ts");
   const directory = await mkdtemp(join(tmpdir(), "publisle-svg-worker-"));
   try {
     const bytes = Buffer.from(

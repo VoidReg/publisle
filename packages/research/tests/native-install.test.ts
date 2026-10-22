@@ -4,10 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 const state = vi.hoisted(() => ({ packagePath: "" }));
-vi.mock("node:module", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:module")>()),
-  createRequire: () =>
-    Object.assign(() => {}, { resolve: () => state.packagePath }),
+vi.mock("node:module", () => ({
+  createRequire: () => ({ resolve: () => state.packagePath }),
 }));
 import {
   installedNativeCompiler,
