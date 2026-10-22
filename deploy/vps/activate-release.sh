@@ -12,13 +12,21 @@ UPLOAD="/var/tmp/publisle-deploy-$RELEASE_SHA"
 install -d -o root -g root -m 0755 /var/lib/publisle-releases
 STAGE=$(mktemp -d "/var/lib/publisle-releases/$RELEASE_SHA.XXXXXX")
 cp -a --no-dereference "$UPLOAD/source" "$UPLOAD/image.tar.gz" "$STAGE/"
-[[ -z $(find "$STAGE" -type l -print -quit) ]]
+[[ -z $(find "$STAGE" ! -type f ! -type d -print -quit) ]]
 command -v java >/dev/null
 command -v pdftotext >/dev/null
 UID_PUBLISLE=$(id -u publisle)
 RUNTIME=(--setenv=HOME=/var/lib/publisle-runtime --setenv="XDG_RUNTIME_DIR=/run/user/$UID_PUBLISLE" --setenv="DOCKER_HOST=unix:///run/user/$UID_PUBLISLE/docker.sock")
-chown -R publisle:publisle "$STAGE"
+# Runtime validation may write its outputs and dependencies, but it must never
+# replace source files that root later installs into the live service.
+chown -R root:root "$STAGE"
+chown root:publisle "$STAGE" "$STAGE/image.tar.gz"
 chmod 750 "$STAGE"
+chmod 640 "$STAGE/image.tar.gz"
+chmod -R go-w "$STAGE/source"
+VALIDATION="$STAGE/validation"
+install -d -o publisle -g publisle -m 0750 "$VALIDATION"
+chown -R publisle:publisle "$STAGE/source/deploy/vps/qa"
 function bounded() {
   systemd-run --unit="publisle-release-$RELEASE_SHA-$1" --wait --pipe --collect --uid=publisle --gid=publisle --working-directory="$STAGE/source" --slice=publisle-pdf.slice -p MemoryMax=320M -p MemorySwapMax=0 -p RuntimeMaxSec=1800 -p TimeoutStopSec=30 "${RUNTIME[@]}" --setenv="JAVA_TOOL_OPTIONS=-Xmx128m -XX:ActiveProcessorCount=1" "${@:2}"
 }
@@ -27,14 +35,17 @@ rm -f "$STAGE/image.tar.gz"
 # Validators live in the isolated staging tree, not the production API install.
 bounded dependencies /usr/bin/env -C "$STAGE/source/deploy/vps/qa" /usr/bin/npm ci --ignore-scripts --no-audit --no-fund
 ln -s deploy/vps/qa/node_modules "$STAGE/source/node_modules"
-bounded validator /usr/bin/node tools/install-verapdf.mjs "$STAGE/verapdf"
-bounded verify /usr/bin/node deploy/vps/verify-release.mjs "$IMAGE" "$STAGE"
+bounded validator /usr/bin/node tools/install-verapdf.mjs "$VALIDATION/verapdf"
+bounded verify /usr/bin/node deploy/vps/verify-release.mjs "$IMAGE" "$VALIDATION"
 BACKUP=$(mktemp -d "/opt/publisle-api/rollback-$RELEASE_SHA.XXXXXX")
 cp -a /etc/publisle-api.env "$BACKUP/env"
+if [[ -e /etc/publisle-deployed-release ]]; then cp -a /etc/publisle-deployed-release "$BACKUP/source"; fi
 if [[ -e /etc/publisle-native-pdf-verified.json ]]; then cp -a /etc/publisle-native-pdf-verified.json "$BACKUP/verification.json"; fi
 FILES=(server.mjs images.mjs limits.mjs queue.mjs reap.mjs worker.mjs)
 for file in "${FILES[@]}"; do [[ ! -e /opt/publisle-api/$file ]] || cp -a "/opt/publisle-api/$file" "$BACKUP/$file"; done
 function rollback() {
+  trap - ERR HUP INT TERM
+  if [[ -e "$BACKUP/source" ]]; then cp -a "$BACKUP/source" /etc/publisle-deployed-release; else rm -f /etc/publisle-deployed-release; fi
   cp -a "$BACKUP/env" /etc/publisle-api.env
   if [[ -e "$BACKUP/verification.json" ]]; then cp -a "$BACKUP/verification.json" /etc/publisle-native-pdf-verified.json; else rm -f /etc/publisle-native-pdf-verified.json; fi
   for file in "${FILES[@]}"; do if [[ -e "$BACKUP/$file" ]]; then cp -a "$BACKUP/$file" "/opt/publisle-api/$file"; else rm -f "/opt/publisle-api/$file"; fi; done
@@ -42,8 +53,24 @@ function rollback() {
   echo 'Deployment failed; previous API, image configuration and verification restored.' >&2
 }
 trap rollback ERR
+trap 'rollback; exit 1' HUP INT TERM
 for file in "${FILES[@]}"; do install -o root -g root -m 0644 "$STAGE/source/deploy/vps/$file" "/opt/publisle-api/$file"; done
-install -o root -g root -m 0644 "$STAGE/verification.json" /etc/publisle-native-pdf-verified.json
+# Read an unprivileged output through an opened descriptor without following
+# links; root must not copy arbitrary host files selected by a staging process.
+/usr/bin/node --input-type=module - "$VALIDATION/verification.json" "$IMAGE" "$UID_PUBLISLE" <<'JS'
+import assert from 'node:assert/strict';
+import {openSync,closeSync,fstatSync,readSync,writeFileSync,renameSync,constants} from 'node:fs';
+const fd=openSync(process.argv[2],constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+let report;
+try {
+ const stat=fstatSync(fd);assert(stat.isFile()&&stat.uid===Number(process.argv[4])&&stat.nlink===1&&stat.size<=1024*1024);
+ const bytes=Buffer.alloc(1024*1024+1);const count=readSync(fd,bytes,0,bytes.length,0);assert(count<=1024*1024);
+ report=JSON.parse(bytes.subarray(0,count).toString('utf8'));
+} finally {closeSync(fd);}
+assert(report.image===process.argv[3]&&report.passed===true);
+const path='/etc/publisle-native-pdf-verified.json';
+writeFileSync(path+'.new',JSON.stringify(report,null,2)+'\n',{mode:0o644});renameSync(path+'.new',path);
+JS
 /usr/bin/node --input-type=module - "$IMAGE" <<'JS'
 import {readFileSync,writeFileSync,renameSync} from 'node:fs';
 const path='/etc/publisle-api.env';let text=readFileSync(path,'utf8');
@@ -63,7 +90,7 @@ JS
     printf '%s\n' "$RELEASE_SHA" > /etc/publisle-deployed-release.new
     chmod 0644 /etc/publisle-deployed-release.new
     mv /etc/publisle-deployed-release.new /etc/publisle-deployed-release
-    trap - ERR
+    trap - ERR HUP INT TERM
     echo "Deployed $RELEASE_SHA ($IMAGE), health, legacy defaults and public compilations verified."
     exit 0
   fi
