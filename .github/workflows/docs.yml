@@ -24,6 +24,7 @@ jobs:
       - run: pnpm exec markdownlint-cli2
       - uses: errata-ai/vale-action@v2
         with:
+          version: 3.24.0
           files: '["README.md", "docs", "packages", "blocks"]'
           fail_on_error: true
       - uses: lycheeverse/lychee-action@v2

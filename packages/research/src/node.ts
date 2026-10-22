@@ -460,7 +460,8 @@ async function taggingFormat(image?: string): Promise<string | undefined> {
           openin_any: "p",
           openout_any: "p",
         },
-        timeout: 15_000,
+        // Cold container startup can initialize LuaLaTeX caches.
+        timeout: image ? 60_000 : 15_000,
         maxBuffer: 1024 * 1024,
       },
     );

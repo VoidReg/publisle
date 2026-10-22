@@ -1,5 +1,15 @@
 # @publisle/research
 
+## 0.3.0
+
+### Minor Changes
+
+- 628aa6a: Install the matching optional native compiler and fonts on supported platforms. Keep native PDF opt-in and preserve each hosted profile’s legacy default. Release native binaries in lockstep with Research using validated archives and trusted publishing.
+
+### Patch Changes
+
+- Allow up to one minute for a cold container compiler probe to initialize before declaring the installed compiler unavailable.
+
 ## 0.2.0
 
 ### Minor Changes
