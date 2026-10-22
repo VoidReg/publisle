@@ -6,7 +6,9 @@ const run = (args: string[]) =>
   execFileSync("git", args, { encoding: "utf8" }).trim();
 const branch = process.env["GITHUB_HEAD_REF"] ?? process.env["GITHUB_REF_NAME"];
 if (branch === "changeset-release/main") {
-  execFileSync("pnpm", ["changeset", "status"], { stdio: "inherit" });
+  execFileSync("pnpm", ["changeset", "status", "--since", "origin/main"], {
+    stdio: "inherit",
+  });
 } else {
   const files = run(["diff", "--name-only", "origin/main...HEAD"]).split("\n");
   const root = resolve(import.meta.dirname, "..");
@@ -20,7 +22,9 @@ if (branch === "changeset-release/main") {
         );
       }) || /^native\/pdf\/(?:src\/|Cargo\.(?:toml|lock))/u.test(file),
   );
-  execFileSync("pnpm", ["changeset", "status"], { stdio: "inherit" });
+  execFileSync("pnpm", ["changeset", "status", "--since", "origin/main"], {
+    stdio: "inherit",
+  });
   if (publicChange)
     assert(
       files.some((file) =>

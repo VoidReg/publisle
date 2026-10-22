@@ -76,7 +76,7 @@ async function inspectLock(cwd: string, coreOnly: boolean): Promise<void> {
     }
     if (coreOnly)
       assert(
-        !/node_modules\/(?:@publisle\/(?:research|cli-research|template-[^/]+)|citeproc|fflate)$/u.test(
+        !/node_modules\/(?:@publisle\/(?:research|cli-research|pdf-native-[^/]+|template-[^/]+)|citeproc|fflate)$/u.test(
           path,
         ),
         `Research dependency leaked: ${path}`,

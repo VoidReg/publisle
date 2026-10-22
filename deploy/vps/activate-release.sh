@@ -57,7 +57,12 @@ const base='https://api.publisle.xyz';const health=await(await fetch(base+'/heal
 const capabilities=await(await fetch(base+'/pdf/capabilities')).json();const rows=capabilities.templates??capabilities.pdf?.templates??[];
 if(rows.length!==7||rows.some(row=>row.engines[0]==='rust'||!row.engines.includes('rust')))process.exit(1);
 JS
-  then trap - ERR; echo "Deployed $RELEASE_SHA ($IMAGE), health and legacy defaults verified."; exit 0; fi
+  then
+    bounded live /usr/bin/node deploy/vps/verify-live.mjs
+    trap - ERR
+    echo "Deployed $RELEASE_SHA ($IMAGE), health, legacy defaults and public compilations verified."
+    exit 0
+  fi
   sleep 2
 done
 false
