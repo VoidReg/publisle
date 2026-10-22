@@ -57,3 +57,14 @@ it("rejects missing metadata, missing fonts, unknown templates, and unresolved c
     /Unresolved citations/,
   );
 });
+
+it("preserves the requested native PDF/UA flavour without downgrading", () => {
+  const document = parse(markdown);
+  expect(
+    createNativePdfPackage(document, { fonts, pdfUa: "ua-1" }).input
+      .pdfStandard,
+  ).toBe("ua-1");
+  expect(
+    createNativePdfPackage(document, { fonts, pdfUa: false }).input.pdfStandard,
+  ).toBeNull();
+});

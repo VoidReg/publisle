@@ -16,6 +16,7 @@ import { createRequire } from "node:module";
 import { compileJob } from "../server.mjs";
 import { validateRequest, TEMPLATES } from "../limits.mjs";
 
+import { assertCompliant } from "../../../tools/validate-pdf-ua.mjs";
 const execute = promisify(execFile);
 const root = resolve(import.meta.dirname, "../../..");
 test(
@@ -116,7 +117,7 @@ test(
                   { maxBuffer: 8 * 1024 * 1024 },
                 )
               ).stdout;
-              assert.ok(report.includes('isCompliant="true"'), report);
+              assertCompliant(report, "ua2");
             }
           }
           console.log(

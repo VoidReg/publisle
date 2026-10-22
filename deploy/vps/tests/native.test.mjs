@@ -139,3 +139,81 @@ test(
 test.todo(
   "native Arabic copy/paste preserves ligatures and diacritics across PDF viewers",
 );
+
+test(
+  "hosted native SVG figures retain searchable labels, symbols and vector artwork",
+  {
+    skip: !process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+    timeout: 180000,
+  },
+  async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "publisle-native-svg-"));
+    const artifacts = process.env.PDF_TEST_ARTIFACTS ?? temporary;
+    const jobs = join(temporary, "jobs");
+    await mkdir(jobs);
+    await mkdir(artifacts, { recursive: true });
+    const figures = [
+      "fft-spectrum.svg",
+      "fft-spectrum-dark.svg",
+      "gibbs-overshoot.svg",
+      "gibbs-overshoot-dark.svg",
+    ];
+    const markdown = `---\ntitle: Native SVG regression\nauthors:\n  - name: Ada\n---\n\n# Results\n\n${figures.map((name) => `![${name}](https://fixture.invalid/${name})`).join("\n\n")}`;
+    try {
+      const result = await compileJob(
+        validateRequest({ markdown, engine: "rust" }, ["article"]),
+        new AbortController().signal,
+        {
+          nativeImage: process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+          nativeTemplates: ["article"],
+          image: process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+          jobDirectory: jobs,
+          imageDependencies: {
+            resolve: async () => [{ address: "93.184.216.34", family: 4 }],
+            download: async ({ url }) => ({
+              bytes: await readFile(
+                join(root, "sites/www/public", url.pathname.slice(1)),
+              ),
+              mime: "image/svg+xml",
+            }),
+          },
+        },
+      );
+      const path = join(artifacts, "native-svg-figures.pdf");
+      await writeFile(path, result.pdf);
+      const text = (await execute("pdftotext", [path, "-"])).stdout.normalize(
+        "NFKC",
+      );
+      assert.equal(text.match(/frequency bin k/gu)?.length, 2, text);
+      assert.equal(text.match(/fifteen-term partial sum/gu)?.length, 2, text);
+      for (const expected of ["|X[2]| = 4", "|X[6]| = 4", "π/16", "−π"])
+        assert(text.includes(expected), text);
+      assert(!text.includes("\uFFFD") && !text.includes("□"), text);
+      const images = (await execute("pdfimages", ["-list", path])).stdout
+        .trim()
+        .split("\n");
+      assert.equal(
+        images.length,
+        2,
+        "These SVG figures must remain vectors, not full-figure raster images",
+      );
+      if (process.env.PDF_TEST_VERAPDF) {
+        const report = (
+          await execute(
+            process.env.PDF_TEST_VERAPDF,
+            ["--flavour", "ua2", "--format", "xml", path],
+            { maxBuffer: 8 * 1024 * 1024 },
+          )
+        ).stdout;
+        await writeFile(
+          join(artifacts, "native-svg-figures.validation.xml"),
+          report,
+        );
+        assertCompliant(report, "ua2");
+      }
+      assert.deepEqual(await readdir(jobs), []);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  },
+);

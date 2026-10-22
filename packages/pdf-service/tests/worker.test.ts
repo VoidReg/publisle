@@ -51,3 +51,36 @@ it("embeds inline Markdown images as adjacent figures without mutating editor da
     data: { alt: "Result", src: "https://example.com/a.png" },
   });
 });
+
+it("passes validated native SVGs through without replacing text with raster glyph boxes", async () => {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { convertAssets } = await import("../src/worker.ts");
+  const directory = await mkdtemp(join(tmpdir(), "publisle-svg-worker-"));
+  try {
+    const bytes = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><text font-family="ui-monospace" y="20">Axis 123</text></svg>',
+    );
+    await writeFile(join(directory, "image-0.input"), bytes);
+    const assets = [
+      {
+        source: "https://fixture.invalid/axis.svg",
+        file: "image-0.input",
+        mime: "image/svg+xml",
+      },
+    ];
+    const output = await convertAssets(assets, directory, true);
+    expect(output[0]?.file).toBe("image-0.svg");
+    expect(output[0]?.bytes).toEqual(bytes);
+    await writeFile(
+      join(directory, "image-0.input"),
+      "<svg><script>bad</script></svg>",
+    );
+    await expect(convertAssets(assets, directory, true)).rejects.toThrow(
+      /active content/u,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

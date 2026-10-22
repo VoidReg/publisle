@@ -23,7 +23,7 @@ export interface NativePdfInput {
   readonly schemaVersion: typeof NATIVE_PDF_INPUT_VERSION;
   readonly template: NativePdfTemplate;
   readonly templateVersion: string;
-  readonly pdfStandard: "ua-2" | null;
+  readonly pdfStandard: "ua-1" | "ua-2" | null;
   readonly article: ResolvedDocument["article"] & { readonly title: string };
   readonly citations: readonly string[];
   readonly bibliography: ResolvedDocument["bibliography"];
@@ -37,7 +37,7 @@ export interface NativePdfInput {
 export interface NativePdfOptions {
   readonly template?: NativePdfTemplate;
   readonly style?: string;
-  readonly pdfUa?: "ua-2" | false;
+  readonly pdfUa?: "ua-1" | "ua-2" | false;
   readonly fonts: readonly NativeFont[];
   readonly assets?: NativePdfInput["assets"];
   readonly data?: { readonly country?: string };
@@ -136,7 +136,7 @@ export function createNativePdfPackage(
       schemaVersion: NATIVE_PDF_INPUT_VERSION,
       template,
       templateVersion: "0.1.0-experimental",
-      pdfStandard: options.pdfUa === false ? null : "ua-2",
+      pdfStandard: options.pdfUa === false ? null : (options.pdfUa ?? "ua-2"),
       article: { ...article, title: resolved.article.title },
       citations: resolved.citations,
       bibliography: resolved.bibliography,
