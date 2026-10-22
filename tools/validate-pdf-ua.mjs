@@ -78,6 +78,7 @@ export async function validatePdf(
   { validator = "verapdf", flavour = "ua2", report } = {},
 ) {
   assert(report, "A report path is required");
+  assert(["ua1", "ua2"].includes(flavour), "Unsupported PDF/UA flavour");
   const execute = promisify(execFile);
   let result;
   try {
