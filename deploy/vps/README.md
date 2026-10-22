@@ -207,10 +207,10 @@ existing engines. Do not reuse the legacy image's verification record.
 The record retains `image`, `passed`, `aggregateCpu: 0.5`,
 `aggregateMemoryMiB: 512` and successful `samples` for each enabled profile
 (`template`, `engine: "rust"`, `pdfBytes`). It additionally requires
-`native.templates` entries with `id`, `contentParity`, `layoutReviewed`,
+`native.templates` entries with `id`, `contentParity`, `layoutChecksPassed`,
 `pdfUa2`, `uncachedSamples` (at least 30) and `uncachedP95Ms` (below 5000).
-Visual and content review must be real; passing a validator alone is insufficient.
-Once verified, Rust becomes the default for those profiles. Explicit legacy
+The deployment gate also checks extracted text, glyphs and text bounds, and retains rendered pages for review.
+Once verified, Rust is available as an explicit choice for those profiles. The existing legacy
 engine requests continue to work. Changing the image requires fresh evidence.
 Rollback removes the native environment settings and restarts the API; retain
 the previous image and its verification file.

@@ -58,6 +58,11 @@ jobs:
             "${{ vars.PUBLIC_API_URL || 'https://api.publisle.xyz' }}" \
             "${{ vars.PUBLIC_PDF_ENABLED || 'false' }}" > sites/www/.env.production
           pnpm --filter @publisle/www build
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-1.63.0
+      - run: bash tools/ci-apt-sources.sh
       - name: Install browser
         run: pnpm exec playwright-core install --with-deps chromium
       - name: Playground browser regression

@@ -1,6 +1,6 @@
 # Measured publishing performance
 
-Publisle separates document preparation, publication, and reader delivery. This comparison measures those stages explicitly against MDX, Docusaurus, VitePress, and Pandoc, using the same source content and retaining the observations behind the homepage numbers.
+Measure preparation, publication and reader delivery separately. The results below compare fixed configurations of Publisle, MDX, Docusaurus, VitePress and Pandoc; they are not a universal speed ranking. Raw reports and source hashes accompany the measurements.
 
 ## What is compared
 
@@ -76,3 +76,30 @@ The Research-paper sample is the principal latency workload: five warmups and th
 The five-second p95 target was not met by the existing LaTeX path within the fixed budget. The native study changes typography and template implementation, and is not a production replacement or evidence of publisher/PDF-UA equivalence.
 
 <!-- /pdf-results -->
+
+## Preparation and optimization
+
+Preparation is measured without caching. The [generated measurement report](../standards/performance.md) records its environment, inputs and p50/p95 observations. Regenerate it with `node tools/benchmarks/measure.ts`; profile separately with `--profile`.
+
+Canonicalization previously allocated a UTF-8 buffer for every fragment just to count bytes. Counting short validated fragments directly, while retaining native encoding for strings of 1,024 UTF-16 units or more, reduced preparation costs. It preserves canonical text, byte and structural limits, getter rejection, hashes, diagnostics and output. It does not cache mutable declarations or bypass validation.
+
+| Workload                   | Before median ms | After median ms |
+| -------------------------- | ---------------: | --------------: |
+| 100 paragraphs             |           33.816 |          11.662 |
+| 1,000 paragraphs           |          317.720 |         113.095 |
+| 10,000 paragraphs          |         3440.320 |        1244.365 |
+| Registry construction      |          170.669 |          49.380 |
+| 10,000-document corpus     |         4587.378 |        1679.635 |
+| 1,000-paragraph end-to-end |          491.992 |         160.527 |
+
+These paired local observations use five excluded warmups, 30 preparation samples and 100 short-operation samples. Five baseline fixtures preserved prepared output, diagnostics, identities and publication output exactly. The initial all-JavaScript counter regressed large ASCII strings; the hybrid implementation retains native encoding for them. Declaration validation and canonical tree processing remain substantial costs. Profiles and raw local runs live in ignored `benchmarks/` directories; commands and measurement boundaries are in the [harness instructions](../../tools/benchmarks/README.md).
+
+## Calibration snapshot and limits
+
+The [accepted budget data](../../tools/benchmarks/accepted-budgets.json) preserves all recorded timing and byte allowances from [run 37934846094](https://github.com/VoidReg/publisle/actions/runs/37934846094), repetitions 1–3, baseline `1753e9b526bee12c349420a82a0722968f011dd9`. The retained artifacts are `performance-calibration-37934846094-1-{1,2,3}`. They record input hashes, CPU metadata, Node 24.21.0 and Chromium 153.0.8010.12. The three runners had different CPUs; these are observations, not portable latency guarantees.
+
+Timing allowances are the largest observed run p95 plus twice the largest run standard deviation, rounded up to milliseconds. Byte allowances are the largest observation plus the larger of observed spread or 1%. Neither formula is a confidence interval. GitHub does not enforce these numbers, and a machine change is not a reason to rewrite them.
+
+A full browser run uses 30 fresh contexts after two warmups, with one, five and 100 islands in two placements, for both frameworks and delivery paths. Preparation uses five warmups and 30 samples; short operations use 100 samples. Percentiles use nearest rank and variance uses the sample denominator. Gzip uses level 6. A three-sample smoke run checks instrumentation, not p95. Incomplete runs, correctness failures, tooling leaks, early island imports and browser errors fail the harness.
+
+Use `node tools/benchmarks/gate.ts` for an optional local comparison with the snapshot. Review bytes and each workload separately; do not add overlapping props/CSS twice or combine preparation, registry setup, throughput and activation into one score. Heap, long tasks, CLS, parse/evaluation, mobile devices and unmeasured publishing compilers remain observations. Exact legacy PDF similarity is not a release requirement.

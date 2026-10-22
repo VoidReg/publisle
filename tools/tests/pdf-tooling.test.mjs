@@ -101,3 +101,58 @@ test("installer rejects untrusted bytes before ZIP extraction or execution", () 
     /checksum mismatch/,
   );
 });
+
+test(
+  "deployment reads bounded regular verification files without following links",
+  { skip: process.platform === "win32" },
+  async () => {
+    const { readFile, mkdtemp, writeFile, symlink, link, rm } =
+      await import("node:fs/promises");
+    const { execFileSync, spawnSync } = await import("node:child_process");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const source = await readFile(
+      new URL("../../deploy/vps/activate-release.sh", import.meta.url),
+      "utf8",
+    );
+    const block = source.match(
+      /"\$VALIDATION\/verification\.json".*<<'JS'\n([\s\S]*?)\nJS/u,
+    )?.[1];
+    assert(block, "Privileged report reader is present");
+    // Execute the production reader up to its privileged write, in a subprocess.
+    const script = block.split(
+      "const path='/etc/publisle-native-pdf-verified.json'",
+    )[0];
+    const directory = await mkdtemp(
+      join(tmpdir(), "publisle-verification-test-"),
+    );
+    try {
+      const file = join(directory, "record.json");
+      await writeFile(file, JSON.stringify({ image: a, passed: true }));
+      const read = (path, uid = process.getuid()) =>
+        spawnSync(
+          process.execPath,
+          ["--input-type=module", "-", path, a, String(uid)],
+          { input: script, encoding: "utf8", timeout: 5000 },
+        );
+      assert.equal(read(file).status, 0);
+      assert.notEqual(read(file, process.getuid() + 1).status, 0);
+      const symbolic = join(directory, "symbolic.json");
+      await symlink(file, symbolic);
+      assert.notEqual(read(symbolic).status, 0);
+      const hard = join(directory, "hard.json");
+      await link(file, hard);
+      assert.notEqual(read(hard).status, 0);
+      await rm(hard);
+      const fifo = join(directory, "fifo");
+      execFileSync("mkfifo", [fifo]);
+      const result = read(fifo);
+      assert.equal(result.error, undefined, "FIFO rejection must not block");
+      assert.notEqual(result.status, 0);
+      await writeFile(file, "x".repeat(1024 * 1024 + 1));
+      assert.notEqual(read(file).status, 0);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  },
+);

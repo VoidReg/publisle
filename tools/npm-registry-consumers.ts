@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { npmCli, reviewedTarballs } from "./npm-release.ts";
+import { npmCli, reviewedTarballs } from "./release.ts";
 
 const root = resolve(import.meta.dirname, "..");
 const [manifestPath] = process.argv.slice(2);
@@ -76,7 +76,7 @@ async function inspectLock(cwd: string, coreOnly: boolean): Promise<void> {
     }
     if (coreOnly)
       assert(
-        !/node_modules\/(?:@publisle\/(?:research|cli-research|template-[^/]+)|citeproc|fflate)$/u.test(
+        !/node_modules\/(?:@publisle\/(?:research|cli-research|pdf-native-[^/]+|template-[^/]+)|citeproc|fflate)$/u.test(
           path,
         ),
         `Research dependency leaked: ${path}`,

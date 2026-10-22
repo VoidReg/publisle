@@ -1,11 +1,12 @@
 /** Locate a pinned, already installed native artifact. Never download at runtime. */
 import { createHash } from "node:crypto";
+import researchPackage from "../package.json" with { type: "json" };
 import { createRequire } from "node:module";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { parseJson, isPlainObject } from "@publisle/schema";
 const require = createRequire(import.meta.url);
-export const NATIVE_ARTIFACT_VERSION = "0.1.0";
+export const NATIVE_ARTIFACT_VERSION = researchPackage.version;
 export const NATIVE_PLATFORM_PACKAGES: Readonly<Record<string, string>> = {
   "linux-x64": "@publisle/pdf-native-linux-x64",
   "linux-arm64": "@publisle/pdf-native-linux-arm64",

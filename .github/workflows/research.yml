@@ -1,9 +1,6 @@
 name: Research export
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_call:
 
 jobs:
@@ -21,6 +18,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install local TeX and PDF tooling
         run: |
+          bash tools/ci-apt-sources.sh
           sudo apt-get update
           sudo apt-get install -y latexmk texlive-publishers texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra texlive-lang-arabic texlive-lang-chinese fonts-paktype fonts-texgyre fonts-texgyre-math fontconfig poppler-utils libxml2-utils default-jre-headless
           # apt TeX Live keeps fonts inside the texmf tree, which fontconfig

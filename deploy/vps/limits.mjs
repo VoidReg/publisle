@@ -74,7 +74,7 @@ export function availableTemplates(nativeTemplates = []) {
   return TEMPLATES.map((template) => ({
     ...template,
     engines: nativeTemplates.includes(template.id)
-      ? ["rust", ...template.engines]
+      ? [...template.engines, "rust"]
       : [...template.engines],
   }));
 }

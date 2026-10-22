@@ -66,5 +66,12 @@
     "url": "git+https://github.com/VoidReg/publisle.git",
     "directory": "packages/research"
   },
-  "homepage": "https://github.com/VoidReg/publisle#readme"
+  "homepage": "https://github.com/VoidReg/publisle#readme",
+  "optionalDependencies": {
+    "@publisle/pdf-native-linux-x64": "workspace:*",
+    "@publisle/pdf-native-linux-arm64": "workspace:*",
+    "@publisle/pdf-native-darwin-x64": "workspace:*",
+    "@publisle/pdf-native-darwin-arm64": "workspace:*",
+    "@publisle/pdf-native-win32-x64": "workspace:*"
+  }
 }

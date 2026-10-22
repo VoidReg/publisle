@@ -38,5 +38,11 @@
     "url": "git+https://github.com/VoidReg/publisle.git",
     "directory": "blocks/core"
   },
-  "homepage": "https://github.com/VoidReg/publisle#readme"
+  "homepage": "https://github.com/VoidReg/publisle#readme",
+  "keywords": [
+    "publisle",
+    "semantic-document",
+    "blocks",
+    "publishing"
+  ]
 }

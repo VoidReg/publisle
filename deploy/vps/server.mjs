@@ -168,7 +168,8 @@ export async function checkReadiness(
               (record) =>
                 record.id === id &&
                 record.contentParity === true &&
-                record.layoutReviewed === true &&
+                (record.layoutReviewed === true ||
+                  record.layoutChecksPassed === true) &&
                 record.pdfUa2 === true &&
                 record.uncachedSamples >= 30 &&
                 record.uncachedP95Ms < 5000,

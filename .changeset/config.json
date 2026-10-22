@@ -2,7 +2,16 @@
   "$schema": "https://unpkg.com/@changesets/config/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [],
+  "fixed": [
+    [
+      "@publisle/research",
+      "@publisle/pdf-native-linux-x64",
+      "@publisle/pdf-native-linux-arm64",
+      "@publisle/pdf-native-darwin-x64",
+      "@publisle/pdf-native-darwin-arm64",
+      "@publisle/pdf-native-win32-x64"
+    ]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
