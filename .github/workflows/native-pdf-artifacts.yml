@@ -9,6 +9,11 @@ on:
       - ".github/workflows/native-pdf-artifacts.yml"
   workflow_call:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish all five validated native packages to npm
+        type: boolean
+        default: false
 
 concurrency:
   group: native-artifacts-${{ github.head_ref || github.ref_name }}
@@ -107,3 +112,31 @@ jobs:
         with:
           name: native-pdf-${{ matrix.platform }}-${{ matrix.architecture }}
           path: ${{ runner.temp }}/publisle-pdf-native-*.tgz
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    needs: binary
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: native-pdf-*
+          path: ${{ runner.temp }}/native-release
+      - name: Install trusted-publishing npm
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@12.2.0
+      - name: Publish exact validated platform archives
+        run: node tools/publish-native-pdf.mjs "$RUNNER_TEMP/native-release"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: native-npm-publication
+          path: ${{ runner.temp }}/native-release/publication.json
+          if-no-files-found: ignore
