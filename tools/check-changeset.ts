@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 const run = (args: string[]) =>
   execFileSync("git", args, { encoding: "utf8" }).trim();
-const branch = process.env["GITHUB_HEAD_REF"] || process.env["GITHUB_REF_NAME"];
+const headRef = process.env["GITHUB_HEAD_REF"];
+const branch = headRef?.length ? headRef : process.env["GITHUB_REF_NAME"];
 if (branch === "changeset-release/main") {
   await readReleasePlan(resolve(import.meta.dirname, ".."));
   execFileSync("pnpm", ["changeset", "status", "--since", "HEAD"], {
