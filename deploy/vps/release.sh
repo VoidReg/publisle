@@ -12,6 +12,16 @@ printf '%s\n' "$PDF_DEPLOY_KEY" > "$STAGE/key"
 chmod 600 "$STAGE/key"
 printf '%s\n' "$PDF_DEPLOY_HOST_KEY" > "$STAGE/known_hosts"
 SSH_ARGS=(-i "$STAGE/key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$STAGE/known_hosts")
+# A retry of an older release must not roll back a newer successful deployment.
+CURRENT=$(ssh "${SSH_ARGS[@]}" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST" 'if [ -f /etc/publisle-deployed-release ]; then cat /etc/publisle-deployed-release; fi')
+if [[ -n "$CURRENT" && "$CURRENT" != "$GITHUB_SHA" ]]; then
+  [[ "$CURRENT" =~ ^[a-f0-9]{40}$ ]]
+  if git merge-base --is-ancestor "$GITHUB_SHA" "$CURRENT"; then
+    echo "A newer source is already deployed; skipping this older deployment."
+    exit 0
+  fi
+  git merge-base --is-ancestor "$CURRENT" "$GITHUB_SHA"
+fi
 pnpm --filter @publisle/pdf-service build
 docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-release .
 IMAGE=$(docker image inspect publisle-pdf-release --format '{{.Id}}')

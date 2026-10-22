@@ -59,6 +59,9 @@ if(rows.length!==7||rows.some(row=>row.engines[0]==='rust'||!row.engines.include
 JS
   then
     bounded live /usr/bin/node deploy/vps/verify-live.mjs
+    printf '%s\n' "$RELEASE_SHA" > /etc/publisle-deployed-release.new
+    chmod 0644 /etc/publisle-deployed-release.new
+    mv /etc/publisle-deployed-release.new /etc/publisle-deployed-release
     trap - ERR
     echo "Deployed $RELEASE_SHA ($IMAGE), health, legacy defaults and public compilations verified."
     exit 0
