@@ -1,4 +1,9 @@
-import { isPlainObject, type Document } from "@publisle/schema";
+import {
+  isPlainObject,
+  type Block,
+  type BlockType,
+  type Document,
+} from "@publisle/schema";
 import { citationClusters, projectArticle } from "./article.ts";
 import { resolveDocument, type ResolvedDocument } from "./resolve.ts";
 import type { ArticleBlock, ArticleInline } from "./article.ts";
@@ -51,7 +56,7 @@ export interface NativePdfPackage {
 
 /** Pure lowering shared by the website worker and Research CLI. No filesystem or network access. */
 export function createNativePdfPackage(
-  document: Document,
+  document: Document<Block<BlockType, unknown>>,
   options: NativePdfOptions,
 ): NativePdfPackage {
   const template = options.template ?? "article";

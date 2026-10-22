@@ -10,7 +10,13 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { parseJson, isPlainObject, type Document } from "@publisle/schema";
+import {
+  parseJson,
+  isPlainObject,
+  type Block,
+  type BlockType,
+  type Document,
+} from "@publisle/schema";
 import {
   createNativePdfPackage,
   type NativeFont,
@@ -44,7 +50,7 @@ export interface NativeCompileResult {
 
 /** Explicit native compiler invocation. Automatic selection remains gated on parity. */
 export async function compileNativePdf(
-  document: Document,
+  document: Document<Block<BlockType, unknown>>,
   options: NativeCompileOptions,
 ): Promise<NativeCompileResult> {
   const timeout = options.timeoutMs ?? 180_000;
