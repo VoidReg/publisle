@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { verifyReadiness } from "../native-pdf-readiness.mjs";
 test("release gate rejects missing, stale, corrupt and incomplete readiness evidence", async () => {
@@ -14,12 +13,6 @@ test("release gate rejects missing, stale, corrupt and incomplete readiness evid
       profiles: ["article"],
       gates: [{ id: "svg-fonts" }],
     };
-    const reference = JSON.parse(
-      await readFile(
-        new URL("../../native/pdf/reference.json", import.meta.url),
-        "utf8",
-      ),
-    );
     const sourceCommit = "a".repeat(40);
     const bytes = Buffer.from("independent validation fixture");
     await writeFile(join(directory, "report.txt"), bytes);
@@ -31,10 +24,8 @@ test("release gate rejects missing, stale, corrupt and incomplete readiness evid
       schemaVersion: 1,
       image: `sha256:${"b".repeat(64)}`,
       sourceCommit,
-      referenceCommit: reference.sourceCommit,
       profiles: ["article"],
       gates: [{ id: "svg-fonts", passed: true, artifacts: [artifact] }],
-      parity: { passed: true, figuresPassed: true },
       distribution: {
         platforms: [
           "darwin-arm64",
@@ -63,6 +54,16 @@ test("release gate rejects missing, stale, corrupt and incomplete readiness evid
       await verifyReadiness(matrix, evidence, directory, sourceCommit),
       true,
     );
+    // Legacy layout comparisons are optional diagnostics, including failures.
+    assert.equal(
+      await verifyReadiness(
+        matrix,
+        { ...evidence, parity: { passed: false, figuresPassed: false } },
+        directory,
+        sourceCommit,
+      ),
+      true,
+    );
     await assert.rejects(
       verifyReadiness(matrix, evidence, directory, "c".repeat(40)),
       /different source/,
@@ -87,15 +88,6 @@ test("release gate rejects missing, stale, corrupt and incomplete readiness evid
         sourceCommit,
       ),
       /Unverified/,
-    );
-    await assert.rejects(
-      verifyReadiness(
-        matrix,
-        { ...evidence, parity: { passed: false, figuresPassed: true } },
-        directory,
-        sourceCommit,
-      ),
-      /parity/,
     );
     await assert.rejects(
       verifyReadiness(

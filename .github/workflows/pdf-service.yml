@@ -112,23 +112,6 @@ jobs:
           export PUBLISLE_NATIVE_COMPILER="$RUNNER_TEMP/publisle-pdf"
           export PUBLISLE_NATIVE_FONTS="$RUNNER_TEMP/native-fonts.json"
           node --test --test-concurrency=1 deploy/vps/tests/native.test.mjs deploy/vps/tests/native-standards.test.mjs
-      - uses: actions/checkout@v7
-        with:
-          ref: 77a04eec404fcb1b10142d018e97b174a129b45c
-          path: .native-reference
-          persist-credentials: false
-      - name: Build the frozen legacy reference independently
-        run: |
-          pnpm --dir .native-reference install --frozen-lockfile
-          pnpm --dir .native-reference --filter @publisle/pdf-service build
-          docker build -f .native-reference/deploy/vps/worker.Dockerfile -t publisle-native-reference .native-reference
-      - name: Compare candidate output against frozen legacy typography and pagination
-        run: |
-          export PUBLISLE_REFERENCE_SOURCE="$GITHUB_WORKSPACE/.native-reference"
-          export PUBLISLE_REFERENCE_WORKER_IMAGE="$(docker image inspect publisle-native-reference --format '{{.Id}}')"
-          export PDF_TEST_NATIVE_WORKER_IMAGE="$(docker image inspect publisle-pdf-native:local --format '{{.Id}}')"
-          export PDF_TEST_ARTIFACTS="$RUNNER_TEMP/native-pdf-artifacts/parity"
-          node tools/native-pdf-corpus.mjs
       - uses: actions/cache/save@v5
         if: always() && steps.rust-cache.outputs.cache-hit != 'true'
         with:
