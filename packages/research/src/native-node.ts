@@ -18,6 +18,7 @@ import {
 } from "./native.ts";
 import { projectArticle, type ResearchLoss } from "./article.ts";
 
+import { installedNativeCompiler } from "./native-install.ts";
 const execute = promisify(execFile);
 export interface NativeCompileOptions extends Omit<
   NativePdfOptions,
@@ -49,16 +50,19 @@ export async function compileNativePdf(
   const timeout = options.timeoutMs ?? 180_000;
   if (!Number.isSafeInteger(timeout) || timeout <= 0)
     throw new Error("Compilation timeout must be a positive integer.");
-  const executable =
+  const explicitExecutable =
     options.executable ?? process.env["PUBLISLE_NATIVE_COMPILER"];
-  if (!executable)
-    throw new Error(
-      "Set PUBLISLE_NATIVE_COMPILER to the pinned publisle-pdf executable.",
-    );
+  const explicitManifest =
+    options.fontManifest ?? process.env["PUBLISLE_NATIVE_FONTS"];
+  const installed =
+    !explicitExecutable || (!options.fonts && !explicitManifest)
+      ? await installedNativeCompiler()
+      : undefined;
+  const executable = explicitExecutable ?? installed?.executable;
+  if (!executable) throw new Error("A pinned native PDF compiler is required.");
   let fonts = options.fonts;
   if (!fonts) {
-    const manifest =
-      options.fontManifest ?? process.env["PUBLISLE_NATIVE_FONTS"];
+    const manifest = explicitManifest ?? installed?.fontManifest;
     if (!manifest)
       throw new Error(
         "Set PUBLISLE_NATIVE_FONTS to the pinned font manifest JSON file.",
@@ -160,14 +164,35 @@ export async function compileNativePdf(
       ok?: boolean;
       compilerVersion?: string;
       pages?: number;
-      diagnostics?: ResearchLoss[];
-      timings?: Record<string, number>;
+      diagnostics?: unknown;
+      timings?: unknown;
     };
     if (
       report.ok !== true ||
       typeof report.pages !== "number" ||
       !Number.isSafeInteger(report.pages) ||
-      typeof report.compilerVersion !== "string"
+      report.pages < 1 ||
+      report.pages > 300 ||
+      typeof report.compilerVersion !== "string" ||
+      report.compilerVersion.length === 0 ||
+      report.compilerVersion.length > 64 ||
+      (installed !== undefined &&
+        report.compilerVersion !== installed.compilerVersion) ||
+      (report.diagnostics !== undefined &&
+        (!Array.isArray(report.diagnostics) ||
+          report.diagnostics.length > 100 ||
+          report.diagnostics.some(
+            (entry) =>
+              !isPlainObject(entry) ||
+              typeof entry["code"] !== "string" ||
+              typeof entry["message"] !== "string",
+          ))) ||
+      (report.timings !== undefined &&
+        (!isPlainObject(report.timings) ||
+          Object.values(report.timings).some(
+            (value) =>
+              typeof value !== "number" || !Number.isFinite(value) || value < 0,
+          )))
     )
       throw new Error("Invalid native compiler report.");
     const outputInfo = await stat(output);
@@ -176,10 +201,26 @@ export async function compileNativePdf(
     const pdf = new Uint8Array(await readFile(output));
     if (new TextDecoder().decode(pdf.subarray(0, 5)) !== "%PDF-")
       throw new Error("Native compiler returned an invalid PDF.");
+    const expectedHeader =
+      source.input.pdfStandard === "ua-1"
+        ? "%PDF-1.7"
+        : source.input.pdfStandard === "ua-2"
+          ? "%PDF-2.0"
+          : undefined;
+    if (
+      expectedHeader &&
+      new TextDecoder().decode(pdf.subarray(0, 8)) !== expectedHeader
+    )
+      throw new Error(
+        "Native compiler returned the wrong PDF version for the requested standard.",
+      );
     return {
       pdf,
-      diagnostics: [...source.diagnostics, ...(report.diagnostics ?? [])],
-      timings: report.timings ?? {},
+      diagnostics: [
+        ...source.diagnostics,
+        ...((report.diagnostics ?? []) as ResearchLoss[]),
+      ],
+      timings: (report.timings ?? {}) as Record<string, number>,
       pages: report.pages,
       compilerVersion: report.compilerVersion,
     };

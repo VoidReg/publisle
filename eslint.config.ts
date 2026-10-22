@@ -159,7 +159,7 @@ export default defineConfig(
   },
   eslintConfigPrettier,
   {
-    files: ["tools/benchmarks/**/*.mjs"],
+    files: ["tools/**/*.mjs"],
     extends: [tseslint.configs.disableTypeChecked],
   },
 );

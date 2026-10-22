@@ -139,7 +139,11 @@ export function checkSvg(source: string): void {
     );
 }
 
-async function convertAssets(assets: Asset[], inputDirectory: string) {
+export async function convertAssets(
+  assets: Asset[],
+  inputDirectory: string,
+  preserveSvg = false,
+) {
   const { default: sharp } = await import("sharp");
   sharp.cache(false);
   // Each conversion runs with single-threaded libvips; conversions themselves
@@ -153,8 +157,20 @@ async function convertAssets(assets: Asset[], inputDirectory: string) {
       if (!/^image-[0-9]+\.input$/u.test(asset.file))
         throw new Error("Invalid asset name.");
       const bytes = await readFile(join(inputDirectory, asset.file));
-      if (asset.mime === "image/svg+xml")
+      if (asset.mime === "image/svg+xml") {
         checkSvg(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+        if (preserveSvg) {
+          if (bytes.length > 4 * 1024 * 1024)
+            throw new Error("SVG exceeds 4 MiB.");
+          // Native fonts must resolve SVG text. Rasterizing here would use
+          // librsvg's unrelated system font database and lose selectable text.
+          return {
+            source: asset.source,
+            file: `image-${String(index)}.svg`,
+            bytes,
+          };
+        }
+      }
       const image = sharp(bytes, {
         limitInputPixels: 8_000_000,
         failOn: "warning",
@@ -262,7 +278,11 @@ async function main(): Promise<void> {
     await readFile(join(inputDirectory, "prepared.json"), "utf8"),
   ) as { document: Document; assets: Asset[] };
   if (action === "images") {
-    const converted = await convertAssets(normalized.assets, inputDirectory);
+    const converted = await convertAssets(
+      normalized.assets,
+      inputDirectory,
+      job.engine === "rust",
+    );
     let total = 0;
     for (const item of converted) {
       total += item.bytes.length;
@@ -285,7 +305,11 @@ async function main(): Promise<void> {
   const paths = new Map<string, string>();
   const imagesStarted = performance.now();
   if (normalized.assets.some((asset) => asset.file.endsWith(".input"))) {
-    const converted = await convertAssets(normalized.assets, inputDirectory);
+    const converted = await convertAssets(
+      normalized.assets,
+      inputDirectory,
+      job.engine === "rust",
+    );
     let total = 0;
     for (const asset of converted) {
       total += asset.bytes.length;
@@ -298,7 +322,10 @@ async function main(): Promise<void> {
     }
   } else {
     for (const asset of normalized.assets) {
-      if (!/^image-[0-9]+\.(png|jpg)$/u.test(asset.file))
+      if (
+        !/^image-[0-9]+\.(png|jpg|svg)$/u.test(asset.file) ||
+        (asset.file.endsWith(".svg") && job.engine !== "rust")
+      )
         throw new Error("Invalid converted asset name.");
       await copyFile(
         join(inputDirectory, asset.file),

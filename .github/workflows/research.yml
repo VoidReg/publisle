@@ -40,7 +40,7 @@ jobs:
         run: pnpm cli setup compiler
       - name: Install checksum-pinned veraPDF
         run: |
-          python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+          node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
           echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
       - name: Validate tagged standard articles against PDF/UA-2
         run: pnpm test:pdf-ua

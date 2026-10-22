@@ -13,6 +13,10 @@ on:
       - ".github/workflows/pdf-service.yml"
   workflow_dispatch:
 
+concurrency:
+  group: pdf-service-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -30,11 +34,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs tools/tests/native-pdf-readiness.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/worker.Dockerfile -t publisle-pdf-worker:local .
       - run: pnpm exec playwright-core install --with-deps chromium
-      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - run: node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
       - name: Exercise compiler layouts, PDF objects, accessibility and website downloads
         shell: bash
         run: |
@@ -63,20 +68,58 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs tools/tests/native-pdf-readiness.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
+      - uses: actions/cache@v5
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/pdf/target
+          key: native-pdf-rust-1.90-${{ runner.os }}-${{ hashFiles('native/pdf/Cargo.lock') }}
+          restore-keys: native-pdf-rust-1.90-${{ runner.os }}-
+      - run: sudo apt-get install -y fonts-dejavu-core
       - run: cargo +1.90.0 test --locked --manifest-path native/pdf/Cargo.toml
+        env:
+          PUBLISLE_TEST_FONT_DIR: /usr/share/fonts/truetype/dejavu
+      - run: pnpm exec vitest run packages/research/tests/native.test.ts packages/research/tests/native-install.test.ts packages/research/tests/native-report.test.ts packages/pdf-service/tests/worker.test.ts --maxWorkers=1
+      - run: pnpm typecheck
+      - run: pnpm exec eslint packages/research/src/native*.ts packages/pdf-service/src/worker.ts packages/pdf-service/tests/worker.test.ts packages/research/tests/native*.test.ts
       - run: cargo +1.90.0 clippy --locked --manifest-path native/pdf/Cargo.toml --all-targets -- -D warnings
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-native:local .
-      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - name: Extract the exact image compiler and fonts for Node API tests
+        run: |
+          CID=$(docker create publisle-pdf-native:local)
+          docker cp "$CID:/usr/local/bin/publisle-pdf" "$RUNNER_TEMP/publisle-pdf"
+          docker cp "$CID:/app/fonts" "$RUNNER_TEMP/fonts"
+          docker rm "$CID"
+          node --input-type=module <<'JS'
+          import {readFileSync, writeFileSync} from 'node:fs';
+          const fonts = JSON.parse(readFileSync('deploy/vps/native-fonts.json'));
+          for (const font of fonts) font.path = font.path.replace('/app', process.env.RUNNER_TEMP);
+          writeFileSync(`${process.env.RUNNER_TEMP}/native-fonts.json`, JSON.stringify(fonts));
+          JS
+      - run: node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
       - name: Validate every native candidate independently
         shell: bash
         run: |
           export PDF_TEST_NATIVE_WORKER_IMAGE="$(docker image inspect publisle-pdf-native:local --format '{{.Id}}')"
           export PDF_TEST_VERAPDF="$RUNNER_TEMP/verapdf/verapdf"
           export PDF_TEST_ARTIFACTS="$RUNNER_TEMP/native-pdf-artifacts"
-          node --test deploy/vps/tests/native.test.mjs
+          export PUBLISLE_NATIVE_COMPILER="$RUNNER_TEMP/publisle-pdf"
+          export PUBLISLE_NATIVE_FONTS="$RUNNER_TEMP/native-fonts.json"
+          node --test --test-concurrency=1 deploy/vps/tests/native.test.mjs deploy/vps/tests/native-standards.test.mjs
+      - uses: actions/cache/save@v5
+        if: always() && steps.rust-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native/pdf/target
+          key: native-pdf-rust-1.90-${{ runner.os }}-${{ hashFiles('native/pdf/Cargo.lock') }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:

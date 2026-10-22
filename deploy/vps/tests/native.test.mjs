@@ -14,6 +14,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { compileJob } from "../server.mjs";
 import { validateRequest, TEMPLATES } from "../limits.mjs";
+import { assertCompliant } from "../../../tools/validate-pdf-ua.mjs";
 const execute = promisify(execFile);
 const root = resolve(import.meta.dirname, "../../..");
 const nativeTemplates = TEMPLATES.map((template) => template.id);
@@ -80,10 +81,41 @@ test(
         assert.ok(text.includes("1949"), "Resolved bibliography must survive");
         if (arabic) {
           assert.ok(text.includes("اختبار النشر العلمي وإتاحة المحتوى"), text);
-          const structure = (await execute("pdfinfo", ["-struct-text", path]))
-            .stdout;
-          assert.ok(structure.includes("العَرَبِيَّة"), structure);
-          assert.ok(structure.includes("للاختبار"), structure);
+          assert.ok(text.includes("العَرَبِيَّة لا للاختبار."), text);
+          const { getDocument } =
+            await import("pdfjs-dist/legacy/build/pdf.mjs");
+          const loading = getDocument({
+            data: new Uint8Array(result.pdf),
+            useSystemFonts: false,
+            isEvalSupported: false,
+          });
+          try {
+            const document = await loading.promise;
+            const pages = [];
+            const structure = [];
+            for (let page = 1; page <= document.numPages; page++) {
+              const pdfPage = await document.getPage(page);
+              const content = await pdfPage.getTextContent();
+              structure.push(await pdfPage.getStructTree());
+              pages.push(content.items.map((item) => item.str ?? "").join(" "));
+            }
+            // Check ActualText directly; pdfinfo -struct-text prints the
+            // visual content sequence rather than these structure values.
+            const logical = JSON.stringify(structure);
+            assert.ok(logical.includes("العَرَبِيَّة"), logical);
+            assert.ok(logical.includes("للاختبار"), logical);
+            const copied = pages
+              .join(" ")
+              .normalize("NFKC")
+              .replace(/\s+/gu, " ");
+            for (const expected of [
+              "اختبار النشر العلمي وإتاحة المحتوى",
+              "العَرَبِيَّة لا للاختبار.",
+            ])
+              assert.ok(copied.includes(expected.normalize("NFKC")), copied);
+          } finally {
+            await loading.destroy();
+          }
         } else assert.ok(text.includes("office affinity"), text);
         const info = (await execute("pdfinfo", [path])).stdout;
         assert.match(info, /Tagged:\s+yes/);
@@ -100,7 +132,7 @@ test(
             join(artifacts, `native-${template}.validation.xml`),
             report,
           );
-          assert.ok(report.includes('isCompliant="true"'), report);
+          assertCompliant(report, "ua2");
         }
       }
       await assert.rejects(
@@ -132,9 +164,86 @@ test(
   },
 );
 
-// Poppler reorders characters inside Arabic ligature/mark clusters in geometry-based
-// extraction, despite correct logical structure. Keep Arabic on the legacy engine
-// until viewer copy/paste parity is independently established.
+// Poppler and PDF.js extraction are checked above. Interactive Acrobat selection
+// still needs independent evidence before the full Arabic readiness gate closes.
 test.todo(
-  "native Arabic copy/paste preserves ligatures and diacritics across PDF viewers",
+  "native Arabic selection preserves ligatures and diacritics in Acrobat",
+);
+
+test(
+  "hosted native SVG figures retain searchable labels, symbols and vector artwork",
+  {
+    skip: !process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+    timeout: 180000,
+  },
+  async () => {
+    const temporary = await mkdtemp(join(tmpdir(), "publisle-native-svg-"));
+    const artifacts = process.env.PDF_TEST_ARTIFACTS ?? temporary;
+    const jobs = join(temporary, "jobs");
+    await mkdir(jobs);
+    await mkdir(artifacts, { recursive: true });
+    const figures = [
+      "fft-spectrum.svg",
+      "fft-spectrum-dark.svg",
+      "gibbs-overshoot.svg",
+      "gibbs-overshoot-dark.svg",
+    ];
+    const markdown = `---\ntitle: Native SVG regression\nauthors:\n  - name: Ada\n---\n\n# Results\n\n${figures.map((name) => `![${name}](https://fixture.invalid/${name})`).join("\n\n")}`;
+    try {
+      const result = await compileJob(
+        validateRequest({ markdown, engine: "rust" }, ["article"]),
+        new AbortController().signal,
+        {
+          nativeImage: process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+          nativeTemplates: ["article"],
+          image: process.env.PDF_TEST_NATIVE_WORKER_IMAGE,
+          jobDirectory: jobs,
+          imageDependencies: {
+            resolve: async () => [{ address: "93.184.216.34", family: 4 }],
+            download: async ({ url }) => ({
+              bytes: await readFile(
+                join(root, "sites/www/public", url.pathname.slice(1)),
+              ),
+              mime: "image/svg+xml",
+            }),
+          },
+        },
+      );
+      const path = join(artifacts, "native-svg-figures.pdf");
+      await writeFile(path, result.pdf);
+      const text = (await execute("pdftotext", [path, "-"])).stdout.normalize(
+        "NFKC",
+      );
+      assert.equal(text.match(/frequency bin k/gu)?.length, 2, text);
+      assert.equal(text.match(/fifteen-term partial sum/gu)?.length, 2, text);
+      for (const expected of ["|X[2]| = 4", "|X[6]| = 4", "π/16", "−π"])
+        assert(text.includes(expected), text);
+      assert(!text.includes("\uFFFD") && !text.includes("□"), text);
+      const images = (await execute("pdfimages", ["-list", path])).stdout
+        .trim()
+        .split("\n");
+      assert.equal(
+        images.length,
+        2,
+        "These SVG figures must remain vectors, not full-figure raster images",
+      );
+      if (process.env.PDF_TEST_VERAPDF) {
+        const report = (
+          await execute(
+            process.env.PDF_TEST_VERAPDF,
+            ["--flavour", "ua2", "--format", "xml", path],
+            { maxBuffer: 8 * 1024 * 1024 },
+          )
+        ).stdout;
+        await writeFile(
+          join(artifacts, "native-svg-figures.validation.xml"),
+          report,
+        );
+        assertCompliant(report, "ua2");
+      }
+      assert.deepEqual(await readdir(jobs), []);
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  },
 );
