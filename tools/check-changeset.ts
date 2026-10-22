@@ -1,4 +1,4 @@
-import { releasePackages } from "./release.ts";
+import { readReleasePlan, releasePackages } from "./release.ts";
 import { dirname, relative, resolve } from "node:path";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -6,7 +6,8 @@ const run = (args: string[]) =>
   execFileSync("git", args, { encoding: "utf8" }).trim();
 const branch = process.env["GITHUB_HEAD_REF"] ?? process.env["GITHUB_REF_NAME"];
 if (branch === "changeset-release/main") {
-  execFileSync("pnpm", ["changeset", "status", "--since", "origin/main"], {
+  await readReleasePlan(resolve(import.meta.dirname, ".."));
+  execFileSync("pnpm", ["changeset", "status", "--since", "HEAD"], {
     stdio: "inherit",
   });
 } else {
@@ -22,9 +23,13 @@ if (branch === "changeset-release/main") {
         );
       }) || /^native\/pdf\/(?:src\/|Cargo\.(?:toml|lock))/u.test(file),
   );
-  execFileSync("pnpm", ["changeset", "status", "--since", "origin/main"], {
-    stdio: "inherit",
-  });
+  execFileSync(
+    "pnpm",
+    ["changeset", "status", "--since", publicChange ? "origin/main" : "HEAD"],
+    {
+      stdio: "inherit",
+    },
+  );
   if (publicChange)
     assert(
       files.some((file) =>
