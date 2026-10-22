@@ -78,9 +78,9 @@ To repeat locally with Java, Docker, Python 3, and Poppler installed:
 
 ```sh
 pnpm cli setup compiler
-python3 tools/install-verapdf.py /tmp/publisle-verapdf
+node tools/install-verapdf.mjs /tmp/publisle-verapdf
 VERAPDF=/tmp/publisle-verapdf/verapdf pnpm test:pdf-ua
-python3 tools/validate_pdf_ua.py manuscript.pdf --flavour ua2 --report verapdf-ua2.xml
+node tools/validate-pdf-ua.mjs manuscript.pdf --flavour ua2 --report verapdf-ua2.xml
 ```
 
 For a UA-1 package, explicitly validate with `--flavour ua1`. veraPDF's [validation documentation](https://site.verapdf.org/cli/validation/)

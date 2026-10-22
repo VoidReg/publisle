@@ -14,6 +14,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { compileJob } from "../server.mjs";
 import { validateRequest, TEMPLATES } from "../limits.mjs";
+import { assertCompliant } from "../../../tools/validate-pdf-ua.mjs";
 const execute = promisify(execFile);
 const root = resolve(import.meta.dirname, "../../..");
 const nativeTemplates = TEMPLATES.map((template) => template.id);
@@ -100,7 +101,7 @@ test(
             join(artifacts, `native-${template}.validation.xml`),
             report,
           );
-          assert.ok(report.includes('isCompliant="true"'), report);
+          assertCompliant(report, "ua2");
         }
       }
       await assert.rejects(

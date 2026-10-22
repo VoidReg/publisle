@@ -30,11 +30,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node --test tools/tests/pdf-tooling.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/worker.Dockerfile -t publisle-pdf-worker:local .
       - run: pnpm exec playwright-core install --with-deps chromium
-      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - run: node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
       - name: Exercise compiler layouts, PDF objects, accessibility and website downloads
         shell: bash
         run: |
@@ -63,13 +64,17 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: node --test tools/tests/pdf-tooling.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
+      - run: sudo apt-get install -y fonts-dejavu-core
       - run: cargo +1.90.0 test --locked --manifest-path native/pdf/Cargo.toml
+        env:
+          PUBLISLE_TEST_FONT_DIR: /usr/share/fonts/truetype/dejavu
       - run: cargo +1.90.0 clippy --locked --manifest-path native/pdf/Cargo.toml --all-targets -- -D warnings
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-native:local .
-      - run: python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+      - run: node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
       - name: Validate every native candidate independently
         shell: bash
         run: |

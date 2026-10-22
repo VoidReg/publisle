@@ -65,7 +65,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y default-jre-headless poppler-utils
-          python3 tools/install-verapdf.py "$RUNNER_TEMP/verapdf"
+          node tools/install-verapdf.mjs "$RUNNER_TEMP/verapdf"
           echo "$RUNNER_TEMP/verapdf" >> "$GITHUB_PATH"
       - name: Verify all publisher classes and tagged articles on native architecture
         run: |
@@ -96,7 +96,7 @@ jobs:
           docker tag publisle-compiler:2 "$REF"
           docker push "$REF"
           mkdir -p "$RUNNER_TEMP/compiler-digests"
-          docker buildx imagetools inspect "$REF" --format '{{json .Manifest}}' | python3 tools/compiler-platform-digest.py "$ARCH" > "$RUNNER_TEMP/compiler-digests/$ARCH.txt"
+          docker buildx imagetools inspect "$REF" --format '{{json .Manifest}}' | node tools/compiler-platform-digest.mjs "$ARCH" > "$RUNNER_TEMP/compiler-digests/$ARCH.txt"
       - uses: actions/upload-artifact@v7
         with:
           name: compiler-digest-${{ matrix.arch }}
@@ -137,7 +137,7 @@ jobs:
           docker buildx imagetools create --tag "$REF" "$REGISTRY@$AMD64" "$REGISTRY@$ARM64"
           INDEX=$(docker buildx imagetools inspect "$REF" --format '{{.Manifest.Digest}}')
           docker buildx imagetools inspect "$REGISTRY@$INDEX" --raw > manifest.json
-          python3 tools/compiler-release-record.py "$REGISTRY" "$INDEX" "$AMD64" "$ARM64" > compiler-release.json
+          node tools/compiler-release-record.mjs "$REGISTRY" "$INDEX" "$AMD64" "$ARM64" > compiler-release.json
           cat compiler-release.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:

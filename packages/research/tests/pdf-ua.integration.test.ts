@@ -13,7 +13,7 @@ import { template, arabicTemplate } from "../../template-article/src/index.ts";
 const execute = promisify(execFile);
 const articles = new URL("../../../examples/articles/", import.meta.url)
   .pathname;
-const validator = new URL("../../../tools/validate_pdf_ua.py", import.meta.url)
+const validator = new URL("../../../tools/validate-pdf-ua.mjs", import.meta.url)
   .pathname;
 for (const [profile, standard] of [
   [template, "ua-2"],
@@ -96,7 +96,7 @@ for (const [profile, standard] of [
       expect(text).toContain("中文研究论文测试");
       expect(text).toContain("مرحبا بالعالم");
       await execute(
-        "python3",
+        process.execPath,
         [
           validator,
           pdf,
