@@ -35,6 +35,9 @@ jobs:
   check:
     needs: changeset
     uses: ./.github/workflows/check.yml
+  docs:
+    needs: changeset
+    uses: ./.github/workflows/docs.yml
   research:
     needs: changeset
     uses: ./.github/workflows/research.yml
@@ -48,7 +51,7 @@ jobs:
     needs: native
     uses: ./.github/workflows/distribution.yml
   validate:
-    needs: [check, research, distribution, pdf]
+    needs: [check, docs, research, distribution, pdf]
     runs-on: ubuntu-24.04
     steps:
       - run: echo 'All required checks and packed consumers passed before publication.'

@@ -1,8 +1,7 @@
 name: Documentation
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_call:
+  workflow_dispatch:
   schedule:
     - cron: "17 6 * * 1"
 permissions:
