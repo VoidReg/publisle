@@ -20,9 +20,10 @@ RUNTIME=(--setenv=HOME=/var/lib/publisle-runtime --setenv="XDG_RUNTIME_DIR=/run/
 chown -R publisle:publisle "$STAGE"
 chmod 750 "$STAGE"
 function bounded() {
-  systemd-run --unit="publisle-release-$RELEASE_SHA-$1" --wait --pipe --collect --uid=publisle --gid=publisle --working-directory="$STAGE/source" --slice=publisle-pdf.slice -p MemoryMax=320M -p MemorySwapMax=0 "${RUNTIME[@]}" --setenv="JAVA_TOOL_OPTIONS=-Xmx128m -XX:ActiveProcessorCount=1" "${@:2}"
+  systemd-run --unit="publisle-release-$RELEASE_SHA-$1" --wait --pipe --collect --uid=publisle --gid=publisle --working-directory="$STAGE/source" --slice=publisle-pdf.slice -p MemoryMax=320M -p MemorySwapMax=0 -p RuntimeMaxSec=1800 -p TimeoutStopSec=30 "${RUNTIME[@]}" --setenv="JAVA_TOOL_OPTIONS=-Xmx128m -XX:ActiveProcessorCount=1" "${@:2}"
 }
 bounded load /usr/bin/docker load -i "$STAGE/image.tar.gz"
+rm -f "$STAGE/image.tar.gz"
 # Validators live in the isolated staging tree, not the production API install.
 bounded dependencies /usr/bin/env -C "$STAGE/source/deploy/vps/qa" /usr/bin/npm ci --ignore-scripts --no-audit --no-fund
 ln -s deploy/vps/qa/node_modules "$STAGE/source/node_modules"

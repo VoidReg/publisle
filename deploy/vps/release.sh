@@ -44,3 +44,6 @@ REMOTE="/var/tmp/publisle-deploy-$GITHUB_SHA"
 ssh "${SSH_ARGS[@]}" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST" "mkdir -p '$REMOTE'"
 scp "${SSH_ARGS[@]}" "$STAGE/image.tar.gz" "$STAGE/source.tar" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST:$REMOTE/"
 ssh "${SSH_ARGS[@]}" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST" "tar -xf '$REMOTE/source.tar' -C '$REMOTE' && sudo -n /usr/local/sbin/publisle-deploy '$GITHUB_SHA' '$IMAGE'"
+
+# Remove only this run's uploaded archive after activation; retain server reports.
+ssh "${SSH_ARGS[@]}" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST" "rm -rf '$REMOTE'"
