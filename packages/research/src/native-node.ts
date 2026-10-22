@@ -18,6 +18,7 @@ import {
 } from "./native.ts";
 import { projectArticle, type ResearchLoss } from "./article.ts";
 
+import { installedNativeCompiler } from "./native-install.ts";
 const execute = promisify(execFile);
 export interface NativeCompileOptions extends Omit<
   NativePdfOptions,
@@ -49,16 +50,19 @@ export async function compileNativePdf(
   const timeout = options.timeoutMs ?? 180_000;
   if (!Number.isSafeInteger(timeout) || timeout <= 0)
     throw new Error("Compilation timeout must be a positive integer.");
-  const executable =
+  const explicitExecutable =
     options.executable ?? process.env["PUBLISLE_NATIVE_COMPILER"];
-  if (!executable)
-    throw new Error(
-      "Set PUBLISLE_NATIVE_COMPILER to the pinned publisle-pdf executable.",
-    );
+  const explicitManifest =
+    options.fontManifest ?? process.env["PUBLISLE_NATIVE_FONTS"];
+  const installed =
+    !explicitExecutable || (!options.fonts && !explicitManifest)
+      ? await installedNativeCompiler()
+      : undefined;
+  const executable = explicitExecutable ?? installed?.executable;
+  if (!executable) throw new Error("A pinned native PDF compiler is required.");
   let fonts = options.fonts;
   if (!fonts) {
-    const manifest =
-      options.fontManifest ?? process.env["PUBLISLE_NATIVE_FONTS"];
+    const manifest = explicitManifest ?? installed?.fontManifest;
     if (!manifest)
       throw new Error(
         "Set PUBLISLE_NATIVE_FONTS to the pinned font manifest JSON file.",

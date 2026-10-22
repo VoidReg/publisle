@@ -30,7 +30,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node --test tools/tests/pdf-tooling.test.mjs
+      - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/worker.Dockerfile -t publisle-pdf-worker:local .
@@ -64,7 +64,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: node --test tools/tests/pdf-tooling.test.mjs
+      - run: node --test tools/tests/pdf-tooling.test.mjs tools/tests/native-pdf-parity.test.mjs
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils default-jre-headless
       - run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - uses: actions/cache@v5
@@ -79,8 +79,9 @@ jobs:
       - run: cargo +1.90.0 test --locked --manifest-path native/pdf/Cargo.toml
         env:
           PUBLISLE_TEST_FONT_DIR: /usr/share/fonts/truetype/dejavu
-      - run: pnpm exec vitest run packages/research/tests/native.test.ts packages/pdf-service/tests/worker.test.ts --maxWorkers=1
-      - run: pnpm exec eslint packages/research/src/native.ts packages/pdf-service/src/worker.ts packages/pdf-service/tests/worker.test.ts packages/research/tests/native.test.ts
+      - run: pnpm exec vitest run packages/research/tests/native.test.ts packages/research/tests/native-install.test.ts packages/pdf-service/tests/worker.test.ts --maxWorkers=1
+      - run: pnpm typecheck
+      - run: pnpm exec eslint packages/research/src/native*.ts packages/pdf-service/src/worker.ts packages/pdf-service/tests/worker.test.ts packages/research/tests/native*.test.ts
       - run: cargo +1.90.0 clippy --locked --manifest-path native/pdf/Cargo.toml --all-targets -- -D warnings
       - run: pnpm --filter @publisle/pdf-service build
       - run: docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-native:local .
