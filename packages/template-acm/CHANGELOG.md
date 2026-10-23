@@ -1,5 +1,13 @@
 # @publisle/template-acm
 
+## 0.1.3
+
+### Patch Changes
+
+- ebe4478: Repository moved to the publisle GitHub org
+- Updated dependencies [ebe4478]
+  - @publisle/template-sdk@0.1.4
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,5 +1,18 @@
 # @publisle/research
 
+## 0.3.1
+
+### Patch Changes
+
+- ebe4478: Use the independently versioned native PDF binaries published from publisle/publisle-rs.
+- ebe4478: Repository moved to the publisle GitHub org
+- Updated dependencies [ebe4478]
+  - @publisle/contracts@0.1.3
+  - @publisle/profiles@0.1.3
+  - @publisle/schema@0.1.2
+  - @publisle/template-article@0.1.3
+  - @publisle/template-sdk@0.1.4
+
 ## 0.3.0
 
 ### Minor Changes

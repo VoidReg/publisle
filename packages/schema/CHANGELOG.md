@@ -1,5 +1,11 @@
 # @publisle/schema
 
+## 0.1.2
+
+### Patch Changes
+
+- ebe4478: Repository moved to the publisle GitHub org
+
 ## 0.1.1
 
 ### Patch Changes

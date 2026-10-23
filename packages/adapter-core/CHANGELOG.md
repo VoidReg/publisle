@@ -1,5 +1,15 @@
 # @publisle/adapter-core
 
+## 0.2.1
+
+### Patch Changes
+
+- ebe4478: Repository moved to the publisle GitHub org
+- Updated dependencies [ebe4478]
+  - @publisle/core@0.1.3
+  - @publisle/markdown@0.1.3
+  - @publisle/schema@0.1.2
+
 ## 0.2.0
 
 ### Minor Changes
