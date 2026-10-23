@@ -1,5 +1,15 @@
 # @publisle/blocks-core
 
+## 0.1.3
+
+### Patch Changes
+
+- ebe4478: Repository moved to the publisle GitHub org
+- Updated dependencies [ebe4478]
+  - @publisle/block-sdk@0.1.3
+  - @publisle/contracts@0.1.3
+  - @publisle/schema@0.1.2
+
 ## 0.1.2
 
 ### Patch Changes

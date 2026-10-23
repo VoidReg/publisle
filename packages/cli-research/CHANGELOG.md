@@ -1,5 +1,25 @@
 # @publisle/cli-research
 
+## 0.2.2
+
+### Patch Changes
+
+- ebe4478: Repository moved to the publisle GitHub org
+- Updated dependencies [ebe4478]
+- Updated dependencies [ebe4478]
+  - @publisle/research@0.3.1
+  - @publisle/adapter-core@0.2.1
+  - @publisle/cli@0.2.2
+  - @publisle/core@0.1.3
+  - @publisle/markdown@0.1.3
+  - @publisle/schema@0.1.2
+  - @publisle/template-acm@0.1.3
+  - @publisle/template-article@0.1.3
+  - @publisle/template-elsevier@0.1.3
+  - @publisle/template-ieee@0.1.3
+  - @publisle/template-sdk@0.1.4
+  - @publisle/template-springer@0.1.3
+
 ## 0.2.1
 
 ### Patch Changes
