@@ -85,7 +85,7 @@ jobs:
           else
             echo publish=false >> "$GITHUB_OUTPUT"
           fi
-      - uses: changesets/action@v1
+      - uses: changesets/action@v2
         id: changesets
         if: steps.mode.outputs.publish != 'true'
         with:
