@@ -34,7 +34,7 @@ const canonicalUrl = new URL(path, site);
 canonicalUrl.pathname = `${canonicalUrl.pathname.replace(/\/+$/u, "")}/`;
 const canonical = canonicalUrl.href;
 const ogImage = new URL(image, site).href;
-const github = "https://github.com/VoidReg/publisle";
+const github = "https://github.com/publisle/publisle";
 
 const nav = [
   { href: "/docs/", label: "Docs" },
@@ -180,7 +180,7 @@ const ldScripts = jsonLd ?? [];
       <div
         class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
       >
-        <p>© 2026 Publisle · MIT License · beta</p>
+        <p>Copyright (c) 2026 Publisle · MIT License · beta</p>
         <p class="flex gap-4">
           <a href="/docs/" class="hover:text-accent">Docs</a>
           <a href={github + "/issues"} class="hover:text-accent">Issues</a>

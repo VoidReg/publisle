@@ -31,7 +31,7 @@ docker cp "$CID:/usr/local/bin/publisle-pdf" "$STAGE/compiler"
 docker rm "$CID"
 node --input-type=module - "$STAGE/compiler" <<'JS'
 import {readFileSync} from 'node:fs';import{createHash}from'node:crypto';import{execFileSync}from'node:child_process';
-const {version}=JSON.parse(readFileSync('packages/research/package.json'));
+const version=JSON.parse(readFileSync('packages/research/package.json')).optionalDependencies['@publisle/pdf-native-linux-x64'];
 const cwd=process.env.RUNNER_TEMP;
 const result=JSON.parse(execFileSync('npm',['pack',`@publisle/pdf-native-linux-x64@${version}`,'--ignore-scripts','--json'],{cwd,encoding:'utf8'}));
 const manifest=JSON.parse(execFileSync('tar',['-xOf',`${cwd}/${result[0].filename}`,'package/artifact.json'],{encoding:'utf8'}));

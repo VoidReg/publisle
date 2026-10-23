@@ -13,8 +13,8 @@ import type { LocalPublicationOptions } from "@publisle/adapter-core/node";
 import { fromMarkdown } from "@publisle/markdown";
 import type { Document } from "@publisle/schema";
 
-const REPO_BLOB = "https://github.com/VoidReg/publisle/blob/main";
-const REPO_RAW = "https://raw.githubusercontent.com/VoidReg/publisle/main";
+const REPO_BLOB = "https://github.com/publisle/publisle/blob/main";
+const REPO_RAW = "https://raw.githubusercontent.com/publisle/publisle/main";
 const ASSET_EXTENSIONS = new Set([
   ".png",
   ".jpg",

@@ -37,7 +37,7 @@ describe("createBlock", () => {
     const id = createBlockId();
     const block = createBlock({
       id,
-      type: "voidreg:cache-simulator",
+      type: "publisle:cache-simulator",
       schemaVersion: 2,
       data: { sets: 64 },
     });
@@ -145,8 +145,8 @@ describe("block identity parsers", () => {
   });
 
   it("parses namespaced block types", () => {
-    expect(parseBlockType("voidreg:cache-simulator")).toBe(
-      "voidreg:cache-simulator",
+    expect(parseBlockType("publisle:cache-simulator")).toBe(
+      "publisle:cache-simulator",
     );
     expectSchemaError(
       () => parseBlockType("cache-simulator"),

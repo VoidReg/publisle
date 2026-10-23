@@ -7,12 +7,12 @@ limits live in the [documentation index](docs/README.md).
 ## Getting help and proposing ideas
 
 - Ask questions and share ideas in
-  [GitHub Discussions](https://github.com/VoidReg/publisle/discussions).
-- Bug reports start best as a [Discussion](https://github.com/VoidReg/publisle/discussions)
+  [GitHub Discussions](https://github.com/publisle/publisle/discussions).
+- Bug reports start best as a [Discussion](https://github.com/publisle/publisle/discussions)
   unless you can already reproduce them against `main` — then open an issue
   with the reproduction template.
 - Look for issues tagged
-  [`good first issue`](https://github.com/VoidReg/publisle/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+  [`good first issue`](https://github.com/publisle/publisle/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
   for scoped entry points.
 
 ## Development setup
@@ -27,6 +27,11 @@ limits live in the [documentation index](docs/README.md).
 pnpm --filter @publisle/playground-svelte dev   # or playground-react
 pnpm --filter @publisle/www dev                 # the website (docs are the demo)
 ```
+
+Rust engine changes belong in [publisle-rs](https://github.com/publisle/publisle-rs).
+This repository owns the TypeScript projection, runtime integration and VPS deployment.
+To verify a new external native release, build the packages and run
+`node tools/native-consumer-proof.mjs`; CI repeats this on Linux, macOS and Windows.
 
 ## Before you open a pull request
 

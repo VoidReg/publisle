@@ -4,6 +4,6 @@ type: software
 title: Publisle
 authors:
   - name: Publisle contributors
-repository-code: "https://github.com/VoidReg/publisle"
+repository-code: "https://github.com/publisle/publisle"
 url: "https://publisle.xyz"
 license: MIT

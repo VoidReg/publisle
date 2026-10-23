@@ -44,12 +44,12 @@ Compiler recipe **2**, release **recipe-2.0.0**:
 
 Both architectures passed native publisher compilation and all three PDF/UA
 fixtures before publication. Evidence: [compiler release and native fixture
-reports](https://github.com/VoidReg/publisle/actions/runs/38083600968),
-[Core checks and conformance](https://github.com/VoidReg/publisle/actions/runs/38083105036),
-[Research export](https://github.com/VoidReg/publisle/actions/runs/38083105023),
-and [packed distribution and showcase](https://github.com/VoidReg/publisle/actions/runs/38083105089).
+reports](https://github.com/publisle/publisle/actions/runs/38083600968),
+[Core checks and conformance](https://github.com/publisle/publisle/actions/runs/38083105036),
+[Research export](https://github.com/publisle/publisle/actions/runs/38083105023),
+and [packed distribution and showcase](https://github.com/publisle/publisle/actions/runs/38083105089).
 
-The [release artifacts](https://github.com/VoidReg/publisle/releases/tag/v0.1.0)
+The [release artifacts](https://github.com/publisle/publisle/releases/tag/v0.1.0)
 retain the exact tarballs, publication-order/hash manifest, and offline built-in
 contract bundle with all 16 shipped contract identities and digest seals.
 Registry installation checks and public showcase deployment are recorded

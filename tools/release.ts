@@ -58,10 +58,9 @@ export async function releasePackages(root: string) {
   const sets = await json<{
     core: string[];
     research: string[];
-    native?: string[];
   }>(join(root, "packages/core-packages.json"));
   const packages: { path: string; manifest: Manifest }[] = [];
-  for (const group of ["packages", "blocks", "native/packages"]) {
+  for (const group of ["packages", "blocks"]) {
     if (!existsSync(join(root, group))) continue;
     for (const entry of await readdir(join(root, group), {
       withFileTypes: true,
@@ -72,7 +71,7 @@ export async function releasePackages(root: string) {
       if (manifest.publishConfig) packages.push({ path, manifest });
     }
   }
-  const names = [...sets.core, ...sets.research, ...(sets.native ?? [])];
+  const names = [...sets.core, ...sets.research];
   assert.equal(new Set(names).size, names.length);
   assert.deepEqual(
     packages.map((p) => p.manifest.name).sort(),
@@ -107,45 +106,9 @@ export async function readReleasePlan(root: string) {
   }
   return plan;
 }
-export async function syncNativeVersion(root: string) {
-  const research = await json<Manifest>(
-    join(root, "packages/research/package.json"),
-  );
-  const sets = await json<{ native: string[] }>(
-    join(root, "packages/core-packages.json"),
-  );
-  for (const p of await releasePackages(root))
-    if (sets.native.includes(p.manifest.name))
-      assert.equal(
-        p.manifest.version,
-        research.version,
-        "Native packages must version with Research",
-      );
-  const cargo = join(root, "native/pdf/Cargo.toml"),
-    lock = join(root, "native/pdf/Cargo.lock");
-  await writeFile(
-    cargo,
-    (await readFile(cargo, "utf8")).replace(
-      /^(version = ")[^"]+/mu,
-      `$1${research.version}`,
-    ),
-  );
-  await writeFile(
-    lock,
-    (await readFile(lock, "utf8")).replace(
-      /(name = "publisle-pdf"\nversion = ")[^"]+/u,
-      `$1${research.version}`,
-    ),
-  );
-  await writeFile(
-    join(root, "native/pdf/package-version.json"),
-    JSON.stringify({ version: research.version }, null, 2) + "\n",
-  );
-}
 export async function versionRelease(root: string) {
   const before = await releasePackages(root);
   run("pnpm", ["changeset", "version"], root);
-  await syncNativeVersion(root);
   const after = await releasePackages(root),
     versions = Object.fromEntries(
       after.map((p) => [p.manifest.name, p.manifest.version]),
@@ -183,8 +146,6 @@ export async function versionRelease(root: string) {
       "--write",
       "packages",
       "blocks",
-      "native/packages",
-      "native/pdf/package-version.json",
       ".release",
       ".changeset",
       "pnpm-lock.yaml",
@@ -584,9 +545,6 @@ if (
     case "version":
       await versionRelease(root);
       break;
-    case "sync":
-      await syncNativeVersion(root);
-      break;
     case "promote":
       await promote(root);
       break;
@@ -603,6 +561,6 @@ if (
       );
       break;
     default:
-      throw new Error("Use release.ts version|sync|promote|publish");
+      throw new Error("Use release.ts version|promote|publish");
   }
 }

@@ -6,7 +6,17 @@ import { readFile, realpath, stat } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { parseJson, isPlainObject } from "@publisle/schema";
 const require = createRequire(import.meta.url);
-export const NATIVE_ARTIFACT_VERSION = researchPackage.version;
+export const NATIVE_ARTIFACT_VERSION =
+  researchPackage.optionalDependencies["@publisle/pdf-native-linux-x64"];
+if (
+  !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/u.test(NATIVE_ARTIFACT_VERSION) ||
+  !Object.values(researchPackage.optionalDependencies).every(
+    (version) => version === NATIVE_ARTIFACT_VERSION,
+  )
+)
+  throw new Error(
+    "Native PDF dependencies must share one exact external version.",
+  );
 export const NATIVE_PLATFORM_PACKAGES: Readonly<Record<string, string>> = {
   "linux-x64": "@publisle/pdf-native-linux-x64",
   "linux-arm64": "@publisle/pdf-native-linux-arm64",
@@ -40,7 +50,7 @@ export async function installedNativeCompiler(): Promise<InstalledNativeCompiler
     manifest["version"] !== NATIVE_ARTIFACT_VERSION
   )
     throw new Error(
-      "Installed native PDF package version does not match Research.",
+      "Installed native PDF package version does not match the pinned dependency.",
     );
   const artifact = parseJson(await readFile(resolve(root, "artifact.json")), {
     maxBytes: 65536,

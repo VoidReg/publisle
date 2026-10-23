@@ -12,7 +12,7 @@ const content = JSON.parse(
   await readFile(join(root, "tools/package-readme-content.json"), "utf8"),
 );
 const write = process.argv.includes("--write");
-for (const group of ["packages", "blocks", "native/packages"])
+for (const group of ["packages", "blocks"])
   for (const entry of await readdir(join(root, group), {
     withFileTypes: true,
   })) {

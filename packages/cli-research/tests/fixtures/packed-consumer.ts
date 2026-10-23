@@ -116,8 +116,13 @@ try {
       ),
       "utf8",
     ),
-  ) as { version: string };
-  assert.equal(result.compilerVersion, manifest.version);
+  ) as { optionalDependencies: Record<string, string> };
+  assert.equal(
+    result.compilerVersion,
+    manifest.optionalDependencies[
+      `@publisle/pdf-native-${process.platform}-${process.arch}`
+    ],
+  );
 } finally {
   for (const [key, value] of [
     ["PATH", previousPath],

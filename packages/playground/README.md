@@ -20,5 +20,5 @@ editor.importMarkdown("# Hello");
 ```
 
 the npm `latest` tag. See the
-[core standard](https://github.com/VoidReg/publisle/blob/main/docs/standards/README.md)
+[core standard](https://github.com/publisle/publisle/blob/main/docs/standards/README.md)
 and the [playground](https://publisle.xyz/playground) for the hosted editor.

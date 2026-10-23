@@ -30,17 +30,17 @@ describe("documentation links", () => {
         context,
       ),
     ).toBe(
-      "[Fixture](https://github.com/VoidReg/publisle/blob/main/packages/contracts/fixtures/canonical.json) [Code](https://github.com/VoidReg/publisle/blob/main/tools/python/README.md#citations) [Directory](https://github.com/VoidReg/publisle/blob/main/packages/contracts/schemas)",
+      "[Fixture](https://github.com/publisle/publisle/blob/main/packages/contracts/fixtures/canonical.json) [Code](https://github.com/publisle/publisle/blob/main/tools/python/README.md#citations) [Directory](https://github.com/publisle/publisle/blob/main/packages/contracts/schemas)",
     );
   });
   it("uses GitHub for documentation outside the hosted collection", () => {
     expect(rewriteLinks("[Other](../other.md#section)", context)).toBe(
-      "[Other](https://github.com/VoidReg/publisle/blob/main/docs/other.md#section)",
+      "[Other](https://github.com/publisle/publisle/blob/main/docs/other.md#section)",
     );
   });
   it("uses raw repository URLs for images", () => {
     expect(rewriteLinks("![Figure](../../assets/figure.svg)", context)).toBe(
-      "![Figure](https://raw.githubusercontent.com/VoidReg/publisle/main/assets/figure.svg)",
+      "![Figure](https://raw.githubusercontent.com/publisle/publisle/main/assets/figure.svg)",
     );
   });
   it("preserves external URLs, site paths, local anchors, and targets outside the checkout", () => {

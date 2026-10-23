@@ -3,8 +3,14 @@ packages:
   - blocks/*
   - examples/*
   - sites/*
-  - native/packages/*
 
 allowBuilds:
   esbuild: true
   sharp: true
+
+minimumReleaseAgeExclude:
+  - "@publisle/pdf-native-darwin-arm64@0.3.1"
+  - "@publisle/pdf-native-darwin-x64@0.3.1"
+  - "@publisle/pdf-native-linux-arm64@0.3.1"
+  - "@publisle/pdf-native-linux-x64@0.3.1"
+  - "@publisle/pdf-native-win32-x64@0.3.1"

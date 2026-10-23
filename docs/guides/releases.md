@@ -1,8 +1,8 @@
 # Releases
 
 Public packages use Changesets and npm trusted publishing. They have independent
-versions, except Research and its five native compiler packages, which share one
-version. Contract versions and the legacy compiler recipe remain separate.
+versions. Research pins an exact external native compiler version published from
+[publisle-rs](https://github.com/publisle/publisle-rs). Contract versions and the legacy compiler recipe remain separate.
 
 ## Ship a change
 
@@ -19,7 +19,8 @@ version. Contract versions and the legacy compiler recipe remain separate.
    defaults, and restores the previous API configuration on failure.
 
 PR checks cover packed declarations, dependency ranges, isolated Core and Research
-consumers, the Fourier showcase, and all five native platforms. The version PR
+consumers, the Fourier showcase, and Research installs on Linux, macOS and Windows.
+The Rust repository builds and smoke-tests all five native platforms. The version PR
 must be current with main: publication rejects artifacts from a different source
 tree. Release does not rebuild packages after publication starts.
 
@@ -47,7 +48,7 @@ and verification record until the new deployment is confirmed healthy.
 
 ## One-time setup
 
-All 29 packages must trust `VoidReg/publisle`, workflow **release.yml**, with
+All 24 TypeScript packages must trust `publisle/publisle`, workflow **release.yml**, with
 publishing allowed and no npm environment restriction. Use a browser-authenticated
 npm 12.2 account with package administration rights:
 
@@ -77,3 +78,24 @@ The VPS must already have the dedicated Publisle rootless Docker runtime, cgroup
 limits, Node.js 24, Java, Poppler and service configuration described in the
 [deployment guide](../../deploy/vps/README.md). Runtime requests never build or
 pull images, install compilers, or require Python.
+
+## Native engine releases
+
+Rust engine development, conformance pins and native npm releases live in
+[publisle-rs](https://github.com/publisle/publisle-rs). Its `release.yml` publishes
+crates with release-plz and the five `@publisle/pdf-native-*` packages. Those five
+npm publishers trust `publisle/publisle-rs`, workflow `release.yml`, with no environment.
+The TypeScript trusted-publisher helper covers only this repository's 24 packages.
+
+Research's optional dependencies pin one exact native version independently from
+its own version. Dependabot groups updates to all five pins and the VPS native
+runtime lockfile in one weekly PR. Review it, add a Research patch Changeset, and
+verify all three consumer platforms before merging Version packages. Runtime
+compilation never downloads or builds a compiler.
+
+The VPS secrets, worker integration and deployment remain in this repository.
+The worker's build stage runs `npm ci` against
+`deploy/vps/native-runtime/package-lock.json`, verifies the package inventory,
+and copies the pinned executable and fonts into its final runtime. Deployment
+compares the binary with the published native package using the pinned native
+version, independently of the Research package version.

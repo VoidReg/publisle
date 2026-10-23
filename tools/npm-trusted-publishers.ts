@@ -30,7 +30,7 @@ for (const [index, { manifest }] of packages.entries()) {
     "github",
     manifest.name,
     "--repo",
-    "VoidReg/publisle",
+    "publisle/publisle",
     "--file",
     "release.yml",
     "--allow-publish",
@@ -72,7 +72,7 @@ for (const [index, { manifest }] of packages.entries()) {
     const matching = configurations.some(
       (config) =>
         config.type === "github" &&
-        config.repository === "VoidReg/publisle" &&
+        config.repository === "publisle/publisle" &&
         config.file === "release.yml" &&
         !config.environment &&
         config.permissions?.includes("createPackage"),
