@@ -50,10 +50,10 @@ const run = (command: string, args: string[], cwd = root) =>
 run(process.execPath, ["tools/build-packages.ts"]);
 const sets = JSON.parse(
   await readFile(join(root, "packages/core-packages.json"), "utf8"),
-) as { core: string[]; research: string[]; native: string[] };
+) as { core: string[]; research: string[] };
 const packed = new Map<string, string>();
 const manifests = new Map<string, Manifest>();
-const releaseNames = new Set([...sets.core, ...sets.research, ...sets.native]);
+const releaseNames = new Set([...sets.core, ...sets.research]);
 const versions = Object.fromEntries(
   (await releasePackages(root)).map(({ manifest }) => [
     manifest.name,
@@ -183,34 +183,7 @@ assert.deepEqual(
   [...sets.core, ...sets.research].sort(),
 );
 // Release consumers use the actual immutable registry bytes for unchanged packages.
-// Native packages are the exact archives tested on their own platform runners.
-const nativeDirectory = process.env["PUBLISLE_NATIVE_ARTIFACTS"];
-assert(nativeDirectory, "All five validated native archives are required");
-for (const file of (await readdir(nativeDirectory, { recursive: true })).filter(
-  (file) => file.endsWith(".tgz"),
-)) {
-  const source = join(nativeDirectory, file);
-  const manifest = JSON.parse(
-    run("tar", ["-xOf", source, "package/package.json"]),
-  ) as Manifest;
-  assert(sets.native.includes(manifest.name));
-  assert.equal(manifest.version, versions[manifest.name]);
-  assert(!packed.has(manifest.name));
-  const destination = join(
-    tarballs,
-    manifest.name.slice(1).replaceAll("/", "-") +
-      "-" +
-      manifest.version +
-      ".tgz",
-  );
-  await writeFile(destination, await readFile(source));
-  packed.set(manifest.name, destination);
-  manifests.set(manifest.name, manifest);
-}
-assert(
-  sets.native.every((name) => packed.has(name)),
-  "Missing native platform archive",
-);
+// Native optional dependencies install their exact external registry versions.
 // Rebuilding unchanged sources would conceal incompatibility with installed users.
 if (plan) {
   for (const [name, path] of packed) {
@@ -274,8 +247,7 @@ const visit = (name: string): void => {
   visiting.delete(name);
   publicationOrder.push(name);
 };
-for (const name of [...sets.core, ...sets.research, ...sets.native])
-  visit(name);
+for (const name of [...sets.core, ...sets.research]) visit(name);
 // The plain Node consumer includes the Core renderer but deliberately has no
 // framework peers or Research extension. It lives outside the workspace.
 const consumer = join(stage, "consumer");
@@ -454,20 +426,6 @@ await writeFile(
   JSON.stringify({
     private: true,
     type: "module",
-    optionalDependencies: Object.fromEntries(
-      sets.native.map((name) => [
-        name,
-        "file:" +
-          relative(
-            researchConsumer,
-            (() => {
-              const file = packed.get(name);
-              assert(file);
-              return file;
-            })(),
-          ),
-      ]),
-    ),
   }),
 );
 run(

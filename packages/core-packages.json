@@ -27,12 +27,5 @@
     "@publisle/template-elsevier",
     "@publisle/template-springer",
     "@publisle/cli-research"
-  ],
-  "native": [
-    "@publisle/pdf-native-linux-x64",
-    "@publisle/pdf-native-linux-arm64",
-    "@publisle/pdf-native-darwin-x64",
-    "@publisle/pdf-native-darwin-arm64",
-    "@publisle/pdf-native-win32-x64"
   ]
 }

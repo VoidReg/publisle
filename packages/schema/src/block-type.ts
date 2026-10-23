@@ -12,7 +12,7 @@ export function parseBlockType(value: string): BlockType {
   if (!isBlockType(value)) {
     throw new SchemaParseError(
       "invalid-block-type",
-      `Block types must be a namespaced identifier such as "voidreg:cache-simulator", received ${JSON.stringify(value)}.`,
+      `Block types must be a namespaced identifier such as "publisle:cache-simulator", received ${JSON.stringify(value)}.`,
     );
   }
 

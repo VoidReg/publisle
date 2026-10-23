@@ -12,7 +12,6 @@
     "docs/**/*.md",
     "packages/*/README.md",
     "blocks/*/README.md",
-    "native/packages/*/README.md",
   ],
   "ignores": ["**/node_modules/**", "**/dist/**"],
 }

@@ -19,14 +19,9 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: native-pdf-*-*
-          path: ${{ runner.temp }}/native-platforms
       - run: pnpm test:distribution
         env:
           PUBLISLE_RELEASE_PLAN: ${{ (github.head_ref == 'changeset-release/main' || github.ref_name == 'changeset-release/main') && '.release/plan.json' || '' }}
-          PUBLISLE_NATIVE_ARTIFACTS: ${{ runner.temp }}/native-platforms
           PUBLISLE_DISTRIBUTION_ARTIFACTS: ${{ runner.temp }}/distribution
       - name: Rehearse the full Fourier showcase from packed Core artifacts
         run: |

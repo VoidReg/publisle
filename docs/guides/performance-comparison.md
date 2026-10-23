@@ -96,7 +96,7 @@ These paired local observations use five excluded warmups, 30 preparation sample
 
 ## Calibration snapshot and limits
 
-The [accepted budget data](../../tools/benchmarks/accepted-budgets.json) preserves all recorded timing and byte allowances from [run 37934846094](https://github.com/VoidReg/publisle/actions/runs/37934846094), repetitions 1–3, baseline `1753e9b526bee12c349420a82a0722968f011dd9`. The retained artifacts are `performance-calibration-37934846094-1-{1,2,3}`. They record input hashes, CPU metadata, Node 24.21.0 and Chromium 153.0.8010.12. The three runners had different CPUs; these are observations, not portable latency guarantees.
+The [accepted budget data](../../tools/benchmarks/accepted-budgets.json) preserves all recorded timing and byte allowances from [run 37934846094](https://github.com/publisle/publisle/actions/runs/37934846094), repetitions 1–3, baseline `1753e9b526bee12c349420a82a0722968f011dd9`. The retained artifacts are `performance-calibration-37934846094-1-{1,2,3}`. They record input hashes, CPU metadata, Node 24.21.0 and Chromium 153.0.8010.12. The three runners had different CPUs; these are observations, not portable latency guarantees.
 
 Timing allowances are the largest observed run p95 plus twice the largest run standard deviation, rounded up to milliseconds. Byte allowances are the largest observation plus the larger of observed spread or 1%. Neither formula is a confidence interval. GitHub does not enforce these numbers, and a machine change is not a reason to rewrite them.
 

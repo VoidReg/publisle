@@ -87,7 +87,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/VoidReg/publisle.git",
+    "url": "git+https://github.com/publisle/publisle.git",
     "directory": "packages/playground"
   },
   "homepage": "https://publisle.xyz"

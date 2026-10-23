@@ -5,7 +5,7 @@
   </picture>
   <p><strong>Portable semantic articles, compiled into static content with optional interactive islands.</strong></p>
   <p>
-    <a href="https://github.com/VoidReg/publisle/actions/workflows/release.yml"><img src="https://github.com/VoidReg/publisle/actions/workflows/release.yml/badge.svg" alt="Release validation status" /></a>
+    <a href="https://github.com/publisle/publisle/actions/workflows/release.yml"><img src="https://github.com/publisle/publisle/actions/workflows/release.yml/badge.svg" alt="Release validation status" /></a>
     <img src="https://img.shields.io/badge/status-beta-9B3214" alt="beta" />
     <img src="https://img.shields.io/badge/node-24%2B-1A1513" alt="Node 24+" />
   </p>
@@ -95,7 +95,7 @@ acceptance or PDF/UA certification.
 For local development, use Node.js 24+ and pnpm 11.17+ (11.x):
 
 ```sh
-git clone https://github.com/VoidReg/publisle.git
+git clone https://github.com/publisle/publisle.git
 cd publisle
 pnpm install
 pnpm --filter @publisle/playground-svelte dev
@@ -106,8 +106,8 @@ pnpm --filter @publisle/playground-svelte dev
 
 See [Contributing](CONTRIBUTING.md) for setup and checks, the
 [Code of Conduct](CODE_OF_CONDUCT.md) for community expectations, and
-[Discussions](https://github.com/VoidReg/publisle/discussions) for questions and ideas.
+[Discussions](https://github.com/publisle/publisle/discussions) for questions and ideas.
 
 ## License
 
-[MIT](LICENSE) — Copyright © 2026 VoidReg.
+[MIT](LICENSE) — Copyright (c) 2026 Publisle.

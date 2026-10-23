@@ -1,7 +1,7 @@
 # Governance and versioning
 
 **Status:** Beta maintenance policy, reviewed 2026-10-10. Publisle is maintained by
-VoidReg. This policy governs changes; it does not announce an npm release or
+Publisle. This policy governs changes; it does not announce an npm release or
 certify every conformance role.
 
 ## Contract identities and beta freeze

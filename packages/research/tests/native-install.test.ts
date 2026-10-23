@@ -78,7 +78,7 @@ it("rejects escaped paths and incompatible input versions", async () => {
   );
   await expect(installedNativeCompiler()).rejects.toThrow(/incompatible/u);
 });
-it("rejects a package version that does not match Research", async () => {
+it("rejects a package version that does not match the pinned dependency", async () => {
   await fixture();
   await writeFile(
     state.packagePath,

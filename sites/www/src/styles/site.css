@@ -16,7 +16,7 @@
   }
 }
 
-/* Publisle brand (VoidReg): paper, ink, vermilion. WCAG-AAA pairings.
+/* Publisle brand: paper, ink, vermilion. WCAG-AAA pairings.
    Layered resolution: light defaults → system preference (no explicit choice)
    → explicit data-theme override persisted by the toggle. */
 :root {

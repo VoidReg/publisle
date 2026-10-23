@@ -41,17 +41,17 @@ jobs:
   research:
     needs: changeset
     uses: ./.github/workflows/research.yml
-  native:
+  native-consumers:
     needs: changeset
-    uses: ./.github/workflows/native-pdf-artifacts.yml
+    uses: ./.github/workflows/native-consumers.yml
   pdf:
     needs: changeset
     uses: ./.github/workflows/pdf-service.yml
   distribution:
-    needs: native
+    needs: changeset
     uses: ./.github/workflows/distribution.yml
   validate:
-    needs: [check, docs, research, distribution, pdf]
+    needs: [check, docs, research, distribution, pdf, native-consumers]
     runs-on: ubuntu-24.04
     steps:
       - run: echo 'All required checks and packed consumers passed before publication.'

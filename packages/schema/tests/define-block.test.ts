@@ -17,7 +17,7 @@ interface HeadingData {
 }
 
 const cacheSimulatorDefinition = defineBlock({
-  type: "voidreg:cache-simulator",
+  type: "publisle:cache-simulator",
   schemaVersion: 2,
   schema: {
     parse(value: unknown): CacheSimulatorData {
@@ -31,7 +31,7 @@ const cacheSimulatorDefinition = defineBlock({
 });
 
 const headingDefinition = defineBlock({
-  type: "voidreg:heading",
+  type: "publisle:heading",
   schemaVersion: 1,
   schema: {
     parse(value: unknown): HeadingData {
@@ -46,12 +46,12 @@ const headingDefinition = defineBlock({
 
 describe("defineBlock", () => {
   it("preserves the literal type and schema version", () => {
-    expect(cacheSimulatorDefinition.type).toBe("voidreg:cache-simulator");
+    expect(cacheSimulatorDefinition.type).toBe("publisle:cache-simulator");
     expect(cacheSimulatorDefinition.schemaVersion).toBe(2);
-    expect(headingDefinition.type).toBe("voidreg:heading");
+    expect(headingDefinition.type).toBe("publisle:heading");
     expectTypeOf(
       cacheSimulatorDefinition.type,
-    ).toEqualTypeOf<"voidreg:cache-simulator">();
+    ).toEqualTypeOf<"publisle:cache-simulator">();
     expectTypeOf(cacheSimulatorDefinition.schemaVersion).toEqualTypeOf<2>();
   });
 
@@ -66,7 +66,7 @@ describe("defineBlock", () => {
 
     expectTypeOf<
       CacheSimulatorBlock["type"]
-    >().toEqualTypeOf<"voidreg:cache-simulator">();
+    >().toEqualTypeOf<"publisle:cache-simulator">();
     expectTypeOf<
       CacheSimulatorBlock["data"]
     >().toEqualTypeOf<CacheSimulatorData>();
@@ -75,7 +75,7 @@ describe("defineBlock", () => {
     >();
 
     const inspect = (block: KnownBlock): number | string => {
-      if (block.type === "voidreg:cache-simulator") {
+      if (block.type === "publisle:cache-simulator") {
         expectTypeOf(block.data).toEqualTypeOf<CacheSimulatorData>();
         return block.data.sets;
       }
@@ -87,7 +87,7 @@ describe("defineBlock", () => {
     expect(
       inspect({
         id: "01ARZ3NDEKTSV4RRFFQ69G5FAV" as CacheSimulatorBlock["id"],
-        type: "voidreg:cache-simulator",
+        type: "publisle:cache-simulator",
         schemaVersion: 2,
         data: { sets: 64, ways: 8, lineSize: 64 },
       }),

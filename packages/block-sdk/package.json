@@ -41,8 +41,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/VoidReg/publisle.git",
+    "url": "git+https://github.com/publisle/publisle.git",
     "directory": "packages/block-sdk"
   },
-  "homepage": "https://github.com/VoidReg/publisle#readme"
+  "homepage": "https://github.com/publisle/publisle#readme"
 }

@@ -29,7 +29,7 @@ const next =
 
 // Section overview entries store README.md under the bare section id.
 const raw = docRawRoute(entry.id);
-const githubSource = `https://github.com/VoidReg/publisle/blob/main/docs/${docRepoPath(entry.id)}`;
+const githubSource = `https://github.com/publisle/publisle/blob/main/docs/${docRepoPath(entry.id)}`;
 const sectionLabel = entry.data.section === "guides" ? "Guides" : "Standards";
 const sectionHref = entry.data.section === "guides" ? "/docs/#guides" : "/docs/standards/";
 const jsonLd = [
@@ -40,7 +40,7 @@ const jsonLd = [
     description: entry.data.description,
     url: `https://publisle.xyz/docs/${entry.id}/`,
     isAccessibleForFree: true,
-    author: { "@type": "Organization", name: "VoidReg" },
+    author: { "@type": "Organization", name: "Publisle" },
     publisher: { "@type": "Organization", name: "Publisle" },
   },
   {

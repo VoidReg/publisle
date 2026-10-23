@@ -1,10 +1,4 @@
 **
-!native/
-!native/pdf/
-!native/pdf/Cargo.toml
-!native/pdf/Cargo.lock
-!native/pdf/src/
-!native/pdf/src/**
 !packages/
 !packages/pdf-service/
 !packages/pdf-service/dist/
@@ -15,3 +9,9 @@
 !deploy/vps/runtime/
 !deploy/vps/runtime/package.json
 !deploy/vps/runtime/package-lock.json
+!deploy/vps/native-runtime/
+!deploy/vps/native-runtime/package.json
+!deploy/vps/native-runtime/package-lock.json
+!deploy/vps/install-native-artifact.mjs
+!packages/research/
+!packages/research/package.json

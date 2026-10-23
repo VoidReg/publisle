@@ -7,7 +7,7 @@
     { href: "/examples/", label: "Examples" },
     { href: "/playground/", label: "Playground" },
   ];
-  const github = "https://github.com/VoidReg/publisle";
+  const github = "https://github.com/publisle/publisle";
 
   let open = $state(false);
   let path = $state("/");

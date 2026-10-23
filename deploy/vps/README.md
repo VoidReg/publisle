@@ -184,9 +184,10 @@ bibliography-fetching API is not used by this public service.
 
 The native worker uses a single sandbox session for preparation and compilation.
 It waits for the API to stage validated assets, then produces a tagged PDF using
-the pinned Rust binary and fonts. Its image contains no TeX runtime. The existing
+the exact registry-pinned Rust binary and fonts, installed during image construction
+from the native runtime lockfile. Rust source compilation takes place in publisle-rs. Its image contains no TeX runtime. The existing
 LaTeX worker remains available for source-compatible journal exports and rollback.
-See [native compiler setup and limitations](../../native/pdf/README.md).
+See [native compiler setup and limitations](https://github.com/publisle/publisle-rs/blob/main/crates/publisle-pdf/README.md).
 
 ```sh
 pnpm --filter @publisle/pdf-service build

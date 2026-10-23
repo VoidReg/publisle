@@ -15,14 +15,13 @@ if (branch === "changeset-release/main") {
   const files = run(["diff", "--name-only", "origin/main...HEAD"]).split("\n");
   const root = resolve(import.meta.dirname, "..");
   const packages = await releasePackages(root);
-  const publicChange = files.some(
-    (file) =>
-      packages.some(({ path }) => {
-        const prefix = relative(root, dirname(path)) + "/";
-        return (
-          file === prefix + "package.json" || file.startsWith(prefix + "src/")
-        );
-      }) || /^native\/pdf\/(?:src\/|Cargo\.(?:toml|lock))/u.test(file),
+  const publicChange = files.some((file) =>
+    packages.some(({ path }) => {
+      const prefix = relative(root, dirname(path)) + "/";
+      return (
+        file === prefix + "package.json" || file.startsWith(prefix + "src/")
+      );
+    }),
   );
   execFileSync(
     "pnpm",

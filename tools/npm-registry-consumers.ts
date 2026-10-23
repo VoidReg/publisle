@@ -21,6 +21,11 @@ const report = JSON.parse(await readFile(manifestPath, "utf8")) as {
   releaseId: string;
 };
 const { versions } = report;
+const nativePins = (
+  JSON.parse(
+    await readFile(join(root, "packages/research/package.json"), "utf8"),
+  ) as { optionalDependencies: Record<string, string> }
+).optionalDependencies;
 const sets = JSON.parse(
   await readFile(join(root, "packages/core-packages.json"), "utf8"),
 ) as { core: string[]; research: string[] };
@@ -68,7 +73,7 @@ async function inspectLock(cwd: string, coreOnly: boolean): Promise<void> {
       );
       assert.equal(
         entry.version,
-        versions[name],
+        versions[name] ?? nativePins[name],
         `Unexpected registry version of ${name}`,
       );
       assert(entry.resolved?.startsWith("https://registry.npmjs.org/"));

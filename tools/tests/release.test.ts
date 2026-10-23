@@ -10,12 +10,12 @@ import {
   releasePackages,
   validateVersion,
 } from "../release.ts";
-it("publishes only the 29 public packages, including all five native platforms", async () => {
+it("publishes only the 24 TypeScript packages", async () => {
   const p = await releasePackages(new URL("../../", import.meta.url).pathname);
-  expect(p).toHaveLength(29);
+  expect(p).toHaveLength(24);
   expect(
     p.filter((p) => p.manifest.name.includes("/pdf-native-")),
-  ).toHaveLength(5);
+  ).toHaveLength(0);
   expect(p.some((p) => p.manifest.name === "@publisle/pdf-service")).toBe(
     false,
   );

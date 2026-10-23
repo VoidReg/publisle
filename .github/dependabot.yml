@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /deploy/vps/native-runtime
+    schedule:
+      interval: weekly
+    groups:
+      native-pdf:
+        patterns:
+          - "@publisle/pdf-native-*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

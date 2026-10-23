@@ -34,7 +34,7 @@ const sample = fromMarkdown(heroMarkdown);
 if (!sample.document) throw new Error("Invalid hero example");
 const heroPublication = preparePublication(sample.document, { registry: createRegistry(coreBlockDefinitions) });
 
-const github = "https://github.com/VoidReg/publisle";
+const github = "https://github.com/publisle/publisle";
 const npmScope = "https://www.npmjs.com/org/publisle";
 
 const formatBytes = (bytes: number) => bytes === 0 ? "0 B" : bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
@@ -80,8 +80,8 @@ const packages = coreBlockDefinitions.length >= 0
         operatingSystem: "Node.js 24+",
         description:
           "Publishing toolkit for technical articles, research papers, and interactive explanations: Markdown or JSON in, validated portable documents, static HTML out.",
-        license: "https://github.com/VoidReg/publisle/blob/main/LICENSE",
-        author: { "@type": "Organization", name: "VoidReg" },
+        license: "https://github.com/publisle/publisle/blob/main/LICENSE",
+        author: { "@type": "Organization", name: "Publisle" },
       },
     ])}
   />
