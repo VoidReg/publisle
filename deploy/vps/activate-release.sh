@@ -30,7 +30,26 @@ chown -R publisle:publisle "$STAGE/source/deploy/vps/qa"
 function bounded() {
   systemd-run --unit="publisle-release-$RELEASE_SHA-$1" --wait --pipe --collect --uid=publisle --gid=publisle --working-directory="$STAGE/source" --slice=publisle-pdf.slice -p MemoryMax=320M -p MemorySwapMax=0 -p RuntimeMaxSec=1800 -p TimeoutStopSec=30 "${RUNTIME[@]}" --setenv="JAVA_TOOL_OPTIONS=-Xmx128m -XX:ActiveProcessorCount=1" "${@:2}"
 }
+# Classic Docker IDs identify image configuration; containerd reports an OCI
+# manifest ID after loading the same archive. Bind the archived tag to the
+# expected configuration, then resolve the immutable ID on this daemon.
+METADATA=$(bounded metadata /usr/bin/tar -xzOf "$STAGE/image.tar.gz" manifest.json)
+ARCHIVE_TAG=$(/usr/bin/node --input-type=module - "$METADATA" "$IMAGE" "$RELEASE_SHA" <<'JS'
+import assert from 'node:assert/strict';
+const entries=JSON.parse(process.argv[2]);
+assert(entries.length===1);
+const entry=entries[0];
+const config=/^(?:blobs\/sha256\/([a-f0-9]{64})|([a-f0-9]{64})\.json)$/.exec(entry.Config);
+assert(config&&`sha256:${config[1]??config[2]}`===process.argv[3], 'Archive configuration does not match the expected image');
+assert(entry.RepoTags?.length===1);
+const tag=entry.RepoTags[0];
+assert(tag==='publisle-pdf-release:latest'||tag===`publisle-pdf-release:${process.argv[4]}`);
+console.log(tag);
+JS
+)
 bounded load /usr/bin/docker load -i "$STAGE/image.tar.gz"
+IMAGE=$(bounded resolve /usr/bin/docker image inspect --format '{{.Id}}' "$ARCHIVE_TAG")
+[[ "$IMAGE" =~ ^sha256:[a-f0-9]{64}$ ]]
 rm -f "$STAGE/image.tar.gz"
 # Validators live in the isolated staging tree, not the production API install.
 bounded dependencies /usr/bin/env -C "$STAGE/source/deploy/vps/qa" /usr/bin/npm ci --ignore-scripts --no-audit --no-fund

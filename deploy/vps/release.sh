@@ -23,11 +23,10 @@ if [[ -n "$CURRENT" && "$CURRENT" != "$GITHUB_SHA" ]]; then
   git merge-base --is-ancestor "$CURRENT" "$GITHUB_SHA"
 fi
 pnpm --filter @publisle/pdf-service build
-docker build -f deploy/vps/native-worker.Dockerfile -t publisle-pdf-release .
-IMAGE=$(docker image inspect publisle-pdf-release --format '{{.Id}}')
-[[ "$IMAGE" =~ ^sha256:[a-f0-9]{64}$ ]]
+BUILD_TAG="publisle-pdf-release:$GITHUB_SHA"
+docker build -f deploy/vps/native-worker.Dockerfile -t "$BUILD_TAG" .
 # The compiler in the deployment image must be the published Linux compiler.
-CID=$(docker create publisle-pdf-release)
+CID=$(docker create "$BUILD_TAG")
 docker cp "$CID:/usr/local/bin/publisle-pdf" "$STAGE/compiler"
 docker rm "$CID"
 node --input-type=module - "$STAGE/compiler" <<'JS'
@@ -38,7 +37,16 @@ const result=JSON.parse(execFileSync('npm',['pack',`@publisle/pdf-native-linux-x
 const manifest=JSON.parse(execFileSync('tar',['-xOf',`${cwd}/${result[0].filename}`,'package/artifact.json'],{encoding:'utf8'}));
 if(createHash('sha256').update(readFileSync(process.argv[2])).digest('hex')!==manifest.files['bin/publisle-pdf'])throw Error('Deployment compiler differs from the published compiler');
 JS
-docker save publisle-pdf-release | gzip -1 > "$STAGE/image.tar.gz"
+docker save "$BUILD_TAG" | gzip -1 > "$STAGE/image.tar.gz"
+# Transport the portable configuration digest, not a daemon-specific image ID.
+IMAGE=$(tar -xzOf "$STAGE/image.tar.gz" manifest.json | node --input-type=module -e '
+import {readFileSync} from "node:fs";
+import assert from "node:assert/strict";
+const entries=JSON.parse(readFileSync(0,"utf8"));assert(entries.length===1);
+const match=/^(?:blobs\/sha256\/([a-f0-9]{64})|([a-f0-9]{64})\.json)$/.exec(entries[0].Config);
+assert(match);console.log(`sha256:${match[1]??match[2]}`);
+')
+[[ "$IMAGE" =~ ^sha256:[a-f0-9]{64}$ ]]
 git archive --format=tar --prefix=source/ "$GITHUB_SHA" > "$STAGE/source.tar"
 REMOTE="/var/tmp/publisle-deploy-$GITHUB_SHA"
 ssh "${SSH_ARGS[@]}" "$PDF_DEPLOY_USER@$PDF_DEPLOY_HOST" "mkdir -p '$REMOTE'"

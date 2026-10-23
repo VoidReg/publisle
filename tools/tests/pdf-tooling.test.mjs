@@ -156,3 +156,52 @@ test(
     }
   },
 );
+
+test("binds Docker archive tags to the expected portable configuration digest", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { spawnSync } = await import("node:child_process");
+  const source = await readFile(
+    new URL("../../deploy/vps/activate-release.sh", import.meta.url),
+    "utf8",
+  );
+  const script = source.match(
+    /"\$METADATA" "\$IMAGE" "\$RELEASE_SHA" <<'JS'\n([\s\S]*?)\nJS/u,
+  )?.[1];
+  assert(script);
+  const sha = "c".repeat(40);
+  const inspect = (entries, expected = a) =>
+    spawnSync(
+      process.execPath,
+      ["--input-type=module", "-", JSON.stringify(entries), expected, sha],
+      {
+        input: script,
+        encoding: "utf8",
+        timeout: 5000,
+      },
+    );
+  for (const config of [`blobs/sha256/${a.slice(7)}`, `${a.slice(7)}.json`]) {
+    for (const tag of [
+      "publisle-pdf-release:latest",
+      `publisle-pdf-release:${sha}`,
+    ]) {
+      const result = inspect([{ Config: config, RepoTags: [tag] }]);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(result.stdout.trim(), tag);
+      assert.notEqual(
+        inspect([{ Config: config, RepoTags: [tag] }], b).status,
+        0,
+      );
+    }
+  }
+  for (const entries of [
+    [],
+    [{ Config: `blobs/sha256/${a.slice(7)}`, RepoTags: ["unrelated:latest"] }],
+    [
+      {
+        Config: `../../${a.slice(7)}.json`,
+        RepoTags: ["publisle-pdf-release:latest"],
+      },
+    ],
+  ])
+    assert.notEqual(inspect(entries).status, 0);
+});
