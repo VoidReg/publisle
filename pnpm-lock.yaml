@@ -1052,20 +1052,20 @@ importers:
         version: 0.8.3
     optionalDependencies:
       '@publisle/pdf-native-darwin-arm64':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.4.0
+        version: 0.4.0
       '@publisle/pdf-native-darwin-x64':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.4.0
+        version: 0.4.0
       '@publisle/pdf-native-linux-arm64':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.4.0
+        version: 0.4.0
       '@publisle/pdf-native-linux-x64':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.4.0
+        version: 0.4.0
       '@publisle/pdf-native-win32-x64':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.4.0
+        version: 0.4.0
 
   packages/schema: {}
 
@@ -2160,34 +2160,34 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@publisle/pdf-native-darwin-arm64@0.3.1':
-    resolution: {integrity: sha512-a9x5MGPgi1DP6DX0za1WR9cO/Zt1aIG2CtV1AQh4mzio4ogIo+lg9Vc10fsmO/8Lek0laFh/GGnQE96SPOZHFA==}
+  '@publisle/pdf-native-darwin-arm64@0.4.0':
+    resolution: {integrity: sha512-QmP7gJhzkcMg73324Vit4wkVVv7rlmvHW6GkdYL8tPcV01AA+l5S+PfhGGUDWOY0vU/smjySb6JKCVMDeDPV6w==}
     engines: {node: '>=24'}
     cpu: [arm64]
     os: [darwin]
 
-  '@publisle/pdf-native-darwin-x64@0.3.1':
-    resolution: {integrity: sha512-cZwVWNcGvnv6ECn3FVvYOutsUUveEw6MILgnkXv/dnoIz+BX4zC4Bbsp5HbOkOgX3Ubuh3RVWgkXlb86Q7WpbQ==}
+  '@publisle/pdf-native-darwin-x64@0.4.0':
+    resolution: {integrity: sha512-EDV6CtrN/GdXNhcv6Qr8pIIUzaq3Jo8rtJuRhIBvKTzJ0Vz/BnYp5CI8kbvm9r+V/+CJ9bnTFLINhwp01dHEAw==}
     engines: {node: '>=24'}
     cpu: [x64]
     os: [darwin]
 
-  '@publisle/pdf-native-linux-arm64@0.3.1':
-    resolution: {integrity: sha512-ZrQmtKNRpVbceaMOf0MjX/chlhWey0ENH/x+bZwC+cCuRlcXFyrlW58jenM/AijNn+WNTMimYEjciLYwd4Ofyw==}
+  '@publisle/pdf-native-linux-arm64@0.4.0':
+    resolution: {integrity: sha512-Er25x4VqDrlYChMgERqmvVWQI2AlP/h81LGSQWe1Dky1JcBL1Bd5ubFg4IAa5carlLqAjOe5m8FZhlWp3pPufQ==}
     engines: {node: '>=24'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@publisle/pdf-native-linux-x64@0.3.1':
-    resolution: {integrity: sha512-HXXRJjIAMvsq7YCCdN/HFsTgbGPnXY4Td9LrcDhxz55LRYtid0RSxr2S0vchNp7yXMU/+vf+7mj12aOynWi97w==}
+  '@publisle/pdf-native-linux-x64@0.4.0':
+    resolution: {integrity: sha512-cm0HZFp285GA/mqyj6NvRPPAafy7oKajau0sCMHgeFgLA6mQCCk065uzBWa0AJPtQsgOXyDrV7THnfUe8wVDLg==}
     engines: {node: '>=24'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@publisle/pdf-native-win32-x64@0.3.1':
-    resolution: {integrity: sha512-4k07e4eJe+DJBxug38bRu0PMUlJcRXWveXGOwtnGAz1uXoIk0f5+/vGudlG4Hrraf+OFbPSqlVeQPwILPGMTVA==}
+  '@publisle/pdf-native-win32-x64@0.4.0':
+    resolution: {integrity: sha512-UFpxJG3f0Cr7BIPqzcTY2pPEEcmQGtkoCVMnaEUFvQIRiF9O5knH5n8JvQ1RLfd3qPVm0Nm3tLSbmuvFyAw4dg==}
     engines: {node: '>=24'}
     cpu: [x64]
     os: [win32]
@@ -5968,19 +5968,19 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@publisle/pdf-native-darwin-arm64@0.3.1':
+  '@publisle/pdf-native-darwin-arm64@0.4.0':
     optional: true
 
-  '@publisle/pdf-native-darwin-x64@0.3.1':
+  '@publisle/pdf-native-darwin-x64@0.4.0':
     optional: true
 
-  '@publisle/pdf-native-linux-arm64@0.3.1':
+  '@publisle/pdf-native-linux-arm64@0.4.0':
     optional: true
 
-  '@publisle/pdf-native-linux-x64@0.3.1':
+  '@publisle/pdf-native-linux-x64@0.4.0':
     optional: true
 
-  '@publisle/pdf-native-win32-x64@0.3.1':
+  '@publisle/pdf-native-win32-x64@0.4.0':
     optional: true
 
   '@rolldown/binding-android-arm-eabi@1.2.13':
