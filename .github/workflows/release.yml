@@ -89,15 +89,14 @@ jobs:
         id: changesets
         if: steps.mode.outputs.publish != 'true'
         with:
-          version: pnpm release:version
-          title: Version packages
-          commit: Version packages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version-script: pnpm release:version
+          pr-title: Version packages
+          commit-message: Version packages
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       # GITHUB_TOKEN-created PRs do not trigger pull_request workflows. Explicitly
       # dispatch the validation workflow at the bot branch's exact commit.
       - name: Validate the generated version PR
-        if: steps.mode.outputs.publish != 'true' && steps.changesets.outputs.pullRequestNumber != ''
+        if: steps.mode.outputs.publish != 'true' && steps.changesets.outputs.pr-number != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run release.yml --ref changeset-release/main
