@@ -136,7 +136,7 @@ export async function compilePdf(
               diagnostics
                 .map(
                   (entry) =>
-                    `${entry.code}${entry.blockIndex === undefined ? "" : ` (block ${entry.blockIndex + 1})`}: ${entry.message}`,
+                    `${entry.code}${entry.blockIndex === undefined ? "" : ` (block ${String(entry.blockIndex + 1)})`}: ${entry.message}`,
                 )
                 .join(" ")
             : ""),
