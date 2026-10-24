@@ -54,7 +54,7 @@
     "@publisle/cli": "workspace:*",
     "@types/node": "^24.13.5",
     "@types/semver": "^7.8.0",
-    "eslint": "^10.11.0",
+    "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "fflate": "0.8.3",
     "globals": "^17.12.0",
