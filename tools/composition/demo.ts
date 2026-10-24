@@ -72,7 +72,7 @@ export async function buildCompositionDemo(): Promise<{
     build: {
       write: false,
       minify: true,
-      rollupOptions: { input: "composition-demo" },
+      rolldownOptions: { input: "composition-demo" },
     },
   });
   const built = Array.isArray(result) ? result[0] : result;
