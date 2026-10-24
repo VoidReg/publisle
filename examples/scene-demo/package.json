@@ -15,7 +15,7 @@
     "@publisle/schema": "workspace:*",
     "react": "^19.0.0",
     "svelte": "^5.0.0",
-    "three": "^0.183.0"
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
