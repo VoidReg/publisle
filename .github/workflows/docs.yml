@@ -22,7 +22,7 @@ jobs:
       - run: pnpm readmes:check
       - run: pnpm docs:check
       - run: pnpm exec markdownlint-cli2
-      - uses: errata-ai/vale-action@v2
+      - uses: errata-ai/vale-action@v3
         with:
           version: 3.24.0
           files: '["README.md", "docs", "packages", "blocks"]'
