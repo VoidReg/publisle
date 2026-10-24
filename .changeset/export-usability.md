@@ -3,7 +3,6 @@
 "@publisle/adapter-core": patch
 "@publisle/playground": patch
 "@publisle/research": patch
-"@publisle/www": patch
 ---
 
 Suppress empty references and automatic LaTeX dates, keep tables before references,
