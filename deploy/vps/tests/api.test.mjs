@@ -620,3 +620,70 @@ test("the cache partitions by worker image and reports hits without recompiling"
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("native failure retries once in the legacy image and retains diagnostics", async () => {
+  const nativeImage = `sha256:${"a".repeat(64)}`;
+  const legacyImage = `sha256:${"b".repeat(64)}`;
+  const calls = [];
+  const result = await compileJob(
+    validateRequest({ markdown: "hello", engine: "rust" }, ["article"]),
+    new AbortController().signal,
+    {
+      nativeImage,
+      image: legacyImage,
+      nativeTemplates: ["article"],
+      runWorker: async (image, _directory, action) => {
+        calls.push({ image, action });
+        if (image === nativeImage)
+          throw Object.assign(new Error("unsupported math"), {
+            code: "compilation-failed",
+            diagnostics: [
+              {
+                code: "unsupported-math",
+                message: "Unknown command",
+                blockIndex: 2,
+              },
+            ],
+          });
+        if (action === "prepare")
+          return Buffer.from(
+            JSON.stringify({
+              document: { schemaVersion: 1, blocks: [] },
+              sources: [],
+            }),
+          );
+        return Buffer.from(
+          JSON.stringify({ ok: true, diagnostics: [] }) + "\n%PDF-test",
+        );
+      },
+    },
+  );
+  assert.deepEqual(calls, [
+    { image: nativeImage, action: "session" },
+    { image: legacyImage, action: "prepare" },
+    { image: legacyImage, action: "compile" },
+  ]);
+  assert.equal(result.diagnostics[0].blockIndex, 2);
+  assert.equal(result.diagnostics[1].code, "native-engine-fallback");
+});
+test("cancellation never starts a legacy retry", async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  await assert.rejects(
+    compileJob(
+      validateRequest({ markdown: "hello", engine: "rust" }, ["article"]),
+      controller.signal,
+      {
+        nativeImage: `sha256:${"a".repeat(64)}`,
+        image: `sha256:${"b".repeat(64)}`,
+        nativeTemplates: ["article"],
+        runWorker: async () => {
+          calls++;
+          controller.abort();
+          throw new Error("cancelled");
+        },
+      },
+    ),
+  );
+  assert.equal(calls, 1);
+});

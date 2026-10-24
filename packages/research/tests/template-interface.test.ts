@@ -59,3 +59,14 @@ it("defaults to Unicode LaTeX and refuses unknown templates", () => {
     createSubmissionPackage(source, { template: "missing" }),
   ).toThrow("Unknown export template");
 });
+
+it("omits empty CSL references and suppresses the automatic date", () => {
+  const source = document({
+    metadata: { title: "No references", authors: [{ name: "Ada" }] },
+    blocks: [],
+  });
+  const tex = createSubmissionPackage(source).files["manuscript.tex"] ?? "";
+  expect(tex).toContain("\\date{}");
+  expect(tex).not.toContain("\\section*{References}");
+  expect(tex).not.toContain("\\FloatBarrier");
+});

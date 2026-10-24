@@ -11,9 +11,19 @@ export interface ApiHealth {
   readonly services?: { readonly pdf?: boolean };
 }
 
+export interface ApiDiagnostic {
+  readonly code: string;
+  readonly message: string;
+  readonly blockIndex?: number;
+}
+
 export type ApiResult<T> =
   | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly message: string };
+  | {
+      readonly ok: false;
+      readonly message: string;
+      readonly diagnostics?: readonly ApiDiagnostic[];
+    };
 
 export async function fetchHealth(
   timeoutMs = 4000,
@@ -78,7 +88,7 @@ export type CompilePdfRequest = {
 
 export type CompilePdfResult = ApiResult<{
   readonly pdf: Blob;
-  readonly diagnostics: readonly { code: string; message: string }[];
+  readonly diagnostics: readonly ApiDiagnostic[];
 }>;
 
 export async function compilePdf(
@@ -100,14 +110,36 @@ export async function compilePdf(
         : AbortSignal.timeout(220000),
     });
     if (!response.ok) {
-      const payload = (await response.json()) as { message?: string };
+      const payload = (await response.json()) as {
+        message?: string;
+        diagnostics?: ApiDiagnostic[];
+      };
+      const diagnostics = Array.isArray(payload.diagnostics)
+        ? payload.diagnostics
+            .filter(
+              (entry) =>
+                typeof entry.code === "string" &&
+                typeof entry.message === "string",
+            )
+            .slice(0, 30)
+        : [];
       const retry = response.headers.get("retry-after");
       return {
         ok: false,
+        diagnostics,
         message:
           (payload.message ??
             `Compilation failed (${String(response.status)}).`) +
-          (retry ? ` Retry in ${retry} seconds.` : ""),
+          (retry ? ` Retry in ${retry} seconds.` : "") +
+          (diagnostics.length
+            ? " " +
+              diagnostics
+                .map(
+                  (entry) =>
+                    `${entry.code}${entry.blockIndex === undefined ? "" : ` (block ${String(entry.blockIndex + 1)})`}: ${entry.message}`,
+                )
+                .join(" ")
+            : ""),
       };
     }
     if (!response.headers.get("content-type")?.startsWith("application/pdf"))

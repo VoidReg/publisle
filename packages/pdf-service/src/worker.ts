@@ -352,7 +352,11 @@ async function main(): Promise<void> {
     });
     const diagnostics = native.diagnostics
       .slice(0, 30)
-      .map(({ code, message }) => ({ code, message: message.slice(0, 200) }));
+      .map(({ code, message, blockIndex }) => ({
+        code,
+        message: message.slice(0, 200),
+        ...(blockIndex === undefined ? {} : { blockIndex }),
+      }));
     if (
       !process.stdout.write(
         JSON.stringify({ ok: true, diagnostics, timings }) + "\n",
@@ -489,6 +493,7 @@ if (
           : preparing
             ? "invalid-document"
             : "compilation-failed",
+        diagnostics: (error as { diagnostics?: unknown }).diagnostics,
         message: outOfMemory
           ? "This document exceeds the PDF service memory budget."
           : message,

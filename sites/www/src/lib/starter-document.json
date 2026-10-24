@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "blocks": [
+    {
+      "id": "543a6f0a-9356-58d8-a60e-27a8e17a0269",
+      "type": "publisle:paragraph",
+      "schemaVersion": 1,
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "value": "Edit this document and see the result beside it. Your draft saves on this device."
+          }
+        ]
+      }
+    },
+    {
+      "id": "7f70a388-6db3-5f8a-ad70-7b40872efc03",
+      "type": "publisle:heading",
+      "schemaVersion": 1,
+      "data": {
+        "level": 2,
+        "content": [
+          {
+            "type": "text",
+            "value": "Blocks"
+          }
+        ]
+      }
+    },
+    {
+      "id": "d57ad0dd-055a-5947-acfe-eac23f8f6e54",
+      "type": "publisle:list",
+      "schemaVersion": 1,
+      "data": {
+        "type": "list",
+        "ordered": false,
+        "items": [
+          {
+            "type": "listItem",
+            "children": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "value": "Structured blocks keep IDs, captions, and labels"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "listItem",
+            "children": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "value": "Math stays TeX: "
+                  },
+                  {
+                    "type": "inlineMath",
+                    "value": "e^{i\\pi} + 1 = 0"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "listItem",
+            "children": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "value": "Press Ctrl+K to add blocks from the searchable palette"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "2361dafb-c93b-57ef-acab-998a4f3d34b3",
+      "type": "publisle:paragraph",
+      "schemaVersion": 1,
+      "data": {
+        "content": [
+          {
+            "type": "text",
+            "value": "PDF export works out of the box: this sample already carries a title and author."
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "title": "Hello, Publisle",
+    "authors": [
+      {
+        "name": "Ada Example"
+      }
+    ]
+  }
+}

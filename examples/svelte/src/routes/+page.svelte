@@ -3,7 +3,7 @@
   import "@publisle/adapter-core/document.css";
   import "@publisle/adapter-core/katex.css";
   import { metadata, publication } from "../content/counter.md";
-  import Schematic from "$lib/Schematic.svelte";
+  import Schematic from "#lib/Schematic.svelte";
 
   const implementations = {
     "demo:interactive-scene": () => import("@publisle/example-scene/svelte"),

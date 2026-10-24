@@ -39,6 +39,7 @@ export interface NativeCompileOptions extends Omit<
 }
 export interface NativeCompilerDiagnostic extends ResearchLoss {
   readonly blockId?: string;
+  readonly blockIndex?: number;
 }
 export interface NativeCompileResult {
   readonly pdf: Uint8Array;
@@ -146,6 +147,7 @@ export async function compileNativePdf(
           ? String(cause.stdout)
           : "";
       let message = "Native PDF compilation failed.";
+      let diagnostics: NativeCompilerDiagnostic[] = [];
       try {
         const error = JSON.parse(stdout) as {
           diagnostics?: {
@@ -154,8 +156,27 @@ export async function compileNativePdf(
             blockIndex?: number;
           }[];
         };
-        const detail = error.diagnostics
-          ?.map(
+        diagnostics = (error.diagnostics ?? [])
+          .slice(0, 30)
+          .filter(
+            (entry) =>
+              typeof entry.code === "string" &&
+              typeof entry.message === "string",
+          )
+          .map((entry) => ({
+            code: entry.code.slice(0, 100),
+            message: entry.message.slice(0, 300),
+            ...(typeof entry.blockIndex === "number" &&
+            Number.isSafeInteger(entry.blockIndex) &&
+            entry.blockIndex >= 0
+              ? {
+                  blockIndex: entry.blockIndex,
+                  blockId: source.blockIds[entry.blockIndex],
+                }
+              : {}),
+          }));
+        const detail = diagnostics
+          .map(
             (entry) =>
               `${entry.code}${entry.blockIndex === undefined ? "" : ` (${source.blockIds[entry.blockIndex] ?? "unknown block"})`}: ${entry.message}`,
           )
@@ -164,7 +185,7 @@ export async function compileNativePdf(
       } catch {
         /* Preserve the bounded process failure when no structured result exists. */
       }
-      throw new Error(message, { cause });
+      throw Object.assign(new Error(message, { cause }), { diagnostics });
     }
     const report = JSON.parse(stdout) as {
       ok?: boolean;

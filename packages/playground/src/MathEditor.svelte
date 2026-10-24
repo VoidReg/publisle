@@ -2,7 +2,14 @@
   // LaTeX editing field: token-highlighted source (transparent textarea over a
   // colored pre), live KaTeX preview with inline errors, and a searchable
   // symbol palette. Used by the math block editor and inline math segments.
-  import katex from "katex";
+  let katex = $state<typeof import("katex").default>();
+  let mathLoadError = $state("");
+  $effect(() => {
+    if (!value.trim() || katex) return;
+    let active = true;
+    void import("katex").then((module) => { if (active) katex = module.default; }).catch(() => { if (active) mathLoadError = "Math preview could not load. Reload to retry."; });
+    return () => { active = false; };
+  });
   import { tick } from "svelte";
   import {
     highlightMath,
@@ -61,7 +68,7 @@
 
   const rendered = $derived.by(() => {
     const trimmed = value.trim();
-    if (trimmed === "") return { html: "", error: "" };
+    if (trimmed === "" || !katex) return { html: "", error: mathLoadError };
     try {
       // Render fill-me guides as visible squares instead of KaTeX errors.
       const source = trimmed.replaceAll("□", "\\square ");

@@ -146,14 +146,35 @@ export async function runWorker(
         if (code !== 0) {
           let message = "PDF compilation failed within the service limits.";
           let errorCode = "compilation-failed";
+          let diagnostics = [];
           try {
             const detail = JSON.parse(body.toString("utf8"));
             message = String(detail.message).slice(0, 300);
             errorCode = detail.code;
+            diagnostics = Array.isArray(detail.diagnostics)
+              ? detail.diagnostics
+                  .slice(0, 30)
+                  .filter(
+                    (entry) =>
+                      typeof entry.code === "string" &&
+                      typeof entry.message === "string",
+                  )
+                  .map(({ code, message, blockIndex }) => ({
+                    code: code.slice(0, 100),
+                    message: message.slice(0, 300),
+                    ...(Number.isSafeInteger(blockIndex) && blockIndex >= 0
+                      ? { blockIndex }
+                      : {}),
+                  }))
+              : [];
           } catch {
             /* bounded generic failure */
           }
-          reject(new ServiceError(errorCode, message));
+          reject(
+            Object.assign(new ServiceError(errorCode, message), {
+              diagnostics,
+            }),
+          );
           return;
         }
         if (onPrepared && !preparedSeen) {
