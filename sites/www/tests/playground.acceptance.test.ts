@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium, devices, type Browser } from "playwright-core";
+import { chromium, devices, type Browser, type Page } from "playwright-core";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { playgroundExamples } from "../src/lib/playground-examples";
 
@@ -20,6 +20,13 @@ const contentTypes: Record<string, string> = {
 let server: Server | undefined;
 let browser: Browser | undefined;
 let baseUrl: string;
+async function waitForPreview(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page.locator('[aria-label="Compiled preview"]').getAttribute("aria-busy"),
+    )
+    .toBe("false");
+}
 
 beforeAll(async () => {
   execFileSync("pnpm", ["build"], { cwd: siteDirectory, stdio: "pipe" });
@@ -90,6 +97,7 @@ it("compiles all examples live and runs the FFT butterfly", async () => {
   try {
     await page.goto(`${baseUrl}/playground/`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     await page.getByText(/Example documents ·/).click();
     const preview = page.getByRole("region", { name: "Compiled preview" });
     const editor = page.getByRole("region", { name: "Document editor" });
@@ -113,6 +121,7 @@ it("compiles all examples live and runs the FFT butterfly", async () => {
       await page
         .getByRole("button", { name: new RegExp(`^${example.title}`) })
         .click();
+      await expect.poll(() => preview.getAttribute("aria-busy")).toBe("false");
       expect(await preview.innerText()).not.toContain(":::");
       expect(await preview.locator(".publisle-document").count()).toBe(1);
       if (example.id === "fft") {
@@ -172,6 +181,7 @@ it("saves source and block edits across modes, reloads, and navigation", async (
   try {
     await page.goto(`${baseUrl}/playground/?example=fft`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     expect(new URL(page.url()).searchParams.has("example")).toBe(false);
     expect(
       await page.getByRole("region", { name: "Compiled preview" }).innerText(),
@@ -197,6 +207,7 @@ it("saves source and block edits across modes, reloads, and navigation", async (
       .toContain("Block edits update while typing.");
     await page.reload();
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     await page.getByRole("tab", { name: /^markdown$/i }).click();
     expect(await source.inputValue()).toContain(
       "Block edits update while typing.",
@@ -204,6 +215,7 @@ it("saves source and block edits across modes, reloads, and navigation", async (
     await source.fill("# Reloaded draft\n\nSaved without an Import click.\n");
     await page.reload();
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     expect(await source.inputValue()).toContain(
       "Saved without an Import click.",
     );
@@ -215,6 +227,7 @@ it("saves source and block edits across modes, reloads, and navigation", async (
     await json.fill("{ invalid draft");
     await page.reload();
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     expect(await json.inputValue()).toBe("{ invalid draft");
     expect(await preview.innerText()).toContain(
       "Saved without an Import click.",
@@ -229,7 +242,7 @@ it("persists theme through Astro navigation and searches documentation", async (
   const page = await browser.newPage();
   try {
     await page.goto(`${baseUrl}/`);
-    await page.getByRole("button", { name: "Switch to dark theme" }).click();
+    expect(await page.locator("html").getAttribute("data-theme")).toBe("dark");
     await page.getByRole("link", { name: "Read the docs" }).click();
     await page
       .getByRole("searchbox", { name: "Search all documentation" })
@@ -265,6 +278,7 @@ it("activates the FFT butterfly by touch after opening and restoring the tutoria
     await page.goto(`${baseUrl}/playground/?example=fft`);
     for (let visit = 0; visit < 2; visit += 1) {
       await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+      await waitForPreview(page);
       await page.getByRole("tab", { name: /^Preview/ }).tap();
       const preview = page.getByRole("region", { name: "Compiled preview" });
       await preview
@@ -318,6 +332,7 @@ it("contains Quickstart code on mobile and keeps the toolbar above the scrolling
       }
       await page.goto(`${baseUrl}/playground/`);
       await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+      await waitForPreview(page);
       await page.getByText(/Example documents ·/).click();
       await page.getByRole("button", { name: /^Fourier & FFT/ }).click();
       await page.getByRole("tab", { name: /^blocks$/i }).click();
@@ -404,6 +419,7 @@ it("contains docs code and aligns Research equation numbers on small and large s
         }
         await page.goto(`${baseUrl}/playground/?example=research-paper`);
         await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+        await waitForPreview(page);
         if (width < 1024)
           await page.getByRole("tab", { name: /^Preview/ }).click();
         const preview = page.getByRole("region", { name: "Compiled preview" });
@@ -484,6 +500,7 @@ it("keeps long equations scrollable without displacing their number", async () =
   try {
     await page.goto(`${baseUrl}/playground/`);
     await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
     await page.getByRole("tab", { name: /^Markdown$/i }).click();
     await page
       .getByRole("textbox", { name: "Markdown source" })
@@ -507,6 +524,51 @@ it("keeps long equations scrollable without displacing their number", async () =
       .boundingBox();
     if (!number) throw new Error("Missing equation number");
     expect(number.x + number.width).toBeLessThanOrEqual(320);
+  } finally {
+    await page.close();
+  }
+});
+
+it("preserves a JSON draft when an older saved Markdown tab has no source text", async () => {
+  if (!browser) throw new Error("Browser not started");
+  const page = await browser.newPage();
+  try {
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "publisle-draft-v1",
+        JSON.stringify({
+          version: 1,
+          mode: "markdown",
+          document: JSON.stringify({
+            schemaVersion: 1,
+            metadata: { title: "Preserved draft" },
+            blocks: [
+              {
+                id: "543a6f0a-9356-58d8-a60e-27a8e17a0269",
+                type: "publisle:paragraph",
+                schemaVersion: 1,
+                data: {
+                  content: [
+                    { type: "text", value: "Keep this saved paragraph." },
+                  ],
+                },
+              },
+            ],
+          }),
+        }),
+      );
+    });
+    await page.goto(`${baseUrl}/playground/`);
+    await page.waitForSelector("astro-island[ssr]", { state: "detached" });
+    await waitForPreview(page);
+    await expect
+      .poll(() =>
+        page.getByRole("textbox", { name: "Markdown source" }).inputValue(),
+      )
+      .toContain("Keep this saved paragraph.");
+    expect(
+      await page.getByRole("region", { name: "Compiled preview" }).innerText(),
+    ).toContain("Keep this saved paragraph.");
   } finally {
     await page.close();
   }

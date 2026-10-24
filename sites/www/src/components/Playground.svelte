@@ -69,11 +69,17 @@ PDF export works out of the box: this sample already carries a title and author.
   function markdownModule() {
     return markdownLoader ??= import("@publisle/markdown").catch((error: unknown) => { markdownLoader = undefined; throw error; });
   }
+  let markdownPending = $state(0);
   async function importMarkdown(source: string) {
+    markdownPending += 1;
+    try {
     const { fromMarkdown } = await markdownModule();
     const result = fromMarkdown(source, { resolveSchemaVersion: (type) => registry.get(type)?.schemaVersion });
     if (result.document) editor.setDocument(result.document);
     return result;
+    } catch {
+      return { diagnostics: [{ level: "error" as const, code: "markdown-load-failed", message: "Markdown support could not load. Reload to retry." }] };
+    } finally { markdownPending -= 1; }
   }
   async function exportMarkdown() { return (await markdownModule()).toMarkdown(editor.document); }
   let version = $state(0);
@@ -175,7 +181,18 @@ PDF export works out of the box: this sample already carries a title and author.
           markdownDocument = typeof draft.markdownDocument === "string" ? draft.markdownDocument : "";
           jsonDocument = typeof draft.jsonDocument === "string" ? draft.jsonDocument : "";
           if (["blocks", "markdown", "json"].includes(draft.mode)) mode = draft.mode;
-          if (mode === "markdown") void applyMarkdown();
+          if (mode === "markdown") {
+            if (typeof draft.markdown === "string") void applyMarkdown();
+            else {
+              const restored = editor.toJson();
+              void exportMarkdown().then((result) => {
+                if (editor.toJson() === restored && markdownText === "") {
+                  markdownText = result.markdown ?? "";
+                  markdownDocument = restored;
+                }
+              }).catch(() => { notice = "Markdown support could not load. Reload to retry."; });
+            }
+          }
           if (mode === "json") applyJson();
         }
       }
@@ -220,7 +237,8 @@ PDF export works out of the box: this sample already carries a title and author.
     if (next === mode) return;
     await flushSource();
     if (next === "markdown" && !markdownInvalid && markdownDocument !== editor.toJson()) {
-      markdownText = (await exportMarkdown()).markdown ?? "";
+      try { markdownText = (await exportMarkdown()).markdown ?? ""; }
+      catch { notice = "Markdown support could not load. Reload to retry."; return; }
       markdownDocument = editor.toJson();
     }
     if (next === "json" && !jsonInvalid && jsonDocument !== editor.toJson()) {
@@ -269,9 +287,13 @@ PDF export works out of the box: this sample already carries a title and author.
       })),
   }));
 
+  let previewBusy = $state(true);
   let compiled = $state<{ html: string; warnings: number; error: string; manifest: ReturnType<typeof publicationReaderManifest> | undefined }>({ html: "", warnings: 0, error: "", manifest: undefined });
   $effect(() => {
     void version;
+    previewBusy = true;
+    compiled = { html: "", warnings: 0, error: "", manifest: undefined };
+    if (markdownPending > 0) return;
     const source = editor.document;
     const citations = citationResolver?.(source);
     let active = true;
@@ -303,7 +325,7 @@ PDF export works out of the box: this sample already carries a title and author.
         manifest: undefined,
       };
     }
-    })().then((result) => { if (active) compiled = result; });
+    })().then((result) => { if (active) { compiled = result; previewBusy = false; } });
     return () => { active = false; };
   });
 
@@ -360,7 +382,11 @@ PDF export works out of the box: this sample already carries a title and author.
   async function loadExample(example: PlaygroundExample): Promise<void> {
     clearTimeout(sourceTimer);
     sourcePending = false;
-    await importMarkdown(example.markdown);
+    const imported = await importMarkdown(example.markdown);
+    if (imported.diagnostics.some((item) => item.level === "error")) {
+      notice = imported.diagnostics.map((item) => item.message).join(" ");
+      return;
+    }
     markdownText = example.markdown;
     jsonText = editor.toJson();
     markdownInvalid = jsonInvalid = false;
@@ -634,11 +660,14 @@ PDF export works out of the box: this sample already carries a title and author.
     </section>
     <section
       aria-label="Compiled preview"
+      aria-busy={previewBusy}
       class="publication-wide min-w-0 max-h-[75vh] overflow-y-auto rounded-xl border border-line bg-surface p-3 sm:p-4 {view === 'edit' ? 'hidden lg:block' : ''}"
     >
       <h2 class="mb-2 font-display text-lg font-semibold">Live preview</h2>
       <p class="mb-3 text-xs text-muted">Your compiled article, with working interactive blocks.</p>
-      {#if compiled.error}
+      {#if previewBusy}
+        <p role="status" class="text-sm text-muted">Updating preview…</p>
+      {:else if compiled.error}
         <p class="whitespace-pre-wrap rounded-lg border border-danger bg-surface px-3 py-2 font-mono text-xs">
           {compiled.error}
         </p>
