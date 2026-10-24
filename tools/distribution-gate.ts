@@ -503,6 +503,8 @@ run(
     "react-dom@^19.0.0",
     "@types/react@^19.0.0",
     "@types/react-dom@^19.0.0",
+    // next build refuses to type-check a TypeScript app without it.
+    "@types/node@^24.0.0",
     "typescript@~6.0.3",
   ],
   nextConsumer,
