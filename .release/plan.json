@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "id": "release-cb85ca10c5cd8f71",
+  "id": "release-53d2bd6321472c7b",
   "versions": {
     "@publisle/adapter-astro": "0.2.2",
-    "@publisle/adapter-core": "0.2.2",
+    "@publisle/adapter-core": "0.2.3",
     "@publisle/adapter-next": "0.1.3",
     "@publisle/adapter-react": "0.1.3",
     "@publisle/adapter-svelte": "0.1.3",
@@ -14,7 +14,7 @@
     "@publisle/contracts": "0.1.3",
     "@publisle/core": "0.1.3",
     "@publisle/markdown": "0.1.3",
-    "@publisle/playground": "0.2.4",
+    "@publisle/playground": "0.2.5",
     "@publisle/profiles": "0.1.3",
     "@publisle/research": "0.3.3",
     "@publisle/schema": "0.1.2",
@@ -29,9 +29,14 @@
   },
   "releases": [
     {
-      "name": "@publisle/research",
-      "oldVersion": "0.3.2",
-      "version": "0.3.3"
+      "name": "@publisle/adapter-core",
+      "oldVersion": "0.2.2",
+      "version": "0.2.3"
+    },
+    {
+      "name": "@publisle/playground",
+      "oldVersion": "0.2.4",
+      "version": "0.2.5"
     }
   ]
 }
