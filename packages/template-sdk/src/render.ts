@@ -1,5 +1,6 @@
 import type { Article, ArticleInline, CitationEntry } from "./article.ts";
 import type { LatexEngine, SourcePackage, TemplateContext } from "./index.ts";
+import { placeins } from "./placeins.ts";
 import { toBibtex } from "./bibtex.ts";
 import { latexKey, latexText } from "./escape.ts";
 type WritingDirection = "ltr" | "rtl" | "auto";
@@ -287,7 +288,7 @@ export function renderLatexArticle(
         )
         .join("\n");
       target.push(
-        `\\begin{table}[!tb]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n${pdfStandard ? `\\tagpdfsetup{table/header-rows={${Array.from({ length: block.headerRows ?? 0 }, (_, index) => String(index + 1)).join(",")}}}\n` : ""}\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
+        `\\begin{table}[!htbp]\n\\caption{${take(block.caption ?? [])}}${label}\n\\centering\n${pdfStandard ? `\\tagpdfsetup{table/header-rows={${Array.from({ length: block.headerRows ?? 0 }, (_, index) => String(index + 1)).join(",")}}}\n` : ""}\\begin{tabularx}{\\columnwidth}{${"X".repeat(width)}}\n\\hline\n${rows}\n\\hline\n\\end{tabularx}\n\\end{table}`,
       );
     } else if (block.kind === "list")
       target.push(
@@ -356,17 +357,20 @@ ${unicodePreamble}${needsColor ? "\\usepackage{xcolor}\n" : ""}\\usepackage{amsm
 % flafter keeps floats at or after their source position, so a figure can
 % never be hoisted above the abstract region on the first page.
 \\usepackage{flafter}
+\\usepackage{placeins}
 \\usepackage[normalem]{ulem}
 \\usepackage{hyperref}
 \\hypersetup{hidelinks}
 \\hypersetup{pdftitle={${latexText(article.title ?? "Untitled")}},pdfauthor={${latexText(article.authors.join(", "))}}}
 ${profile.author ? profile.author(article, text) : `\\title{${text(article.title ?? "Untitled")}}\n\\author{${authors}${affiliations}}`}
+\\date{}
 ${profile.preamble ?? ""}
 \\begin{document}
 ${profile.frontmatter ? profile.frontmatter(abstract.join("\n\n"), article, text) : `\\maketitle${abstract.join("\n\n").trim() ? `\n\\begin{abstract}\n${abstract.join("\n\n")}\n\\end{abstract}` : ""}`}
 ${profile.keywords?.(article.subjects ?? [], text) ?? ""}
 ${body.join("\n\n")}
-${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : "") : `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}`}
+${context.bibliography.length ? "\\FloatBarrier" : ""}
+${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automaticBibliographyStyle ? "" : `\\bibliographystyle{${profile.bibliographyStyle}}\n`}\\bibliography{references}` : "") : context.bibliography.length ? `\\section*{${profile.direction === "rtl" ? text("المراجع") : "References"}}\n${context.bibliography.map((item) => text(item.text)).join("\n\n")}` : ""}
 \\end{document}
 `;
   return {
@@ -379,6 +383,7 @@ ${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automati
       "amsmath.sty",
       ...(needsColor ? ["xcolor.sty"] : []),
       "flafter.sty",
+      "placeins.sty",
       "graphicx.sty",
       "tabularx.sty",
       "ulem.sty",
@@ -394,6 +399,7 @@ ${profile.bibliographyStyle ? (context.bibliography.length ? `${profile.automati
     ],
     fonts: engine === "lualatex" ? fonts : {},
     files: {
+      "placeins.sty": placeins,
       "manuscript.tex": manuscript,
       "references.bib": toBibtex(entries),
       "BUILD.md": `# Rebuild\n\nRequires latexmk, ${engine}, and ${profile.className}.${pdfStandard ? ` LaTeX format >= 2025-11-01 is required for ${pdfStandard} tagging. Compiling does not run PDF/UA validation.` : ""}\n\nRun: latexmk -${engine === "pdflatex" ? "pdf" : "lualatex"} -norc -interaction=nonstopmode -halt-on-error -no-shell-escape manuscript.tex\n`,

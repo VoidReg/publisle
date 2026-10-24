@@ -23,16 +23,17 @@
     "@publisle/core": "workspace:*",
     "@publisle/markdown": "workspace:*",
     "@publisle/playground": "workspace:*",
+    "@publisle/research": "workspace:*",
     "@publisle/schema": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.8",
     "svelte": "^5.0.0",
-    "tailwindcss": "^4.3.3",
-    "@publisle/research": "workspace:*"
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
     "pagefind": "^1.5.2",
+    "rollup-plugin-visualizer": "^7.1.1",
     "sharp": "^0.35.5",
     "svelte-check": "^4.1.0",
     "typescript": "^5.7.0"

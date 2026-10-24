@@ -28,21 +28,11 @@ cd showcase/fourier
 ./scripts/rehearse.sh /tmp/publisle-distribution-EXAMPLE/tarballs
 ```
 
-The script copies the eleven exact `0.1.0` Core tarballs selected by `package.json`, restores dependencies from
-`package-lock.json`, builds the Astro page, and verifies MathML, table/SVG output,
-resolved references, static fallbacks and absence of Research dependencies. It
-writes `dist/rehearsal.json` with source/page hashes, package versions/integrities
-and diagnostics. Packed tarball bytes are not reproducible across machines (gzip
-records timestamps) and npm enforces a lock's recorded digests even for `file:`
-dependencies, so the rehearsal generates the lockfile in an empty temporary
-directory from the exact pinned `package.json` versions and copied tarballs,
-then replays it with `npm ci`. Generating the lock beside an existing installation
-can omit registry integrity metadata. The registry-release flow below
-restores pure `npm ci` replay against published packages. `.artifacts/`,
-dependencies and generated output are ignored.
-
-`0.1.0` is prepared but not yet published. This rehearsal does **not** prove
-registry publication or satisfy the public deployment acceptance criterion.
+The checked-in manifest and lock use exact published Publisle versions and Astro
+7.3.8, so dependency scanners can resolve this site without local tarballs.
+The rehearsal script substitutes the validated tarballs listed in the distribution
+report, generates a temporary lock, and then replays it with `npm ci`. It copies
+the shared article assets before building and verifies the resulting page.
 
 Preview after building:
 

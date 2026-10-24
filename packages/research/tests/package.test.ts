@@ -51,6 +51,16 @@ describe("IEEE journal source packages", () => {
       "\\includegraphics[width=\\columnwidth]{assets/figure-1.pdf}",
     );
     expect(tex).toContain("\\begin{tabularx}{\\columnwidth}{XX}");
+    expect(tex).toContain("\\begin{table}[!htbp]");
+    expect(tex.indexOf("\\FloatBarrier")).toBeGreaterThan(
+      tex.indexOf("\\end{table}"),
+    );
+    expect(tex.indexOf("\\FloatBarrier")).toBeLessThan(
+      tex.indexOf("\\bibliography{references}"),
+    );
+    expect(result.files["placeins.sty"]).toContain(
+      "freely released to the public domain",
+    );
     expect(tex).toContain("\\textbf{Odd harmonics N}");
     expect(tex).toContain("\\footnote{This manuscript");
     expect(tex).toContain("\\bibliographystyle{IEEEtran}");

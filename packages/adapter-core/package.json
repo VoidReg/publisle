@@ -10,7 +10,8 @@
     "./island-runtime": "./src/island-runtime.ts",
     "./publication-runtime": "./src/publication-runtime.ts",
     "./vite": "./src/vite.ts",
-    "./node": "./src/node.ts"
+    "./node": "./src/node.ts",
+    "./async": "./src/async.ts"
   },
   "dependencies": {
     "@publisle/core": "workspace:^",
@@ -61,6 +62,11 @@
         "types": "./dist/node.d.ts",
         "import": "./dist/node.js",
         "default": "./dist/node.js"
+      },
+      "./async": {
+        "types": "./dist/async.d.ts",
+        "import": "./dist/async.js",
+        "default": "./dist/async.js"
       }
     },
     "types": "./dist/index.d.ts"

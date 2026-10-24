@@ -10,13 +10,14 @@
     blockTypes,
     createPlaygroundRegistry,
     DocumentEditor,
-  } from "@publisle/playground";
+  } from "@publisle/playground/core";
   import BlockEditor from "@publisle/playground/BlockEditor.svelte";
   import MathBlockEditor from "@publisle/playground/MathBlockEditor.svelte";
   import { interactiveSchematicDefinition } from "@publisle/blocks-technical";
   import { attachArticle } from "@publisle/adapter-astro/runtime";
   import { prepare } from "@publisle/core";
-  import { compilePublication, publicationReaderManifest } from "@publisle/adapter-core";
+  import { compilePublicationAsync, publicationReaderManifest } from "@publisle/adapter-core/async";
+  import starterDocument from "../lib/starter-document.json";
   import { fetchHealth, fetchPdfTemplates, compilePdf, PDF_ENABLED, type ApiHealth, type PdfTemplate } from "../lib/api";
   import {
     playgroundExamples,
@@ -62,8 +63,19 @@ PDF export works out of the box: this sample already carries a title and author.
 `;
 
   const editor = new DocumentEditor(undefined, registry);
-  editor.importMarkdown(STARTER_MARKDOWN);
+  editor.fromJson(JSON.stringify(starterDocument));
 
+  let markdownLoader: Promise<typeof import("@publisle/markdown")> | undefined;
+  function markdownModule() {
+    return markdownLoader ??= import("@publisle/markdown").catch((error: unknown) => { markdownLoader = undefined; throw error; });
+  }
+  async function importMarkdown(source: string) {
+    const { fromMarkdown } = await markdownModule();
+    const result = fromMarkdown(source, { resolveSchemaVersion: (type) => registry.get(type)?.schemaVersion });
+    if (result.document) editor.setDocument(result.document);
+    return result;
+  }
+  async function exportMarkdown() { return (await markdownModule()).toMarkdown(editor.document); }
   let version = $state(0);
 
   let view = $state<"edit" | "preview">("edit");
@@ -88,15 +100,20 @@ PDF export works out of the box: this sample already carries a title and author.
   let citationResolver = $state<typeof import("../lib/preview-citations").previewCitations>();
   let pdfAbort: AbortController | undefined;
   let pdfDownloadUrl: string | undefined;
+  const engineLabels: Record<string, string> = {
+    lualatex: "LaTeX · LuaLaTeX (~45 s)",
+    pdflatex: "LaTeX · pdfLaTeX",
+    rust: "Fast · experimental (~3 s)",
+  };
   const selectedPdfTemplate = $derived(pdfTemplates.find((item) => item.id === pdfTemplate));
 
   function selectPdfTemplate(): void {
     const selected = pdfTemplates.find((item) => item.id === pdfTemplate);
-    pdfEngine = selected?.engines[0] ?? "lualatex";
+    pdfEngine = selected?.engines.includes("lualatex") ? "lualatex" : selected?.engines.includes("pdflatex") ? "pdflatex" : selected?.engines[0] ?? "lualatex";
   }
 
   async function exportPdf(): Promise<void> {
-    flushSource();
+    await flushSource();
     if ((mode === "markdown" && markdownInvalid) || (mode === "json" && jsonInvalid)) {
       notice = "Fix the invalid editor source before exporting.";
       return;
@@ -135,6 +152,7 @@ PDF export works out of the box: this sample already carries a title and author.
   let draftReady = $state(false);
   let storageAvailable = $state(true);
   let sourcePending = false;
+  let sourceFlight: Promise<void> | undefined;
   let sourceTimer: ReturnType<typeof setTimeout> | undefined;
   const DRAFT_KEY = "publisle-draft-v1";
 
@@ -150,14 +168,14 @@ PDF export works out of the box: this sample already carries a title and author.
         const draft = JSON.parse(raw);
         if (draft.version === 1 && typeof draft.document === "string") {
           editor.fromJson(draft.document);
-          markdownText = typeof draft.markdown === "string" ? draft.markdown : editor.exportMarkdown().markdown ?? "";
+          markdownText = typeof draft.markdown === "string" ? draft.markdown : "";
           jsonText = typeof draft.json === "string" ? draft.json : editor.toJson();
           markdownInvalid = draft.markdownInvalid === true;
           jsonInvalid = draft.jsonInvalid === true;
           markdownDocument = typeof draft.markdownDocument === "string" ? draft.markdownDocument : "";
           jsonDocument = typeof draft.jsonDocument === "string" ? draft.jsonDocument : "";
           if (["blocks", "markdown", "json"].includes(draft.mode)) mode = draft.mode;
-          if (mode === "markdown") applyMarkdown();
+          if (mode === "markdown") void applyMarkdown();
           if (mode === "json") applyJson();
         }
       }
@@ -184,11 +202,11 @@ PDF export works out of the box: this sample already carries a title and author.
     } catch { storageAvailable = false; }
   });
 
-  function flushSource(): void {
+  async function flushSource(): Promise<void> {
     clearTimeout(sourceTimer);
-    if (!sourcePending) return;
+    if (!sourcePending) { await sourceFlight; return; }
     sourcePending = false;
-    if (mode === "markdown") applyMarkdown();
+    if (mode === "markdown") { sourceFlight = applyMarkdown(); await sourceFlight; }
     if (mode === "json") applyJson();
   }
 
@@ -198,11 +216,11 @@ PDF export works out of the box: this sample already carries a title and author.
     sourceTimer = setTimeout(flushSource, 200);
   }
 
-  function changeMode(next: "blocks" | "markdown" | "json"): void {
+  async function changeMode(next: "blocks" | "markdown" | "json"): Promise<void> {
     if (next === mode) return;
-    flushSource();
+    await flushSource();
     if (next === "markdown" && !markdownInvalid && markdownDocument !== editor.toJson()) {
-      markdownText = editor.exportMarkdown().markdown ?? "";
+      markdownText = (await exportMarkdown()).markdown ?? "";
       markdownDocument = editor.toJson();
     }
     if (next === "json" && !jsonInvalid && jsonDocument !== editor.toJson()) {
@@ -251,10 +269,15 @@ PDF export works out of the box: this sample already carries a title and author.
       })),
   }));
 
-  const compiled = $derived.by(() => {
+  let compiled = $state<{ html: string; warnings: number; error: string; manifest: ReturnType<typeof publicationReaderManifest> | undefined }>({ html: "", warnings: 0, error: "", manifest: undefined });
+  $effect(() => {
     void version;
+    const source = editor.document;
+    const citations = citationResolver?.(source);
+    let active = true;
+    void (async () => {
     try {
-      const result = prepare(editor.document, { registry });
+      const result = prepare(source, { registry });
       if (!result.document) {
         return {
           html: "",
@@ -265,7 +288,7 @@ PDF export works out of the box: this sample already carries a title and author.
           manifest: undefined,
         };
       }
-      const artifact = compilePublication(result.document, citationResolver?.(editor.document));
+      const artifact = await compilePublicationAsync(result.document, citations);
       return {
         html: artifact.html,
         warnings: artifact.diagnostics.length,
@@ -280,15 +303,17 @@ PDF export works out of the box: this sample already carries a title and author.
         manifest: undefined,
       };
     }
+    })().then((result) => { if (active) compiled = result; });
+    return () => { active = false; };
   });
 
-  function setView(next: "edit" | "preview"): void {
+  async function setView(next: "edit" | "preview"): Promise<void> {
     view = next;
-    flushSource();
+    await flushSource();
   }
 
-  function addBlock(type: string): void {
-    changeMode("blocks");
+  async function addBlock(type: string): Promise<void> {
+    await changeMode("blocks");
     const selectedIndex = blocks.findIndex(
       (block) => block.id === selectedId,
     );
@@ -306,8 +331,8 @@ PDF export works out of the box: this sample already carries a title and author.
     version += 1;
   }
 
-  function applyMarkdown(): void {
-    const result = editor.importMarkdown(markdownText);
+  async function applyMarkdown(): Promise<void> {
+    const result = await importMarkdown(markdownText);
     markdownInvalid = result.diagnostics.some((item) => item.level === "error");
     markdownDocument = editor.toJson();
     notice =
@@ -332,10 +357,10 @@ PDF export works out of the box: this sample already carries a title and author.
     version += 1;
   }
 
-  function loadExample(example: PlaygroundExample): void {
+  async function loadExample(example: PlaygroundExample): Promise<void> {
     clearTimeout(sourceTimer);
     sourcePending = false;
-    editor.importMarkdown(example.markdown);
+    await importMarkdown(example.markdown);
     markdownText = example.markdown;
     jsonText = editor.toJson();
     markdownInvalid = jsonInvalid = false;
@@ -349,7 +374,7 @@ PDF export works out of the box: this sample already carries a title and author.
   function reset(): void {
     clearTimeout(sourceTimer);
     sourcePending = false;
-    editor.importMarkdown(STARTER_MARKDOWN);
+    editor.fromJson(JSON.stringify(starterDocument));
     markdownText = STARTER_MARKDOWN;
     jsonText = editor.toJson();
     markdownInvalid = jsonInvalid = false;
@@ -506,7 +531,7 @@ PDF export works out of the box: this sample already carries a title and author.
       <summary class="cursor-pointer text-sm font-medium">PDF options</summary>
       <div class="grid gap-3 pt-3 sm:grid-cols-2">
         <div class="grid gap-1 text-sm"><label for="pdf-template">PDF layout</label><select id="pdf-template" class="rounded border border-line bg-bg p-2" bind:value={pdfTemplate} onchange={selectPdfTemplate} disabled={pdfBusy}>{#each pdfTemplates as template}<option value={template.id}>{template.label}</option>{/each}</select></div>
-        <div class="grid gap-1 text-sm"><label for="pdf-engine">PDF engine</label><select id="pdf-engine" class="rounded border border-line bg-bg p-2" bind:value={pdfEngine} disabled={pdfBusy}>{#each selectedPdfTemplate?.engines ?? [] as engine}<option value={engine}>{engine}</option>{/each}</select></div>
+        <div class="grid gap-1 text-sm"><label for="pdf-engine">PDF engine</label><select id="pdf-engine" class="rounded border border-line bg-bg p-2" bind:value={pdfEngine} disabled={pdfBusy}>{#each selectedPdfTemplate?.engines ?? [] as engine}<option value={engine}>{engineLabels[engine] ?? engine}</option>{/each}</select></div>
         <label class="grid gap-1 text-sm">Paper title<input class="rounded border border-line bg-bg p-2" bind:value={pdfTitle} placeholder="Use document metadata" maxlength="500" /></label>
         <label class="grid gap-1 text-sm">Authors (separated by semicolons)<input class="rounded border border-line bg-bg p-2" bind:value={pdfAuthors} placeholder="Use document metadata" maxlength="2000" /></label>
         <label class="grid gap-1 text-sm">Affiliation for entered authors<input class="rounded border border-line bg-bg p-2" bind:value={pdfAffiliation} maxlength="500" /></label>

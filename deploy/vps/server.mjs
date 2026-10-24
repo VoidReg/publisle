@@ -289,6 +289,47 @@ async function storeCachedPdf(cacheDirectory, key, result) {
 }
 
 export async function compileJob(request, signal, options) {
+  // One shared deadline bounds the native attempt and the single legacy retry.
+  const deadline = AbortSignal.any([signal, AbortSignal.timeout(LIMITS.jobMs)]);
+  try {
+    return await compileAttempt(request, deadline, options);
+  } catch (error) {
+    if (
+      request.engine !== "rust" ||
+      deadline.aborted ||
+      !options.image ||
+      error.code === "engine-unavailable"
+    )
+      throw error;
+    try {
+      const result = await compileAttempt(
+        { ...request, engine: "lualatex" },
+        deadline,
+        options,
+      );
+      return {
+        ...result,
+        diagnostics: [
+          ...(error.diagnostics ?? []),
+          {
+            code: "native-engine-fallback",
+            message:
+              "The fast engine failed; this PDF was compiled with LuaLaTeX.",
+          },
+          ...(result.diagnostics ?? []),
+        ],
+      };
+    } catch (fallbackError) {
+      fallbackError.diagnostics = [
+        ...(error.diagnostics ?? []),
+        ...(fallbackError.diagnostics ?? []),
+      ];
+      throw fallbackError;
+    }
+  }
+}
+
+async function compileAttempt(request, signal, options) {
   const image = request.engine === "rust" ? options.nativeImage : options.image;
   if (
     request.engine === "rust" &&
@@ -669,6 +710,7 @@ export function createApi(options = {}) {
             json(response, error.status ?? 422, {
               ok: false,
               code: error.code ?? "compilation-failed",
+              diagnostics: error.diagnostics ?? [],
               message:
                 error instanceof ServiceError
                   ? error.message

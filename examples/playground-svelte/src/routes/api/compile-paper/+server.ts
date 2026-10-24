@@ -1,4 +1,4 @@
-import { json, type RequestHandler } from "@sveltejs/kit";
+import type { RequestHandler } from "@sveltejs/kit";
 import { compilePaper } from "@publisle/playground-core/compile-service";
 
 export const prerender = false;
@@ -10,15 +10,18 @@ export const POST: RequestHandler = async ({ request }) => {
   try {
     body = await request.json();
   } catch {
-    return json({ ok: false, message: "Invalid JSON." }, { status: 400 });
+    return Response.json(
+      { ok: false, message: "Invalid JSON." },
+      { status: 400 },
+    );
   }
   try {
     const result = compilePaper(body as Parameters<typeof compilePaper>[0]);
-    return json(result, {
+    return Response.json(result, {
       status: result.ok ? 200 : result.status < 500 ? 400 : 500,
     });
   } catch (error) {
-    return json(
+    return Response.json(
       {
         ok: false,
         message: error instanceof Error ? error.message : String(error),

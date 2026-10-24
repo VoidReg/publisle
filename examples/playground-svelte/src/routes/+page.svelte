@@ -24,8 +24,8 @@
     withMetadataSubjects,
     type AuthorRow,
   } from "@publisle/playground-core";
-  import BlockEditor from "$lib/BlockEditor.svelte";
-  import Schematic from "$lib/Schematic.svelte";
+  import BlockEditor from "#lib/BlockEditor.svelte";
+  import Schematic from "#lib/Schematic.svelte";
   import "../../../playground-core/theme.css";
 
   const implementations = {

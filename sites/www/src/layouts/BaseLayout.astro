@@ -90,7 +90,8 @@ const ldScripts = jsonLd ?? [];
     }
 
     <script is:inline>
-      // Apply the persisted theme before first paint (no flash).
+      // Default to dark before first paint, preserving a saved preference.
+      document.documentElement.dataset.theme = "dark";
       try {
         var stored = localStorage.getItem("publisle-theme");
         if (stored === "light" || stored === "dark") {

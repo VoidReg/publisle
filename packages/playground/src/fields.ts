@@ -3,7 +3,7 @@
 // keep the React and Svelte forms in parity, and every block additionally
 // exposes its whole payload as JSON so no data is unreachable from the UI.
 import type { PlaygroundExtensions } from "./templates.ts";
-import { flowText } from "./editor.ts";
+import { flowText } from "./editor-core.ts";
 
 export type FieldKind =
   | "text"
