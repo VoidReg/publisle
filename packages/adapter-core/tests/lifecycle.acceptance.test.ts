@@ -80,7 +80,7 @@ async function bundle(): Promise<string> {
     build: {
       write: false,
       minify: true,
-      rollupOptions: { input: "lifecycle-host" },
+      rolldownOptions: { input: "lifecycle-host" },
     },
   });
   const built = Array.isArray(result) ? result[0] : result;
