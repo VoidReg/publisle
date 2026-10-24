@@ -498,7 +498,7 @@ run(
       return relative(nextConsumer, path);
     }),
     relative(nextConsumer, nextTarball),
-    "next@16.4.0",
+    "next@16.4.3",
     "react@^19.0.0",
     "react-dom@^19.0.0",
     "@types/react@^19.0.0",
@@ -521,6 +521,7 @@ await writeFile(
       skipLibCheck: true,
       strict: true,
       noEmit: true,
+      allowImportingTsExtensions: true,
       esModuleInterop: true,
       module: "esnext",
       moduleResolution: "bundler",
@@ -559,6 +560,37 @@ await writeFile(
 await writeFile(
   join(nextConsumer, "app/page.tsx"),
   `import {loadPublication,PublisleArticle} from '@publisle/adapter-next'; import {coreBlockDefinitions} from '@publisle/blocks-core'; import {createRegistry} from '@publisle/core'; import {join} from 'node:path'; export default async function Page(){const publication=await loadPublication(join(process.cwd(),'article.json'),{registry:createRegistry(coreBlockDefinitions)}); return <PublisleArticle publication={publication} instanceId="next-packed"/>;}`,
+);
+// The interactive host route compiles the guide's client-wrapper pattern under
+// the consumer's strict tsconfig, so the documented props typing and the
+// `@publisle/adapter-next/client` export are both exercised by this gate.
+await mkdir(join(nextConsumer, "app/interactive"), { recursive: true });
+await writeFile(
+  join(nextConsumer, "app/interactive/Counter.tsx"),
+  `"use client";
+import {useState} from 'react';
+export default function Counter(){const [count,setCount]=useState(0);return <button type="button" onClick={()=>setCount((value)=>value+1)}>packed counter {count}</button>;}`,
+);
+await writeFile(
+  join(nextConsumer, "app/interactive/Reader.tsx"),
+  `"use client";
+import {ClientAttachment,type ClientAttachmentProps} from '@publisle/adapter-next/client';
+export default function Reader({manifest,instanceId}:Pick<ClientAttachmentProps,'manifest'|'instanceId'>){
+  return <ClientAttachment manifest={manifest} instanceId={instanceId} implementations={{'host:counter':()=>import('./Counter.tsx')}}/>;
+}`,
+);
+await writeFile(
+  join(nextConsumer, "app/interactive/page.tsx"),
+  `import {loadPublication} from '@publisle/adapter-next';
+import {publicationReaderManifest} from '@publisle/adapter-core';
+import {coreBlockDefinitions} from '@publisle/blocks-core';
+import {createRegistry} from '@publisle/core';
+import {join} from 'node:path';
+import Reader from './Reader.tsx';
+export default async function Page(){
+  const publication=await loadPublication(join(process.cwd(),'article.json'),{registry:createRegistry(coreBlockDefinitions)});
+  return <Reader manifest={publicationReaderManifest(publication)} instanceId="next-packed-interactive"/>;
+}`,
 );
 run(
   join(nextConsumer, "node_modules/.bin/next"),

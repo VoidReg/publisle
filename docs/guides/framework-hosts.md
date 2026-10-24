@@ -33,9 +33,15 @@ component:
 ```tsx
 // app/interactive/Reader.tsx
 "use client";
-import { ClientAttachment } from "@publisle/adapter-next/client";
+import {
+  ClientAttachment,
+  type ClientAttachmentProps,
+} from "@publisle/adapter-next/client";
 
-export default function Reader({ manifest, instanceId }) {
+export default function Reader({
+  manifest,
+  instanceId,
+}: Pick<ClientAttachmentProps, "manifest" | "instanceId">) {
   return (
     <ClientAttachment
       manifest={manifest}
